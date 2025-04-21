@@ -1,0 +1,80 @@
+{
+  "common": {
+    "welcome": "Bienvenue",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "actions": "Actions",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "noResults": "Aucun résultat trouvé"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "firstName": "Prénom",
+    "lastName": "Nom"
+  },
+  "inventory": {
+    "title": "Inventaire",
+    "products": "Produits",
+    "stock": "Stock",
+    "lowStock": "Stock Bas",
+    "outOfStock": "Rupture de Stock",
+    "addProduct": "Ajouter un Produit",
+    "editProduct": "Modifier le Produit",
+    "deleteProduct": "Supprimer le Produit",
+    "deleteConfirmation": "Êtes-vous sûr de vouloir supprimer ce produit ?",
+    "transactions": "Transactions",
+    "productCreated": "Produit créé avec succès",
+    "productUpdated": "Produit mis à jour avec succès",
+    "productDeleted": "Produit supprimé avec succès",
+    "productName": "Nom du Produit",
+    "sku": "Référence",
+    "description": "Description",
+    "price": "Prix",
+    "unit": "Unité",
+    "currentStock": "Stock Actuel",
+    "minimumStock": "Stock Minimum",
+    "isRawMaterial": "Matière Première",
+    "rawMaterial": "Matière Première",
+    "showRawMaterials": "Afficher les Matières Premières"
+  },
+  "production": {
+    "title": "Production",
+    "bom": "Liste des matériaux",
+    "records": "Registres de production",
+    "schedule": "Planning de production",
+    "efficiency": "Efficacité",
+    "wastage": "Gaspillage"
+  },
+  "sales": {
+    "title": "Ventes",
+    "newSale": "Nouvelle vente",
+    "orders": "Commandes",
+    "invoices": "Factures",
+    "customers": "Clients",
+    "revenue": "Chiffre d'affaires"
+  },
+  "employees": {
+    "title": "Employés",
+    "attendance": "Présence",
+    "performance": "Performance",
+    "schedule": "Horaires",
+    "department": "Département"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "theme": "Thème",
+    "language": "Langue",
+    "darkMode": "Mode sombre",
+    "profile": "Profil"
+  }
+}

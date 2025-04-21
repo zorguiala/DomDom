@@ -1,0 +1,80 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "actions": "Actions",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "products": "Products",
+    "stock": "Stock",
+    "lowStock": "Low Stock",
+    "outOfStock": "Out of Stock",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "deleteProduct": "Delete Product",
+    "deleteConfirmation": "Are you sure you want to delete this product?",
+    "transactions": "Transactions",
+    "productCreated": "Product created successfully",
+    "productUpdated": "Product updated successfully",
+    "productDeleted": "Product deleted successfully",
+    "productName": "Product Name",
+    "sku": "SKU",
+    "description": "Description",
+    "price": "Price",
+    "unit": "Unit",
+    "currentStock": "Current Stock",
+    "minimumStock": "Minimum Stock",
+    "isRawMaterial": "Raw Material",
+    "rawMaterial": "Raw Material",
+    "showRawMaterials": "Show Raw Materials"
+  },
+  "production": {
+    "title": "Production",
+    "bom": "Bill of Materials",
+    "records": "Production Records",
+    "schedule": "Production Schedule",
+    "efficiency": "Efficiency",
+    "wastage": "Wastage"
+  },
+  "sales": {
+    "title": "Sales",
+    "newSale": "New Sale",
+    "orders": "Orders",
+    "invoices": "Invoices",
+    "customers": "Customers",
+    "revenue": "Revenue"
+  },
+  "employees": {
+    "title": "Employees",
+    "attendance": "Attendance",
+    "performance": "Performance",
+    "schedule": "Schedule",
+    "department": "Department"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "darkMode": "Dark Mode",
+    "profile": "Profile"
+  }
+}
