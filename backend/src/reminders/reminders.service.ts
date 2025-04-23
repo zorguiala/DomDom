@@ -93,16 +93,12 @@ export class RemindersService {
   async getDueReminders(): Promise<ReminderResponseDto[]> {
     const today = new Date();
 
-    const reminders = await this.remindersRepository.find({
-      where: {
-        dueDate: this.remindersRepository
-          .createQueryBuilder()
-          .where('dueDate <= :today', { today })
-          .getMany(),
-        status: ReminderStatus.PENDING,
-      },
-      order: { dueDate: 'ASC' },
-    });
+    const reminders = await this.remindersRepository
+      .createQueryBuilder('reminder')
+      .where('reminder.dueDate <= :today', { today })
+      .andWhere('reminder.status = :status', { status: ReminderStatus.PENDING })
+      .orderBy('reminder.dueDate', 'ASC')
+      .getMany();
 
     return reminders.map((reminder) => this.mapToResponseDto(reminder));
   }

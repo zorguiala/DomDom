@@ -1,8 +1,9 @@
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { BOM } from './bom.entity';
 import { User } from './user.entity';
 import { ProductionRecord } from './production-record.entity';
+import { ProductionOrderItem } from './production-order-item.entity';
 
 export enum ProductionOrderStatus {
   PLANNED = 'planned',
@@ -20,6 +21,7 @@ export enum ProductionOrderPriority {
 @Entity('production_orders')
 export class ProductionOrder extends BaseEntity {
   @ManyToOne(() => BOM)
+  @JoinColumn({ name: 'bom_id' })
   bom: BOM;
 
   @Column('decimal', { precision: 10, scale: 2 })
@@ -51,6 +53,12 @@ export class ProductionOrder extends BaseEntity {
 
   @OneToMany(() => ProductionRecord, (record) => record.productionOrder)
   productionRecords: ProductionRecord[];
+
+  @OneToMany(() => ProductionOrderItem, (item) => item.productionOrder, {
+    cascade: true,
+    eager: true,
+  })
+  items: ProductionOrderItem[];
 
   @Column({ type: 'text', nullable: true })
   notes: string;

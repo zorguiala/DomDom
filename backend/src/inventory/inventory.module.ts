@@ -6,11 +6,13 @@ import { InventoryService } from './inventory.service';
 import { InventoryController } from './inventory.controller';
 import { ProductService } from './product.service';
 import { ProductController } from './product.controller';
+import { InventoryReportingService } from './inventory-reporting.service';
+import { InventoryReportingController } from './inventory-reporting.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Product, InventoryTransaction])],
-  providers: [InventoryService, ProductService],
-  controllers: [InventoryController, ProductController],
-  exports: [InventoryService, ProductService],
+  providers: [InventoryService, ProductService, InventoryReportingService],
+  controllers: [InventoryController, ProductController, InventoryReportingController],
+  exports: [InventoryService, ProductService, InventoryReportingService],
 })
 export class InventoryModule {}

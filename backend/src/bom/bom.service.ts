@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { BOM } from '../entities/bom.entity';
 import { BOMItem } from '../entities/bom-item.entity';
 import { Product } from '../entities/product.entity';
@@ -56,34 +56,53 @@ export class BOMService {
     await queryRunner.startTransaction();
 
     try {
-      const bom = this.bomRepository.create({
-        name: createBomDto.name,
-        description: createBomDto.description,
-        outputQuantity: createBomDto.outputQuantity,
-        outputUnit: createBomDto.outputUnit,
-        createdBy: user,
-      });
+      // Collect all product IDs for validation
+      const productIds = createBomDto.items.map((item) => item.productId);
 
+      // Add outputProductId for validation if it exists
+      if (createBomDto.outputProductId) {
+        productIds.push(createBomDto.outputProductId);
+      }
+
+      // Validate all products exist
+      await this.validateProducts(productIds);
+
+      // Create BOM
+      const bom = new BOM();
+      bom.name = createBomDto.name || '';
+      bom.description = createBomDto.description || '';
+      bom.outputQuantity = createBomDto.outputQuantity;
+      bom.outputUnit = createBomDto.outputUnit || '';
+      bom.isActive = createBomDto.isActive ?? true;
+      bom.createdBy = user;
+
+      // Set output product if provided
+      if (createBomDto.outputProductId) {
+        const outputProduct = await this.productRepository.findOne({
+          where: { id: createBomDto.outputProductId },
+        });
+
+        if (!outputProduct) {
+          throw new NotFoundException(
+            `Output product with ID ${createBomDto.outputProductId} not found`
+          );
+        }
+
+        bom.outputProduct = outputProduct;
+      }
+
+      // Save BOM
       const savedBom = await queryRunner.manager.save(bom);
 
       // Create BOM items
-      const bomItems = createBomDto.items.map((item) =>
-        this.bomItemRepository.create({
-          bom: savedBom,
-          product: { id: item.productId } as Product,
-          quantity: item.quantity,
-          unit: item.unit,
-          wastagePercent: item.wastagePercent,
-        })
-      );
+      await this.createBOMItems(queryRunner, savedBom, createBomDto.items);
 
-      await queryRunner.manager.save(BOMItem, bomItems);
       await queryRunner.commitTransaction();
 
       return this.findOne(savedBom.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error;
+      throw this.handleError(error) as Error;
     } finally {
       await queryRunner.release();
     }
@@ -94,10 +113,13 @@ export class BOMService {
       .createQueryBuilder('bom')
       .leftJoinAndSelect('bom.items', 'items')
       .leftJoinAndSelect('items.product', 'product')
-      .leftJoinAndSelect('bom.createdBy', 'createdBy');
+      .leftJoinAndSelect('bom.createdBy', 'createdBy')
+      .where('bom.isActive = :isActive', { isActive: true });
 
     if (search) {
-      query.where('bom.name ILIKE :search', { search: `%${search}%` });
+      query.andWhere('(bom.name ILIKE :search OR bom.description ILIKE :search)', {
+        search: `%${search}%`,
+      });
     }
 
     return query.getMany();
@@ -110,7 +132,7 @@ export class BOMService {
     });
 
     if (!bom) {
-      throw new BadRequestException('BOM not found');
+      throw new NotFoundException(`BOM with ID ${id} not found`);
     }
 
     return bom;
@@ -122,39 +144,66 @@ export class BOMService {
     await queryRunner.startTransaction();
 
     try {
-      const bom = await this.findOne(id);
-
-      // Update BOM details
-      Object.assign(bom, {
-        name: updateBomDto.name,
-        description: updateBomDto.description,
-        outputQuantity: updateBomDto.outputQuantity,
-        outputUnit: updateBomDto.outputUnit,
+      const bom = await this.bomRepository.findOne({
+        where: { id },
+        relations: ['items', 'items.product'],
       });
 
-      await queryRunner.manager.save(bom);
+      if (!bom) {
+        throw new NotFoundException(`BOM with ID ${id} not found`);
+      }
 
-      // Remove old items
-      await queryRunner.manager.delete(BOMItem, { bom: { id } });
+      // Collect all product IDs that need validation
+      const productIds = updateBomDto.items?.map((item) => item.productId) || [];
 
-      // Create new items
-      const bomItems = updateBomDto.items.map((item) =>
-        this.bomItemRepository.create({
-          bom,
-          product: { id: item.productId } as Product,
-          quantity: item.quantity,
-          unit: item.unit,
-          wastagePercent: item.wastagePercent,
-        })
-      );
+      // Add outputProductId for validation if it exists in the DTO
+      if (updateBomDto.outputProductId) {
+        productIds.push(updateBomDto.outputProductId);
+      }
 
-      await queryRunner.manager.save(BOMItem, bomItems);
+      // Validate all products exist if we have products to validate
+      if (productIds.length > 0) {
+        await this.validateProducts(productIds);
+      }
+
+      // Update basic properties
+      if (updateBomDto.name) bom.name = updateBomDto.name;
+      if (updateBomDto.description) bom.description = updateBomDto.description;
+      if (updateBomDto.outputQuantity) bom.outputQuantity = updateBomDto.outputQuantity;
+      if (updateBomDto.outputUnit) bom.outputUnit = updateBomDto.outputUnit;
+      if (updateBomDto.isActive !== undefined) bom.isActive = updateBomDto.isActive;
+
+      // Update output product if provided
+      if (updateBomDto.outputProductId) {
+        const outputProduct = await this.productRepository.findOne({
+          where: { id: updateBomDto.outputProductId },
+        });
+
+        if (!outputProduct) {
+          throw new NotFoundException(
+            `Output product with ID ${updateBomDto.outputProductId} not found`
+          );
+        }
+
+        bom.outputProduct = outputProduct;
+      }
+
+      // Update bom items if provided
+      if (updateBomDto.items) {
+        // Delete existing bom items
+        await queryRunner.manager.delete(BOMItem, { bom: { id } });
+
+        // Create new bom items
+        await this.createBOMItems(queryRunner, bom, updateBomDto.items);
+      }
+
+      await queryRunner.manager.save(BOM, bom);
       await queryRunner.commitTransaction();
 
       return this.findOne(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error;
+      throw this.handleError(error) as Error;
     } finally {
       await queryRunner.release();
     }
@@ -162,7 +211,9 @@ export class BOMService {
 
   async remove(id: string): Promise<void> {
     const bom = await this.findOne(id);
-    await this.bomRepository.remove(bom);
+    // Soft delete by setting isActive to false
+    bom.isActive = false;
+    await this.bomRepository.save(bom);
   }
 
   async calculateMaterialRequirements(
@@ -192,6 +243,10 @@ export class BOMService {
         where: { id: requirement.product.id },
       });
 
+      if (!product) {
+        throw new NotFoundException(`Product ${requirement.product.id} not found`);
+      }
+
       if (product.currentStock < requirement.requiredQuantity) {
         isAvailable = false;
         shortages.push({
@@ -204,10 +259,7 @@ export class BOMService {
       }
     }
 
-    return {
-      isAvailable,
-      shortages,
-    };
+    return { isAvailable, shortages };
   }
 
   async calculateProductionCost(id: string, desiredQuantity: number): Promise<ProductionCost> {
@@ -219,6 +271,10 @@ export class BOMService {
       const product = await this.productRepository.findOne({
         where: { id: requirement.product.id },
       });
+
+      if (!product) {
+        throw new NotFoundException(`Product ${requirement.product.id} not found`);
+      }
 
       const totalCost = requirement.requiredQuantity * product.price;
       materialCost += totalCost;
@@ -232,8 +288,6 @@ export class BOMService {
       });
     }
 
-    // For now, total cost is just material cost
-    // Later we can add labor cost, overhead, etc.
     const totalCost = materialCost;
 
     return {
@@ -241,5 +295,47 @@ export class BOMService {
       totalCost,
       costBreakdown,
     };
+  }
+
+  private async validateProducts(productIds: string[]): Promise<void> {
+    for (const productId of productIds) {
+      const product = await this.productRepository.findOne({
+        where: { id: productId, isActive: true },
+      });
+
+      if (!product) {
+        throw new BadRequestException(`Product with ID ${productId} not found or inactive`);
+      }
+    }
+  }
+
+  private async createBOMItems(
+    queryRunner: QueryRunner,
+    bom: BOM,
+    items: CreateBOMDto['items']
+  ): Promise<BOMItem[]> {
+    const bomItems = items.map((item) =>
+      this.bomItemRepository.create({
+        bom,
+        product: { id: item.productId } as Product,
+        quantity: item.quantity,
+        unit: item.unit,
+        wastagePercent: item.wastagePercent || 0,
+      })
+    );
+
+    return await queryRunner.manager.save(BOMItem, bomItems);
+  }
+
+  private handleError(error: unknown): never {
+    if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      throw error;
+    }
+
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
+      throw new BadRequestException('A BOM with this name already exists');
+    }
+
+    throw new BadRequestException('Failed to process BOM operation');
   }
 }

@@ -1,4 +1,4 @@
-import { IsArray, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BOMItemDto {
@@ -30,10 +30,17 @@ export class CreateBOMDto {
   @IsString()
   outputUnit: string;
 
+  @IsString()
+  @IsUUID()
+  outputProductId: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BOMItemDto)
   items: BOMItemDto[];
+  
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class UpdateBOMDto extends CreateBOMDto {}

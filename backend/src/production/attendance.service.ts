@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository, Not, IsNull } from 'typeorm';
+import { Between, IsNull, Not, Repository } from 'typeorm';
 import { EmployeeAttendance } from '../entities/employee-attendance.entity';
 import { Employee } from '../entities/employee.entity';
 import { User } from '../entities/user.entity';
@@ -28,7 +28,7 @@ export class AttendanceService {
     const activeAttendance = await this.attendanceRepository.findOne({
       where: {
         employee: { id: clockInDto.employeeId },
-        clockOutTime: null,
+        clockOut: IsNull(),
       },
     });
 
@@ -37,8 +37,8 @@ export class AttendanceService {
     }
 
     const attendance = this.attendanceRepository.create({
-      employee: { id: clockInDto.employeeId },
-      clockInTime: new Date(),
+      employee: { id: clockInDto.employeeId } as Employee,
+      clockIn: new Date(),
       notes: clockInDto.notes,
       recordedBy: user,
     });
@@ -59,7 +59,7 @@ export class AttendanceService {
     const attendance = await this.attendanceRepository.findOne({
       where: {
         employee: { id: clockOutDto.employeeId },
-        clockOutTime: null,
+        clockOut: IsNull(),
       },
     });
 
@@ -68,14 +68,12 @@ export class AttendanceService {
     }
 
     // Update with clock out time
-    attendance.clockOutTime = new Date();
-    attendance.notes = attendance.notes
-      ? `${attendance.notes}; ${clockOutDto.notes || ''}`
-      : clockOutDto.notes;
+    attendance.clockOut = new Date();
+    attendance.notes = clockOutDto.notes || attendance.notes;
 
     // Calculate duration in hours
-    const clockIn = new Date(attendance.clockInTime);
-    const clockOut = new Date(attendance.clockOutTime);
+    const clockIn = new Date(attendance.clockIn);
+    const clockOut = new Date(attendance.clockOut);
     const durationMs = clockOut.getTime() - clockIn.getTime();
     const durationHours = durationMs / (1000 * 60 * 60);
 
@@ -96,7 +94,7 @@ export class AttendanceService {
     endDate.setHours(23, 59, 59, 999);
 
     const query = {
-      clockInTime: Between(startDate, endDate),
+      clockIn: Between(startDate, endDate),
     };
 
     if (queryDto.employeeId) {
@@ -106,15 +104,15 @@ export class AttendanceService {
     return this.attendanceRepository.find({
       where: query,
       relations: ['employee', 'recordedBy'],
-      order: { clockInTime: 'DESC' },
+      order: { clockIn: 'DESC' },
     });
   }
 
   async getAttendanceSummary(startDate: Date, endDate: Date): Promise<any> {
     const records = await this.attendanceRepository.find({
       where: {
-        clockInTime: Between(startDate, endDate),
-        clockOutTime: Not(IsNull()),
+        clockIn: Between(startDate, endDate),
+        clockOut: Not(IsNull()),
       },
       relations: ['employee'],
     });

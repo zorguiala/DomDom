@@ -22,10 +22,18 @@ export class SaleItemDto {
 
 export class CustomerInfoDto {
   @IsString()
+  id: string;
+
+  @IsString()
   name: string;
 
   @IsString()
-  contact: string;
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  phone?: string;
 }
 
 export class DirectSaleDto {

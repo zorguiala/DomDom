@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { SalesService } from './sales.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DirectSaleDto } from './dto/direct-sale.dto';
 import { AgentAssignmentDto, AgentReturnDto } from './dto/commercial-sale.dto';
 

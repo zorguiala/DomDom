@@ -8,6 +8,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LoadingState } from "./components/LoadingState";
 import { Sidebar } from "./components/Sidebar";
+import { NavBar } from "./components/NavBar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
@@ -44,18 +45,24 @@ function App() {
         <ThemeProvider>
           <CssBaseline />
           <BrowserRouter>
-            <Box sx={{ display: "flex", minHeight: "100vh" }}>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+                      <NavBar />
                       <Sidebar />
                       <Box
                         component="main"
-                        sx={{ flexGrow: 1, bgcolor: "background.default" }}
+                        sx={{
+                          flexGrow: 1,
+                          bgcolor: "background.default",
+                          mt: "64px", // Height of NavBar
+                          p: 3,
+                        }}
                       >
                         <Routes>
                           <Route
@@ -124,11 +131,11 @@ function App() {
                           />
                         </Routes>
                       </Box>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </Box>
+                    </Box>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
           </BrowserRouter>
         </ThemeProvider>
       </AuthProvider>

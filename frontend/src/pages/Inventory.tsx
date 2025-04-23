@@ -146,7 +146,7 @@ export default function Inventory() {
         {/* Filters */}
         <Box sx={{ mb: 3 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid item xs={12} md={6} lg={4}>
               <TextField
                 fullWidth
                 label={t("common.search")}
@@ -154,7 +154,7 @@ export default function Inventory() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid item xs={12} md={6} lg={4}>
               <FormControlLabel
                 control={
                   <Switch
@@ -175,8 +175,18 @@ export default function Inventory() {
           <Typography>{t("common.loading")}</Typography>
         ) : (
           <Grid container spacing={3}>
+            {/* Stats Section */}
+            <Grid item xs={12} md={6} lg={4}>
+              {/* Add your stats components here */}
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={4}>
+              {/* Add your stats components here */}
+            </Grid>
+
+            {/* Products Section */}
             {products?.map((product: Product) => (
-              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={product.id}>
+              <Grid item xs={12} md={6} lg={4} key={product.id}>
                 <ProductCard
                   product={product}
                   onEdit={handleEditProduct}

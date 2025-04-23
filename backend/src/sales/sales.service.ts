@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Sale, SaleType, SaleStatus } from '../entities/sale.entity';
@@ -6,6 +6,7 @@ import { SaleItem } from '../entities/sale-item.entity';
 import { InventoryService } from '../inventory/inventory.service';
 import { TransactionType } from '../entities/inventory-transaction.entity';
 import { User } from '../entities/user.entity';
+import { Employee } from '../entities/employee.entity';
 import { DirectSaleDto } from './dto/direct-sale.dto';
 import { AgentAssignmentDto, AgentReturnDto } from './dto/commercial-sale.dto';
 import { PaymentMethod } from './enums/payment-method.enum';
@@ -17,6 +18,10 @@ export class SalesService {
     private saleRepository: Repository<Sale>,
     @InjectRepository(SaleItem)
     private saleItemRepository: Repository<SaleItem>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(Employee)
+    private employeeRepository: Repository<Employee>,
     private inventoryService: InventoryService,
     private dataSource: DataSource
   ) {}
@@ -27,16 +32,20 @@ export class SalesService {
     await queryRunner.startTransaction();
 
     try {
-      // Create sale record
-      const sale = this.saleRepository.create({
-        type: SaleType.DIRECT,
-        status: SaleStatus.COMPLETED,
-        createdBy: user,
-        paymentMethod: data.paymentMethod,
-        customerInfo: data.customerInfo,
-      });
+      const sale = new Sale();
+      sale.type = SaleType.DIRECT;
+      sale.status = SaleStatus.COMPLETED;
+      sale.createdBy = user;
+      sale.paymentMethod = PaymentMethod[data.paymentMethod.toUpperCase()];
+      if (data.customerInfo) {
+        const customer = await this.userRepository.findOne({ where: { id: data.customerInfo.id } });
+        if (!customer) {
+          throw new BadRequestException('Customer not found');
+        }
+        sale.customer = customer;
+      }
 
-      const savedSale = await queryRunner.manager.save(sale);
+      const savedSale = await queryRunner.manager.save(Sale, sale);
 
       // Process each sale item
       let totalAmount = 0;
@@ -73,6 +82,7 @@ export class SalesService {
             item.unitPrice,
             user,
             `Sale ${savedSale.id}`,
+            undefined,
             queryRunner
           );
 
@@ -104,12 +114,21 @@ export class SalesService {
     await queryRunner.startTransaction();
 
     try {
+      // Find the employee (commercial agent)
+      const agent = await this.employeeRepository.findOne({
+        where: { id: data.agentId }
+      });
+
+      if (!agent) {
+        throw new NotFoundException('Commercial agent not found');
+      }
+
       // Create sale record for tracking assigned products
       const sale = this.saleRepository.create({
         type: SaleType.COMMERCIAL,
         status: SaleStatus.DRAFT,
         createdBy: user,
-        commercialAgent: { id: data.agentId } as User,
+        commercialAgent: agent
       });
 
       const savedSale = await queryRunner.manager.save(sale);
@@ -145,6 +164,7 @@ export class SalesService {
             product.price,
             user,
             `Commercial Assignment ${savedSale.id}`,
+            undefined,
             queryRunner
           );
 
@@ -169,10 +189,19 @@ export class SalesService {
     await queryRunner.startTransaction();
 
     try {
+      // Find the employee (commercial agent)
+      const agent = await this.employeeRepository.findOne({
+        where: { id: data.agentId }
+      });
+
+      if (!agent) {
+        throw new NotFoundException('Commercial agent not found');
+      }
+
       // Find the original assignment sale
       const originalSale = await this.saleRepository.findOne({
         where: {
-          commercialAgent: { id: data.agentId },
+          commercialAgent: { id: agent.id },
           status: SaleStatus.DRAFT,
         },
         relations: ['items', 'items.product'],
@@ -220,6 +249,7 @@ export class SalesService {
               originalItem.unitPrice,
               user,
               `Commercial Return ${originalSale.id}`,
+              undefined,
               queryRunner
             );
           }

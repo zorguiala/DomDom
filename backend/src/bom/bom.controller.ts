@@ -15,6 +15,36 @@ import { BOMService } from './bom.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateBOMDto, UpdateBOMDto } from './dto/bom.dto';
 
+// Define interfaces for return types
+interface MaterialRequirement {
+  product: any;
+  requiredQuantity: number;
+  unit: string;
+}
+
+interface AvailabilityCheck {
+  isAvailable: boolean;
+  shortages: Array<{
+    product: any;
+    required: number;
+    available: number;
+    shortage: number;
+    unit: string;
+  }>;
+}
+
+interface ProductionCost {
+  materialCost: number;
+  totalCost: number;
+  costBreakdown: Array<{
+    product: any;
+    quantity: number;
+    unit: string;
+    unitCost: number;
+    totalCost: number;
+  }>;
+}
+
 @Controller('bom')
 @UseGuards(JwtAuthGuard)
 export class BOMController {
@@ -46,7 +76,7 @@ export class BOMController {
   }
 
   @Get(':id/material-requirements')
-  async getMaterialRequirements(@Param('id') id: string, @Query('quantity') quantity: string) {
+  async getMaterialRequirements(@Param('id') id: string, @Query('quantity') quantity: string): Promise<MaterialRequirement[]> {
     if (!quantity) {
       throw new BadRequestException('Quantity parameter is required');
     }
@@ -55,7 +85,7 @@ export class BOMController {
   }
 
   @Get(':id/availability')
-  async checkAvailability(@Param('id') id: string, @Query('quantity') quantity: string) {
+  async checkAvailability(@Param('id') id: string, @Query('quantity') quantity: string): Promise<AvailabilityCheck> {
     if (!quantity) {
       throw new BadRequestException('Quantity parameter is required');
     }
@@ -64,7 +94,7 @@ export class BOMController {
   }
 
   @Get(':id/cost')
-  async calculateCost(@Param('id') id: string, @Query('quantity') quantity: string) {
+  async calculateCost(@Param('id') id: string, @Query('quantity') quantity: string): Promise<ProductionCost> {
     if (!quantity) {
       throw new BadRequestException('Quantity parameter is required');
     }

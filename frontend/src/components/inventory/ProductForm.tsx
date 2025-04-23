@@ -9,9 +9,13 @@ import {
   Switch,
   FormControlLabel,
   Grid,
+  IconButton,
+  Box,
 } from "@mui/material";
+import { QrCodeScanner } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { Product } from "../../types/inventory";
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface ProductFormProps {
   open: boolean;
@@ -24,6 +28,7 @@ const defaultProduct: Product = {
   name: "",
   sku: "",
   description: "",
+  barcode: "",
   price: 0,
   currentStock: 0,
   minimumStock: 0,
@@ -45,6 +50,7 @@ export function ProductForm({
   const [formData, setFormData] = useState<Product>(
     initialData || defaultProduct
   );
+  const [isScanning, setIsScanning] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +63,11 @@ export function ProductForm({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleBarcodeDetected = (barcode: string) => {
+    setFormData((prev) => ({ ...prev, barcode }));
+    setIsScanning(false);
   };
 
   return (
@@ -88,6 +99,25 @@ export function ProductForm({
                 fullWidth
                 required
               />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <TextField
+                  name="barcode"
+                  label={t("inventory.barcode")}
+                  value={formData.barcode}
+                  onChange={handleChange}
+                  fullWidth
+                />
+                <IconButton
+                  color="primary"
+                  onClick={() => setIsScanning(true)}
+                  sx={{ mt: 1 }}
+                >
+                  <QrCodeScanner />
+                </IconButton>
+              </Box>
             </Grid>
 
             <Grid size={{ xs: 12 }}>
@@ -174,6 +204,12 @@ export function ProductForm({
           </Button>
         </DialogActions>
       </form>
+
+      <BarcodeScanner
+        isScanning={isScanning}
+        onDetected={handleBarcodeDetected}
+        onClose={() => setIsScanning(false)}
+      />
     </Dialog>
   );
 }

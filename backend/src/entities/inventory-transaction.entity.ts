@@ -9,6 +9,7 @@ export enum TransactionType {
   PRODUCTION_IN = 'production_in',
   PRODUCTION_OUT = 'production_out',
   ADJUSTMENT = 'adjustment',
+  SALE_OUT = 'SALE_OUT',
 }
 
 @Entity('inventory_transactions')

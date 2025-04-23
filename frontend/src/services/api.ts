@@ -1,20 +1,26 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api",
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // Enable credentials
 });
 
 // Add request interceptor for authentication
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 // Add response interceptor for error handling
 api.interceptors.response.use(
@@ -44,13 +50,36 @@ export interface RegisterData {
 
 export const authApi = {
   login: async (credentials: LoginCredentials) => {
-    const response = await api.post("/auth/login", credentials);
-    return response.data;
+    try {
+      // Create URLSearchParams for form data
+      const params = new URLSearchParams();
+      params.append('username', credentials.email); // Change 'email' to 'username' for Passport
+      params.append('password', credentials.password);
+      
+      const response = await api.post("/auth/login", params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Login failed');
+      }
+      throw error;
+    }
   },
 
   register: async (data: RegisterData) => {
-    const response = await api.post("/auth/register", data);
-    return response.data;
+    try {
+      const response = await api.post("/auth/register", data);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Registration failed');
+      }
+      throw error;
+    }
   },
 };
 

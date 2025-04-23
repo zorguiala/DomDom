@@ -11,6 +11,9 @@ export class Product extends BaseEntity {
   @Column()
   sku: string;
 
+  @Column({ nullable: true })
+  barcode: string;
+
   @Column('text', { nullable: true })
   description: string;
 
@@ -31,6 +34,9 @@ export class Product extends BaseEntity {
 
   @Column({ default: false })
   isRawMaterial: boolean;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  lastPurchasePrice: number;
 
   @OneToMany(() => BOMItem, (bomItem) => bomItem.product)
   bomItems: BOMItem[];

@@ -128,7 +128,7 @@ export function BOMForm({
         </DialogTitle>
 
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 name="name"
@@ -177,7 +177,7 @@ export function BOMForm({
             </Grid>
 
             {/* BOM Items Section */}
-            <Grid size={{ xs: 12 }}>
+            <Grid item xs={12}>
               <Box
                 sx={{
                   display: "flex",
@@ -198,84 +198,70 @@ export function BOMForm({
               </Box>
 
               {formData.items.map((item, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: "flex",
-                    gap: 2,
-                    alignItems: "center",
-                    mb: 2,
-                    p: 2,
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                  }}
-                >
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                      <ProductSelect
-                        value={item.productId}
-                        onChange={(value) =>
-                          handleItemChange(index, "productId", value)
-                        }
-                        products={rawMaterials || []}
-                        label={t("bom.material")}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                      <TextField
-                        label={t("bom.quantity")}
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          handleItemChange(
-                            index,
-                            "quantity",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        fullWidth
-                        required
-                        inputProps={{ min: 0, step: 0.01 }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                      <TextField
-                        label={t("bom.unit")}
-                        value={item.unit}
-                        onChange={(e) =>
-                          handleItemChange(index, "unit", e.target.value)
-                        }
-                        fullWidth
-                        required
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                      <TextField
-                        label={t("bom.wastagePercent")}
-                        type="number"
-                        value={item.wastagePercent || 0}
-                        onChange={(e) =>
-                          handleItemChange(
-                            index,
-                            "wastagePercent",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        fullWidth
-                        inputProps={{ min: 0, max: 100, step: 0.1 }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                      <IconButton
-                        onClick={() => handleRemoveItem(index)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Grid>
+                <Grid container size={{ xs: 12 }} spacing={2} key={index}>
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <ProductSelect
+                      value={item.productId}
+                      onChange={(value) =>
+                        handleItemChange(index, "productId", value)
+                      }
+                      products={rawMaterials || []}
+                      label={t("bom.material")}
+                    />
                   </Grid>
-                </Box>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <TextField
+                      label={t("bom.quantity")}
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(
+                          index,
+                          "quantity",
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      fullWidth
+                      required
+                      inputProps={{ min: 0, step: 0.01 }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <TextField
+                      label={t("bom.unit")}
+                      value={item.unit}
+                      onChange={(e) =>
+                        handleItemChange(index, "unit", e.target.value)
+                      }
+                      fullWidth
+                      required
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <TextField
+                      label={t("bom.wastagePercent")}
+                      type="number"
+                      value={item.wastagePercent || 0}
+                      onChange={(e) =>
+                        handleItemChange(
+                          index,
+                          "wastagePercent",
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      fullWidth
+                      inputProps={{ min: 0, max: 100, step: 0.1 }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+                    <IconButton
+                      onClick={() => handleRemoveItem(index)}
+                      color="error"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Grid>
+                </Grid>
               ))}
             </Grid>
           </Grid>

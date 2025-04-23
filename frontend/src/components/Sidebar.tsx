@@ -5,9 +5,10 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-  Divider,
+  Toolbar,
 } from "@mui/material";
 import {
+  Home,
   Inventory,
   Build,
   ShoppingCart,
@@ -22,6 +23,7 @@ import { useTranslation } from "react-i18next";
 const drawerWidth = 240;
 
 const menuItems = [
+  { path: "/", icon: <Home />, labelKey: "home.title" },
   { path: "/inventory", icon: <Inventory />, labelKey: "inventory.title" },
   { path: "/production", icon: <Build />, labelKey: "production.title" },
   { path: "/sales", icon: <ShoppingCart />, labelKey: "sales.title" },
@@ -48,8 +50,9 @@ export function Sidebar() {
         },
       }}
     >
-      <List sx={{ mt: 8 }}>
-        {menuItems.map((item, index) => (
+      <Toolbar />
+      <List>
+        {menuItems.map((item) => (
           <ListItem key={item.path} disablePadding>
             <ListItemButton
               selected={location.pathname === item.path}

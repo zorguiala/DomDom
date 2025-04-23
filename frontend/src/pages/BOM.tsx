@@ -155,8 +155,12 @@ export default function BOMPage() {
           <Typography>{t("common.loading")}</Typography>
         ) : (
           <Grid container spacing={3}>
+            <Grid item xs={12} md={6} lg={4}>
+              {/* Placeholder for any additional content */}
+            </Grid>
+
             {boms?.map((bom: BOM) => (
-              <Grid size={{ xs: 12, md: 6, lg: 4 }} key={bom.id}>
+              <Grid item xs={12} md={6} lg={4} key={bom.id}>
                 <BOMCard
                   bom={bom}
                   onView={handleViewBOM}

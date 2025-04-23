@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsObject, IsOptional, IsArray } from 'class-validator';
+import { IsString, IsEnum, IsObject, IsOptional, IsArray, IsBoolean } from 'class-validator';
 
 export enum DocumentType {
   INVOICE = 'invoice',
@@ -7,6 +7,7 @@ export enum DocumentType {
   PRODUCTION_ORDER = 'production_order',
   REPORT = 'report',
   CUSTOM = 'custom',
+  CONTRACT = 'contract',
 }
 
 export enum DocumentFormat {
@@ -29,12 +30,12 @@ export class CreateTemplateDto {
   metadata?: Record<string, any>;
 
   @IsOptional()
-  @IsArray()
-  requiredFields?: string[];
-
-  @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsArray()
+  requiredFields?: string[];
 }
 
 export class UpdateTemplateDto {
@@ -55,10 +56,30 @@ export class UpdateTemplateDto {
   metadata?: Record<string, any>;
 
   @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
   @IsArray()
   requiredFields?: string[];
 
   @IsOptional()
-  @IsString()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class TemplateResponseDto {
+  id: string;
+  name: string;
+  type: DocumentType;
   description?: string;
+  requiredFields?: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class TemplateDetailsResponseDto extends TemplateResponseDto {
+  content: string;
+  metadata?: Record<string, any>;
 }

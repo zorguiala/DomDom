@@ -10,6 +10,11 @@ import { EmployeeAttendance } from '../entities/employee-attendance.entity';
 import { ProductionRecord } from '../entities/production-record.entity';
 import { Sale } from '../entities/sale.entity';
 import { SaleItem } from '../entities/sale-item.entity';
+import { Reminder } from '../entities/reminder.entity';
+import { Document } from '../entities/document.entity';
+import { DocumentTemplate } from '../entities/document-template.entity';
+import { ProductionOrder } from '../entities/production-order.entity';
+import { ProductionOrderItem } from '../entities/production-order-item.entity';
 
 config();
 
@@ -31,6 +36,11 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ProductionRecord,
     Sale,
     SaleItem,
+    Reminder,
+    Document,
+    DocumentTemplate,
+    ProductionOrder,
+    ProductionOrderItem,
   ],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',

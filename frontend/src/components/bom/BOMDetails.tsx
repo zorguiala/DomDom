@@ -17,6 +17,7 @@ import {
   Paper,
   Alert,
   CircularProgress,
+  Grid,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -66,18 +67,23 @@ export function BOMDetails({ open, onClose, bom }: BOMDetailsProps) {
 
       <DialogContent>
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            {bom.description}
-          </Typography>
-
-          <TextField
-            type="number"
-            label={t("bom.desiredQuantity")}
-            value={quantity}
-            onChange={(e) => setQuantity(Number(e.target.value))}
-            sx={{ mt: 2 }}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle1" gutterBottom>
+                {bom.description}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                type="number"
+                label={t("bom.desiredQuantity")}
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                fullWidth
+                inputProps={{ min: 0, step: 0.01 }}
+              />
+            </Grid>
+          </Grid>
         </Box>
 
         {isLoading ? (

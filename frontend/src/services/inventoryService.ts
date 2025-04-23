@@ -33,6 +33,16 @@ export const inventoryApi = {
     return response.data;
   },
 
+  findByBarcode: async (barcode: string) => {
+    const response = await api.get(`/products/barcode/${barcode}`);
+    return response.data;
+  },
+
+  updateBarcode: async (id: string, barcode: string) => {
+    const response = await api.put(`/products/${id}/barcode`, { barcode });
+    return response.data;
+  },
+
   getTransactions: async (
     productId?: string,
     startDate?: Date,
