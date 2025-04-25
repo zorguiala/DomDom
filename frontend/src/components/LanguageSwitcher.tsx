@@ -1,29 +1,32 @@
-import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
+import { Select } from "antd";
 import { useTranslation } from "react-i18next";
+import { GlobalOutlined } from "@ant-design/icons";
 
-const languages = {
-  en: "English",
-  fr: "Français",
-};
+const { Option } = Select;
+
+const languages = [
+  { code: "en", label: "English" },
+  { code: "fr", label: "Français" },
+];
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
-  const handleChange = (event: SelectChangeEvent) => {
-    i18n.changeLanguage(event.target.value);
+  const handleChange = (value: string) => {
+    i18n.changeLanguage(value);
   };
 
   return (
     <Select
-      value={i18n.language}
+      defaultValue={i18n.language}
+      style={{ width: 120 }}
       onChange={handleChange}
-      size="small"
-      sx={{ minWidth: 120 }}
+      suffixIcon={<GlobalOutlined />}
     >
-      {Object.entries(languages).map(([code, name]) => (
-        <MenuItem key={code} value={code}>
-          {name}
-        </MenuItem>
+      {languages.map((lang) => (
+        <Option key={lang.code} value={lang.code}>
+          {lang.label}
+        </Option>
       ))}
     </Select>
   );

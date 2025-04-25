@@ -21,35 +21,69 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Mock Material-UI components
-jest.mock("@mui/material", () => {
-  const actual = jest.requireActual("@mui/material");
+// Mock Ant Design components
+jest.mock("antd", () => {
   return {
-    ...actual,
-    TextField: function MockTextField(props: any) {
+    Input: function MockInput(props: any) {
       return React.createElement("input", {
-        "aria-label": props.label,
+        "aria-label": props.placeholder,
         ...props,
       });
     },
     Button: function MockButton(props: any) {
-      return React.createElement("button", props, props.children);
+      return React.createElement(
+        "button",
+        {
+          ...props,
+          className: `ant-btn ${props.type ? `ant-btn-${props.type}` : ""}`,
+        },
+        props.children
+      );
     },
-    Container: function MockContainer(props: any) {
-      return React.createElement("div", props, props.children);
+    Layout: {
+      Content: function MockContent(props: any) {
+        return React.createElement("main", props, props.children);
+      },
     },
-    Box: function MockBox(props: any) {
-      return React.createElement("div", props, props.children);
+    Typography: {
+      Title: function MockTitle(props: any) {
+        const Component = `h${props.level || 1}`;
+        return React.createElement(Component, props, props.children);
+      },
+      Text: function MockText(props: any) {
+        return React.createElement("span", props, props.children);
+      },
     },
-    Paper: function MockPaper(props: any) {
-      return React.createElement("div", props, props.children);
+    Card: function MockCard(props: any) {
+      return React.createElement(
+        "div",
+        {
+          ...props,
+          className: "ant-card",
+        },
+        props.children
+      );
     },
-    Typography: function MockTypography(props: any) {
-      return React.createElement("div", props, props.children);
+    Space: function MockSpace(props: any) {
+      return React.createElement(
+        "div",
+        {
+          ...props,
+          className: "ant-space",
+        },
+        props.children
+      );
     },
-    createTheme: jest.fn().mockReturnValue({}),
-    ThemeProvider: function MockThemeProvider(props: any) {
-      return React.createElement(React.Fragment, null, props.children);
+    Form: {
+      Item: function MockFormItem(props: any) {
+        return React.createElement(
+          "div",
+          {
+            className: "ant-form-item",
+          },
+          props.children
+        );
+      },
     },
   };
 });

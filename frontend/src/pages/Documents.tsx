@@ -1,19 +1,12 @@
-import { Box, Container, Typography } from "@mui/material";
+import { Space } from "antd";
 import { useTranslation } from "react-i18next";
-import { NavBar } from "../components/NavBar";
 
 export default function Documents() {
   const { t } = useTranslation();
 
   return (
-    <Box>
-      <NavBar />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          {t("documents.title")}
-        </Typography>
-        {/* TODO: Implement document generation features */}
-      </Container>
-    </Box>
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      {/* TODO: Add document management features */}
+    </Space>
   );
 }

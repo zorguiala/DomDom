@@ -1,74 +1,73 @@
-import { useQuery } from "@tanstack/react-query";
-import { Box, Paper, Typography, Grid, CircularProgress } from "@mui/material";
+import { Card, Typography, Row, Col, Spin, Statistic } from "antd";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { salesApi } from "../../services/salesService";
+import { ArrowUpOutlined, ArrowDownOutlined } from "@ant-design/icons";
 
-export const SalesOverview = () => {
+const { Title } = Typography;
+
+export function SalesOverview() {
   const { t } = useTranslation();
-
-  // Get sales data for the current month
-  const { data: salesData, isLoading } = useQuery({
-    queryKey: ["monthlySales"],
-    queryFn: async () => {
-      const startDate = new Date();
-      startDate.setDate(1); // First day of current month
-      const endDate = new Date();
-
-      const response = await fetch(
-        `/api/sales/reports/sales?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
-      );
-      return response.json();
-    },
+  const { data, isLoading } = useQuery({
+    queryKey: ["sales-overview"],
+    queryFn: salesApi.getOverview,
   });
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center">
-        <CircularProgress />
-      </Box>
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
-  const totalSales = salesData?.totalAmount || 0;
-  const totalOrders = salesData?.orders?.length || 0;
-  const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+  const percentChange = data?.percentChange || 0;
+  const isPositiveChange = percentChange >= 0;
 
   return (
-    <Paper
-      sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}
-    >
-      <Typography variant="h6" color="primary" gutterBottom>
-        {t("sales.overview")}
-      </Typography>
+    <Card>
+      <Title level={4}>{t("sales.overview")}</Title>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title={t("sales.todaySales")}
+            value={data?.todaySales || 0}
+            precision={2}
+            prefix="$"
+          />
+        </Col>
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("sales.monthlyRevenue")}
-          </Typography>
-          <Typography variant="h4">${totalSales.toFixed(2)}</Typography>
-        </Grid>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title={t("sales.monthToDate")}
+            value={data?.monthToDate || 0}
+            precision={2}
+            prefix="$"
+          />
+        </Col>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("sales.totalOrders")}
-          </Typography>
-          <Typography variant="h4">{totalOrders}</Typography>
-        </Grid>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title={t("sales.compareLastMonth")}
+            value={percentChange}
+            precision={1}
+            prefix={
+              isPositiveChange ? <ArrowUpOutlined /> : <ArrowDownOutlined />
+            }
+            suffix="%"
+            valueStyle={{ color: isPositiveChange ? "#3f8600" : "#cf1322" }}
+          />
+        </Col>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("sales.averageOrder")}
-          </Typography>
-          <Typography variant="h4">${averageOrderValue.toFixed(2)}</Typography>
-        </Grid>
-
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("sales.recentOrders")}
-          </Typography>
-          {/* We'll add a small list of recent orders here later */}
-        </Grid>
-      </Grid>
-    </Paper>
+        <Col xs={24} sm={12} lg={6}>
+          <Statistic
+            title={t("sales.averageOrderValue")}
+            value={data?.averageOrderValue || 0}
+            precision={2}
+            prefix="$"
+          />
+        </Col>
+      </Row>
+    </Card>
   );
-};
+}

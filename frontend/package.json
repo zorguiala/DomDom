@@ -13,11 +13,11 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^5.15.10",
-    "@mui/material": "^5.15.10",
+    "@ant-design/cssinjs": "^1.23.0",
+    "@ant-design/icons": "^6.0.0",
     "@tanstack/react-query": "^5.74.4",
+    "@types/recharts": "^1.8.29",
+    "antd": "^5.24.8",
     "axios": "^1.8.4",
     "i18next": "^25.0.1",
     "i18next-browser-languagedetector": "^8.0.5",
@@ -26,19 +26,24 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.4.1",
-    "react-router-dom": "^6.22.1"
+    "react-router-dom": "^6.22.1",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.12",
+    "@types/node": "^22.14.1",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
     "typescript": "^5.3.3",
     "vite": "^5.1.3"
   },

@@ -11,6 +11,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { InventoryReportingService } from './inventory-reporting.service';
 import { Product } from '../entities/product.entity';
+import { ApiTags } from '@nestjs/swagger';
 
 // Define interfaces for return types
 interface InventoryValueReport {
@@ -52,6 +53,7 @@ interface ProductionInventoryImpact {
   netImpact: number;
 }
 
+@ApiTags('inventory')
 @Controller('inventory/reports')
 @UseGuards(JwtAuthGuard)
 export class InventoryReportingController {
@@ -121,5 +123,15 @@ export class InventoryReportingController {
     }
 
     return this.inventoryReportingService.getProductionInventoryImpact(startDate, endDate);
+  }
+
+  @Get('stats')
+  async getStats() {
+    return this.inventoryReportingService.getInventoryStats();
+  }
+
+  @Get('status')
+  async getStatus() {
+    return this.inventoryReportingService.getInventoryStatus();
   }
 }

@@ -1,18 +1,16 @@
 import { useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
+  Modal,
+  Form,
+  Input,
   Switch,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  Box,
-} from "@mui/material";
-import { QrCodeScanner } from "@mui/icons-material";
+  Button,
+  Space,
+  InputNumber,
+  Row,
+  Col,
+} from "antd";
+import { QrcodeOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { Product } from "../../types/inventory";
 import { BarcodeScanner } from "./BarcodeScanner";
@@ -47,169 +45,142 @@ export function ProductForm({
   initialData,
 }: ProductFormProps) {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<Product>(
-    initialData || defaultProduct
-  );
+  const [form] = Form.useForm();
   const [isScanning, setIsScanning] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  const handleSubmit = (values: any) => {
+    onSubmit({
+      ...defaultProduct,
+      ...initialData,
+      ...values,
+    });
   };
 
   const handleBarcodeDetected = (barcode: string) => {
-    setFormData((prev) => ({ ...prev, barcode }));
+    form.setFieldValue("barcode", barcode);
     setIsScanning(false);
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          {initialData ? t("inventory.editProduct") : t("inventory.addProduct")}
-        </DialogTitle>
-
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+    <>
+      <Modal
+        open={open}
+        onCancel={onClose}
+        title={
+          initialData ? t("inventory.editProduct") : t("inventory.addProduct")
+        }
+        footer={null}
+        width={800}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={initialData || defaultProduct}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
                 name="name"
                 label={t("inventory.productName")}
-                value={formData.name}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+            <Col span={12}>
+              <Form.Item
                 name="sku"
                 label={t("inventory.sku")}
-                value={formData.sku}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-                <TextField
-                  name="barcode"
-                  label={t("inventory.barcode")}
-                  value={formData.barcode}
-                  onChange={handleChange}
-                  fullWidth
-                />
-                <IconButton
-                  color="primary"
+          <Form.Item name="barcode" label={t("inventory.barcode")}>
+            <Input
+              suffix={
+                <Button
+                  type="text"
+                  icon={<QrcodeOutlined />}
                   onClick={() => setIsScanning(true)}
-                  sx={{ mt: 1 }}
-                >
-                  <QrCodeScanner />
-                </IconButton>
-              </Box>
-            </Grid>
+                />
+              }
+            />
+          </Form.Item>
 
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="description"
-                label={t("inventory.description")}
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-              />
-            </Grid>
+          <Form.Item name="description" label={t("inventory.description")}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
                 name="price"
                 label={t("inventory.price")}
-                type="number"
-                value={formData.price}
-                onChange={handleChange}
-                fullWidth
-                required
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <InputNumber min={0} step={0.01} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+            <Col span={12}>
+              <Form.Item
                 name="unit"
                 label={t("inventory.unit")}
-                value={formData.unit}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
                 name="currentStock"
                 label={t("inventory.currentStock")}
-                type="number"
-                value={formData.currentStock}
-                onChange={handleChange}
-                fullWidth
-                required
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <InputNumber min={0} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+            <Col span={12}>
+              <Form.Item
                 name="minimumStock"
                 label={t("inventory.minimumStock")}
-                type="number"
-                value={formData.minimumStock}
-                onChange={handleChange}
-                fullWidth
-                required
-                inputProps={{ min: 0 }}
-              />
-            </Grid>
+                rules={[{ required: true, message: t("common.required") }]}
+              >
+                <InputNumber min={0} style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Grid size={{ xs: 12 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    name="isRawMaterial"
-                    checked={formData.isRawMaterial}
-                    onChange={handleChange}
-                  />
-                }
-                label={t("inventory.isRawMaterial")}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
+          <Form.Item name="isRawMaterial" valuePropName="checked">
+            <Switch
+              checkedChildren={t("inventory.isRawMaterial")}
+              unCheckedChildren={t("inventory.isProduct")}
+            />
+          </Form.Item>
 
-        <DialogActions>
-          <Button onClick={onClose}>{t("common.cancel")}</Button>
-          <Button type="submit" variant="contained">
-            {initialData ? t("common.save") : t("common.create")}
-          </Button>
-        </DialogActions>
-      </form>
+          <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+            <Button onClick={onClose}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit">
+              {initialData ? t("common.save") : t("common.create")}
+            </Button>
+          </Space>
+        </Form>
+      </Modal>
 
       <BarcodeScanner
         isScanning={isScanning}
         onDetected={handleBarcodeDetected}
         onClose={() => setIsScanning(false)}
       />
-    </Dialog>
+    </>
   );
 }

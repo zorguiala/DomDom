@@ -4,10 +4,9 @@ import { render, RenderOptions } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "../context/AuthContext";
-import { ThemeProvider } from "@mui/material";
-import { createTheme } from "@mui/material/styles";
+import { ConfigProvider } from "antd";
+import { StyleProvider } from "@ant-design/cssinjs";
 
-const theme = createTheme();
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,11 +18,20 @@ const queryClient = new QueryClient({
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <AuthProvider>
-          <BrowserRouter>{children}</BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
+      <StyleProvider hashPriority="high">
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: "#D4AF37",
+              borderRadius: 6,
+            },
+          }}
+        >
+          <AuthProvider>
+            <BrowserRouter>{children}</BrowserRouter>
+          </AuthProvider>
+        </ConfigProvider>
+      </StyleProvider>
     </QueryClientProvider>
   );
 };

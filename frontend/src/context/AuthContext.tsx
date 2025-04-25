@@ -50,11 +50,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      const { access_token, user } = await authApi.login({ email, password });
-      localStorage.setItem("token", access_token);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
+      const response = await authApi.login({ email, password });
+
+      if (response && response.access_token) {
+        localStorage.setItem("token", response.access_token);
+
+        // Extract user data from the response
+        const userData = {
+          id: response.user.id,
+          email: response.user.email,
+          firstName: response.user.firstName,
+          lastName: response.user.lastName,
+          isAdmin: response.user.isAdmin,
+        };
+
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (e) {
+      console.error("Login error:", e);
       setError(e as Error);
       throw e;
     }

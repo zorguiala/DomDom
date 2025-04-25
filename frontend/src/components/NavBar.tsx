@@ -1,17 +1,17 @@
+import { Layout, Button, Space, Typography, Avatar, Dropdown } from "antd";
 import {
-  AppBar,
-  Box,
-  Toolbar,
-  IconButton,
-  Typography,
-  Button,
-} from "@mui/material";
-import { Brightness4, Brightness7 } from "@mui/icons-material";
+  BulbOutlined,
+  BulbFilled,
+  UserOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+
+const { Header } = Layout;
 
 export function NavBar() {
   const { t } = useTranslation();
@@ -24,41 +24,79 @@ export function NavBar() {
     navigate("/login");
   };
 
+  const userMenuItems = {
+    items: [
+      {
+        key: "profile",
+        icon: <UserOutlined />,
+        label: t("auth.profile"),
+        onClick: () => navigate("/settings"),
+      },
+      {
+        key: "logout",
+        icon: <LogoutOutlined />,
+        label: t("auth.logout"),
+        onClick: handleLogout,
+      },
+    ],
+  };
+
   return (
-    <AppBar
-      position="fixed"
-      sx={{
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        backgroundColor: (theme) => theme.palette.primary.main,
+    <Header
+      style={{
+        position: "fixed",
+        width: "100%",
+        zIndex: 1000,
+        padding: "0 24px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        backgroundColor: isDarkMode ? "#141414" : "#001529",
+        borderBottom: `1px solid ${isDarkMode ? "#303030" : "#1f1f1f"}`,
+        height: { xs: 56, md: 64 },
+        transition: "all 0.2s",
       }}
     >
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <Typography.Title level={4} style={{ margin: 0, color: "#D4AF37" }}>
           DomDom
-        </Typography>
+        </Typography.Title>
+        <Typography.Text
+          style={{ color: "#8c8c8c", display: { xs: "none", sm: "inline" } }}
+        >
+          Enterprise Resource Planning
+        </Typography.Text>
+      </div>
 
-        {user && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <LanguageSwitcher />
+      {user && (
+        <Space size="middle" align="center">
+          <LanguageSwitcher />
 
-            <IconButton
-              color="inherit"
-              onClick={toggleTheme}
-              aria-label={t("settings.darkMode")}
-            >
-              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
+          <Button
+            type="text"
+            icon={isDarkMode ? <BulbFilled /> : <BulbOutlined />}
+            onClick={toggleTheme}
+            style={{ color: "#fff" }}
+          />
 
-            <Typography variant="body1" sx={{ mx: 2 }}>
-              {t("common.welcome")}, {user.firstName}
-            </Typography>
-
-            <Button color="inherit" onClick={handleLogout}>
-              {t("auth.logout")}
-            </Button>
-          </Box>
-        )}
-      </Toolbar>
-    </AppBar>
+          <Dropdown menu={userMenuItems} placement="bottomRight">
+            <Space style={{ cursor: "pointer" }}>
+              <Avatar
+                style={{ backgroundColor: "#D4AF37" }}
+                icon={<UserOutlined />}
+              />
+              <Typography.Text
+                style={{
+                  color: "#fff",
+                  display: { xs: "none", sm: "inline" },
+                }}
+              >
+                {user.firstName}
+              </Typography.Text>
+            </Space>
+          </Dropdown>
+        </Space>
+      )}
+    </Header>
   );
 }

@@ -1,23 +1,26 @@
 import { useState } from "react";
 import {
-  Box,
-  Container,
   Typography,
-  Grid,
+  Row,
+  Col,
   Button,
-  TextField,
-  Snackbar,
-  Alert,
-} from "@mui/material";
-import { Add } from "@mui/icons-material";
+  Input,
+  notification,
+  Spin,
+  Space,
+  Modal,
+} from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { NavBar } from "../components/NavBar";
 import { BOMCard } from "../components/bom/BOMCard";
 import { BOMForm } from "../components/bom/BOMForm";
 import { BOMDetails } from "../components/bom/BOMDetails";
 import { bomApi } from "../services/bomService";
 import { BOM, BOMInput } from "../types/bom";
+
+const { Title } = Typography;
+const { Search } = Input;
 
 export default function BOMPage() {
   const { t } = useTranslation();
@@ -26,10 +29,6 @@ export default function BOMPage() {
   const [selectedBOM, setSelectedBOM] = useState<BOM | undefined>();
   const [formOpen, setFormOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   // Queries
   const { data: boms, isLoading } = useQuery({
@@ -42,11 +41,11 @@ export default function BOMPage() {
     mutationFn: bomApi.createBOM,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boms"] });
-      setNotification({ message: t("bom.createSuccess"), type: "success" });
+      notification.success({ message: t("bom.createSuccess") });
       handleCloseForm();
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -55,11 +54,11 @@ export default function BOMPage() {
       bomApi.updateBOM(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boms"] });
-      setNotification({ message: t("bom.updateSuccess"), type: "success" });
+      notification.success({ message: t("bom.updateSuccess") });
       handleCloseForm();
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -67,10 +66,10 @@ export default function BOMPage() {
     mutationFn: bomApi.deleteBOM,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["boms"] });
-      setNotification({ message: t("bom.deleteSuccess"), type: "success" });
+      notification.success({ message: t("bom.deleteSuccess") });
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -91,9 +90,10 @@ export default function BOMPage() {
   };
 
   const handleDeleteBOM = (bom: BOM) => {
-    if (window.confirm(t("bom.deleteConfirmation"))) {
-      deleteBOM.mutate(bom.id);
-    }
+    Modal.confirm({
+      title: t("bom.deleteConfirmation"),
+      onOk: () => deleteBOM.mutate(bom.id),
+    });
   };
 
   const handleSubmitBOM = (bomData: BOMInput) => {
@@ -118,92 +118,69 @@ export default function BOMPage() {
   };
 
   return (
-    <Box>
-      <NavBar />
+    <Space direction="vertical" size="large" style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Title level={2}>{t("bom.title")}</Title>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            {t("bom.title")}
-          </Typography>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddBOM}>
+          {t("bom.addBom")}
+        </Button>
+      </div>
 
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAddBOM}
-          >
-            {t("bom.addBom")}
-          </Button>
-        </Box>
-
-        {/* Search */}
-        <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-              <TextField
-                fullWidth
-                label={t("common.search")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </Grid>
-          </Grid>
-        </Box>
-
-        {/* BOMs Grid */}
-        {isLoading ? (
-          <Typography>{t("common.loading")}</Typography>
-        ) : (
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6} lg={4}>
-              {/* Placeholder for any additional content */}
-            </Grid>
-
-            {boms?.map((bom: BOM) => (
-              <Grid item xs={12} md={6} lg={4} key={bom.id}>
-                <BOMCard
-                  bom={bom}
-                  onView={handleViewBOM}
-                  onEdit={handleEditBOM}
-                  onDelete={handleDeleteBOM}
-                />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-
-        {/* BOM Form Dialog */}
-        <BOMForm
-          open={formOpen}
-          onClose={handleCloseForm}
-          onSubmit={handleSubmitBOM}
-          initialData={selectedBOM}
-        />
-
-        {/* BOM Details Dialog */}
-        {selectedBOM && detailsOpen && (
-          <BOMDetails
-            open={detailsOpen}
-            onClose={handleCloseDetails}
-            bom={selectedBOM}
+      {/* Search */}
+      <Row>
+        <Col xs={24} md={12} lg={8}>
+          <Search
+            placeholder={t("common.search")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            allowClear
           />
-        )}
+        </Col>
+      </Row>
 
-        {/* Notifications */}
-        <Snackbar
-          open={!!notification}
-          autoHideDuration={6000}
-          onClose={() => setNotification(null)}
-        >
-          <Alert
-            onClose={() => setNotification(null)}
-            severity={notification?.type}
-            sx={{ width: "100%" }}
-          >
-            {notification?.message}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </Box>
+      {/* BOMs Grid */}
+      {isLoading ? (
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Row gutter={[16, 16]}>
+          {boms?.map((bom: BOM) => (
+            <Col xs={24} md={12} lg={8} key={bom.id}>
+              <BOMCard
+                bom={bom}
+                onView={handleViewBOM}
+                onEdit={handleEditBOM}
+                onDelete={handleDeleteBOM}
+              />
+            </Col>
+          ))}
+        </Row>
+      )}
+
+      {/* BOM Form Modal */}
+      <BOMForm
+        open={formOpen}
+        onClose={handleCloseForm}
+        onSubmit={handleSubmitBOM}
+        initialData={selectedBOM}
+      />
+
+      {/* BOM Details Modal */}
+      {selectedBOM && detailsOpen && (
+        <BOMDetails
+          open={detailsOpen}
+          onClose={handleCloseDetails}
+          bom={selectedBOM}
+        />
+      )}
+    </Space>
   );
 }

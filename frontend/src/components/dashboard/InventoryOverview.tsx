@@ -1,63 +1,54 @@
-import { useQuery } from "@tanstack/react-query";
-import { Box, Paper, Typography, Grid, CircularProgress } from "@mui/material";
+import { Card, Typography, Row, Col, Spin } from "antd";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { inventoryApi } from "../../services/inventoryService";
 
-export const InventoryOverview = () => {
+const { Title, Text } = Typography;
+
+export function InventoryOverview() {
   const { t } = useTranslation();
-
-  const { data: lowStockData, isLoading: isLoadingLowStock } = useQuery({
-    queryKey: ["lowStockAlerts"],
-    queryFn: () => inventoryApi.getLowStockProducts(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["inventory-overview"],
+    queryFn: inventoryApi.getOverview,
   });
 
-  const { data: valuationData, isLoading: isLoadingValuation } = useQuery({
-    queryKey: ["inventoryValuation"],
-    queryFn: () =>
-      inventoryApi.getInventoryReport(
-        new Date(new Date().setMonth(new Date().getMonth() - 1)), // Last month
-        new Date()
-      ),
-  });
-
-  if (isLoadingLowStock || isLoadingValuation) {
+  if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center">
-        <CircularProgress />
-      </Box>
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
   return (
-    <Paper
-      sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}
-    >
-      <Typography variant="h6" color="primary" gutterBottom>
-        {t("inventory.overview")}
-      </Typography>
+    <Row gutter={[16, 16]}>
+      <Col xs={24} sm={12} lg={6}>
+        <Card>
+          <Title level={4}>{t("inventory.totalProducts")}</Title>
+          <Text>{data?.totalProducts || 0}</Text>
+        </Card>
+      </Col>
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("inventory.lowStockItems")}
-          </Typography>
-          <Typography variant="h4">{lowStockData?.length || 0}</Typography>
-        </Grid>
+      <Col xs={24} sm={12} lg={6}>
+        <Card>
+          <Title level={4}>{t("inventory.lowStock")}</Title>
+          <Text>{data?.lowStockCount || 0}</Text>
+        </Card>
+      </Col>
 
-        <Grid size={{ xs: 12, sm: 6 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("inventory.totalProducts")}
-          </Typography>
-          <Typography variant="h4">{valuationData?.length || 0}</Typography>
-        </Grid>
+      <Col xs={24} sm={12} lg={6}>
+        <Card>
+          <Title level={4}>{t("inventory.outOfStock")}</Title>
+          <Text>{data?.outOfStockCount || 0}</Text>
+        </Card>
+      </Col>
 
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("inventory.recentTransactions")}
-          </Typography>
-          {/* We'll add a small list of recent transactions here later */}
-        </Grid>
-      </Grid>
-    </Paper>
+      <Col xs={24} sm={12} lg={6}>
+        <Card>
+          <Title level={4}>{t("inventory.totalValue")}</Title>
+          <Text>${data?.totalValue?.toFixed(2) || "0.00"}</Text>
+        </Card>
+      </Col>
+    </Row>
   );
-};
+}

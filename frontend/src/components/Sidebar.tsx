@@ -1,69 +1,120 @@
+import { Layout, Menu, Button } from "antd";
 import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
-  Toolbar,
-} from "@mui/material";
-import {
-  Home,
-  Inventory,
-  Build,
-  ShoppingCart,
-  People,
-  Description,
-  Settings,
-  Notifications,
-} from "@mui/icons-material";
+  HomeOutlined,
+  ShoppingOutlined,
+  ToolOutlined,
+  ShoppingCartOutlined,
+  TeamOutlined,
+  FileTextOutlined,
+  SettingOutlined,
+  BellOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+} from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 
-const drawerWidth = 240;
+const { Sider } = Layout;
 
-const menuItems = [
-  { path: "/", icon: <Home />, labelKey: "home.title" },
-  { path: "/inventory", icon: <Inventory />, labelKey: "inventory.title" },
-  { path: "/production", icon: <Build />, labelKey: "production.title" },
-  { path: "/sales", icon: <ShoppingCart />, labelKey: "sales.title" },
-  { path: "/employees", icon: <People />, labelKey: "employees.title" },
-  { path: "/documents", icon: <Description />, labelKey: "documents.title" },
-  { path: "/reminders", icon: <Notifications />, labelKey: "reminders.title" },
-  { path: "/settings", icon: <Settings />, labelKey: "settings.title" },
-];
+// Group menu items by category
+const menuItems = {
+  main: [
+    { path: "/", icon: <HomeOutlined />, labelKey: "home.title" },
+    {
+      path: "/inventory",
+      icon: <ShoppingOutlined />,
+      labelKey: "inventory.title",
+    },
+    {
+      path: "/production",
+      icon: <ToolOutlined />,
+      labelKey: "production.title",
+    },
+    { path: "/sales", icon: <ShoppingCartOutlined />, labelKey: "sales.title" },
+  ],
+  management: [
+    { path: "/employees", icon: <TeamOutlined />, labelKey: "employees.title" },
+    {
+      path: "/documents",
+      icon: <FileTextOutlined />,
+      labelKey: "documents.title",
+    },
+  ],
+  system: [
+    { path: "/reminders", icon: <BellOutlined />, labelKey: "reminders.title" },
+    {
+      path: "/settings",
+      icon: <SettingOutlined />,
+      labelKey: "settings.title",
+    },
+  ],
+};
 
 export function Sidebar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const { isDarkMode } = useTheme();
+
+  const getMenuItem = (item: (typeof menuItems.main)[0]) => ({
+    key: item.path,
+    icon: item.icon,
+    label: t(item.labelKey),
+    onClick: () => navigate(item.path),
+  });
 
   return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: drawerWidth,
-          boxSizing: "border-box",
-        },
+    <Sider
+      collapsible
+      collapsed={collapsed}
+      onCollapse={setCollapsed}
+      breakpoint="lg"
+      theme={isDarkMode ? "dark" : "light"}
+      style={{
+        overflow: "auto",
+        height: "100vh",
+        position: "fixed",
+        left: 0,
+        top: 64,
+        bottom: 0,
       }}
+      trigger={
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          style={{ width: "100%", height: 48 }}
+        />
+      }
     >
-      <Toolbar />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => navigate(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={t(item.labelKey)} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </Drawer>
+      <Menu
+        mode="inline"
+        selectedKeys={[location.pathname]}
+        style={{
+          height: "100%",
+          borderRight: 0,
+          backgroundColor: "inherit",
+        }}
+        items={[
+          {
+            type: "group",
+            label: t("sidebar.main"),
+            children: menuItems.main.map(getMenuItem),
+          },
+          {
+            type: "group",
+            label: t("sidebar.management"),
+            children: menuItems.management.map(getMenuItem),
+          },
+          {
+            type: "group",
+            label: t("sidebar.system"),
+            children: menuItems.system.map(getMenuItem),
+          },
+        ]}
+      />
+    </Sider>
   );
 }

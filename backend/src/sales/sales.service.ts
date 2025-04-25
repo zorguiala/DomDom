@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, Between } from 'typeorm';
 import { Sale, SaleType, SaleStatus } from '../entities/sale.entity';
 import { SaleItem } from '../entities/sale-item.entity';
 import { InventoryService } from '../inventory/inventory.service';
@@ -116,7 +116,7 @@ export class SalesService {
     try {
       // Find the employee (commercial agent)
       const agent = await this.employeeRepository.findOne({
-        where: { id: data.agentId }
+        where: { id: data.agentId },
       });
 
       if (!agent) {
@@ -128,7 +128,7 @@ export class SalesService {
         type: SaleType.COMMERCIAL,
         status: SaleStatus.DRAFT,
         createdBy: user,
-        commercialAgent: agent
+        commercialAgent: agent,
       });
 
       const savedSale = await queryRunner.manager.save(sale);
@@ -191,7 +191,7 @@ export class SalesService {
     try {
       // Find the employee (commercial agent)
       const agent = await this.employeeRepository.findOne({
-        where: { id: data.agentId }
+        where: { id: data.agentId },
       });
 
       if (!agent) {
@@ -352,5 +352,110 @@ export class SalesService {
     // TODO: Implement invoice generation logic
     // This will be implemented when we add document generation service
     return `Invoice-${sale.id}`;
+  }
+
+  async getDailySales(date: Date) {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const sales = await this.saleRepository.find({
+      where: {
+        createdAt: Between(startOfDay, endOfDay),
+      },
+      relations: ['items', 'items.product', 'createdBy'],
+    });
+
+    const totalSales = sales.reduce((sum, sale) => sum + this.calculateSaleTotal(sale), 0);
+    const totalItems = sales.reduce(
+      (sum, sale) => sum + sale.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
+      0
+    );
+
+    const productSales = {};
+    sales.forEach((sale) => {
+      sale.items.forEach((item) => {
+        const productId = item.product.id;
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            product: item.product,
+            quantity: 0,
+            total: 0,
+          };
+        }
+        productSales[productId].quantity += item.quantity;
+        productSales[productId].total += item.quantity * item.unitPrice;
+      });
+    });
+
+    return {
+      date: startOfDay,
+      totalSales,
+      totalItems,
+      transactionCount: sales.length,
+      hourlyBreakdown: await this.getHourlyBreakdown(sales),
+      productBreakdown: Object.values(productSales),
+      sales,
+    };
+  }
+
+  private calculateSaleTotal(sale: Sale): number {
+    return sale.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  }
+
+  private async getHourlyBreakdown(sales: Sale[]) {
+    const hourlyData = new Array(24).fill(0).map((_, hour) => ({
+      hour,
+      sales: 0,
+      transactions: 0,
+    }));
+
+    sales.forEach((sale) => {
+      const hour = new Date(sale.createdAt).getHours();
+      hourlyData[hour].sales += this.calculateSaleTotal(sale);
+      hourlyData[hour].transactions += 1;
+    });
+
+    return hourlyData;
+  }
+
+  async getSalesOverview(startDate: Date, endDate: Date) {
+    const sales = await this.saleRepository.find({
+      where: {
+        createdAt: Between(startDate, endDate),
+      },
+      relations: ['items', 'items.product'],
+    });
+
+    const totalRevenue = sales.reduce((sum, sale) => sum + sale.total, 0);
+    const dailySales = {};
+
+    sales.forEach((sale) => {
+      const dateKey = sale.createdAt.toISOString().split('T')[0];
+      if (!dailySales[dateKey]) {
+        dailySales[dateKey] = {
+          revenue: 0,
+          transactions: 0,
+        };
+      }
+      dailySales[dateKey].revenue += sale.total;
+      dailySales[dateKey].transactions += 1;
+    });
+
+    return {
+      startDate,
+      endDate,
+      totalRevenue,
+      totalTransactions: sales.length,
+      averageTransactionValue: sales.length > 0 ? totalRevenue / sales.length : 0,
+      dailyBreakdown: Object.entries(dailySales).map(([date, data]) => ({
+        date,
+        revenue: data.revenue,
+        transactions: data.transactions,
+        averageValue: data.transactions > 0 ? data.revenue / data.transactions : 0,
+      })),
+    };
   }
 }

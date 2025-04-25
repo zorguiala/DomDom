@@ -1,26 +1,23 @@
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Spin } from "antd";
 import { useTranslation } from "react-i18next";
 
 interface LoadingStateProps {
   message?: string;
 }
 
-export function LoadingState({ message }: LoadingStateProps) {
-  const { t } = useTranslation();
-
+export function LoadingState() {
   return (
-    <Box
-      sx={{
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
         justifyContent: "center",
-        padding: 4,
-        gap: 2,
+        alignItems: "center",
+        padding: "2rem",
       }}
     >
-      <CircularProgress />
-      <Typography>{message || t("common.loading")}</Typography>
-    </Box>
+      <Spin size="large" />
+    </div>
   );
 }

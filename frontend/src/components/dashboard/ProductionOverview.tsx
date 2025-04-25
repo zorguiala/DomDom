@@ -1,14 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Box,
-  Paper,
-  Typography,
-  Grid,
-  CircularProgress,
-  LinearProgress,
-} from "@mui/material";
+import { Card, Typography, Row, Col, Spin, Progress } from "antd";
 import { useTranslation } from "react-i18next";
 import { productionApi } from "../../services/productionService";
+
+const { Title, Text } = Typography;
 
 export const ProductionOverview = () => {
   const { t } = useTranslation();
@@ -29,9 +24,9 @@ export const ProductionOverview = () => {
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center">
-        <CircularProgress />
-      </Box>
+      <div style={{ textAlign: "center", padding: "40px" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
@@ -55,53 +50,55 @@ export const ProductionOverview = () => {
   const efficiency = productionStats?.efficiency || 75; // Fallback to 75% if not available
 
   return (
-    <Paper
-      sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}
-    >
-      <Typography variant="h6" color="primary" gutterBottom>
+    <Card>
+      <Title
+        level={4}
+        style={{ color: "var(--ant-primary-color)", marginBottom: 24 }}
+      >
         {t("production.overview")}
-      </Typography>
+      </Title>
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("production.inProgress")}
-          </Typography>
-          <Typography variant="h4">{inProgressOrders.length}</Typography>
-        </Grid>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
+          <div>
+            <Text type="secondary">{t("production.inProgress")}</Text>
+            <Title level={2} style={{ margin: "8px 0" }}>
+              {inProgressOrders.length}
+            </Title>
+          </div>
+        </Col>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("production.completed")}
-          </Typography>
-          <Typography variant="h4">{completedOrders.length}</Typography>
-        </Grid>
+        <Col xs={24} sm={8}>
+          <div>
+            <Text type="secondary">{t("production.completed")}</Text>
+            <Title level={2} style={{ margin: "8px 0" }}>
+              {completedOrders.length}
+            </Title>
+          </div>
+        </Col>
 
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Typography variant="subtitle2" color="textSecondary">
-            {t("production.planned")}
-          </Typography>
-          <Typography variant="h4">{plannedOrders.length}</Typography>
-        </Grid>
+        <Col xs={24} sm={8}>
+          <div>
+            <Text type="secondary">{t("production.planned")}</Text>
+            <Title level={2} style={{ margin: "8px 0" }}>
+              {plannedOrders.length}
+            </Title>
+          </div>
+        </Col>
 
-        <Grid size={{ xs: 12 }}>
-          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-            {t("production.currentEfficiency")}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={efficiency}
-            sx={{ height: 10, borderRadius: 5 }}
+        <Col span={24}>
+          <Text type="secondary">{t("production.currentEfficiency")}</Text>
+          <Progress
+            percent={efficiency}
+            strokeColor={{
+              "0%": "#108ee9",
+              "100%": "#87d068",
+            }}
+            strokeWidth={10}
+            style={{ marginTop: 8 }}
           />
-          <Typography
-            variant="caption"
-            color="textSecondary"
-            sx={{ mt: 1, display: "block" }}
-          >
-            {efficiency}%
-          </Typography>
-        </Grid>
-      </Grid>
-    </Paper>
+        </Col>
+      </Row>
+    </Card>
   );
 };

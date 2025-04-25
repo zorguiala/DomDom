@@ -83,4 +83,21 @@ export class SalesController {
       limit ? parseInt(limit, 10) : undefined
     );
   }
+
+  @Get('daily/:date')
+  async getDailySales(@Param('date') dateString: string) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format');
+    }
+    return this.salesService.getDailySales(date);
+  }
+
+  @Get('dashboard/overview')
+  async getSalesOverview(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
+    if (!startDate || !endDate) {
+      throw new BadRequestException('startDate and endDate are required');
+    }
+    return this.salesService.getSalesOverview(new Date(startDate), new Date(endDate));
+  }
 }

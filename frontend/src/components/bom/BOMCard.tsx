@@ -1,19 +1,11 @@
+import { Card, Typography, Button, Space, Tag, Tooltip } from "antd";
 import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  Chip,
-  Tooltip,
-} from "@mui/material";
-import {
-  Edit,
-  Delete,
-  Visibility,
-  Warning,
-  CheckCircle,
-} from "@mui/icons-material";
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { BOM } from "../../types/bom";
 
@@ -28,53 +20,55 @@ export function BOMCard({ bom, onView, onEdit, onDelete }: BOMCardProps) {
   const { t } = useTranslation();
 
   return (
-    <Card>
-      <CardContent>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography variant="h6" component="div">
-            {bom.name}
-          </Typography>
-          <Box>
-            <Tooltip title={t("common.view")}>
-              <IconButton size="small" onClick={() => onView(bom)}>
-                <Visibility />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t("common.edit")}>
-              <IconButton size="small" onClick={() => onEdit(bom)}>
-                <Edit />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t("common.delete")}>
-              <IconButton size="small" onClick={() => onDelete(bom)}>
-                <Delete />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        <Typography color="text.secondary" sx={{ mb: 1.5 }}>
-          {bom.description}
-        </Typography>
-
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography variant="body2">
-            {t("bom.output")}: {bom.outputQuantity} {bom.outputUnit}
-          </Typography>
-          <Typography variant="body2">
-            {t("bom.materials")}: {bom.items.length}
-          </Typography>
-        </Box>
-
-        <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
-          <Chip
-            icon={bom.isActive ? <CheckCircle /> : <Warning />}
-            label={bom.isActive ? t("common.active") : t("common.inactive")}
-            color={bom.isActive ? "success" : "default"}
-            size="small"
+    <Card
+      actions={[
+        <Tooltip title={t("common.view")}>
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => onView(bom)}
           />
-        </Box>
-      </CardContent>
+        </Tooltip>,
+        <Tooltip title={t("common.edit")}>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => onEdit(bom)}
+          />
+        </Tooltip>,
+        <Tooltip title={t("common.delete")}>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => onDelete(bom)}
+          />
+        </Tooltip>,
+      ]}
+    >
+      <Space direction="vertical" style={{ width: "100%" }}>
+        <Typography.Title level={5} style={{ margin: 0 }}>
+          {bom.name}
+        </Typography.Title>
+
+        <Typography.Text type="secondary">{bom.description}</Typography.Text>
+
+        <Space>
+          <Typography.Text>
+            {t("bom.output")}: {bom.outputQuantity} {bom.outputUnit}
+          </Typography.Text>
+          <Typography.Text>
+            {t("bom.materials")}: {bom.items.length}
+          </Typography.Text>
+        </Space>
+
+        <Tag
+          icon={bom.isActive ? <CheckCircleOutlined /> : <WarningOutlined />}
+          color={bom.isActive ? "success" : "default"}
+        >
+          {bom.isActive ? t("common.active") : t("common.inactive")}
+        </Tag>
+      </Space>
     </Card>
   );
 }

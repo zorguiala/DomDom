@@ -154,4 +154,14 @@ export class InventoryController {
   async getLowStockAlerts(@Query('threshold', ParseIntPipe) threshold?: number) {
     return this.inventoryService.getLowStockAlerts(threshold);
   }
+
+  @Get('stats')
+  async getInventoryStats() {
+    return this.inventoryService.getInventoryStats();
+  }
+
+  @Get('status')
+  async getInventoryStatus() {
+    return this.inventoryService.getInventoryStatus();
+  }
 }

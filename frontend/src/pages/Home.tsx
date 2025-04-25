@@ -1,92 +1,31 @@
-import { Box, Container, Grid, Paper, Typography } from "@mui/material";
+import { Typography, Row, Col } from "antd";
 import { useTranslation } from "react-i18next";
-import { NavBar } from "../components/NavBar";
+import { InventoryOverview } from "../components/dashboard/InventoryOverview";
+import { SalesOverview } from "../components/dashboard/SalesOverview";
+import { ProductionOverview } from "../components/dashboard/ProductionOverview";
+
+const { Title } = Typography;
 
 export default function Home() {
   const { t } = useTranslation();
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <NavBar />
+    <>
+      <Title level={2}>{t("dashboard.title")}</Title>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-        <Grid container spacing={3}>
-          {/* Inventory Overview */}
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              <Typography
-                component="h2"
-                variant="h6"
-                color="primary"
-                gutterBottom
-              >
-                {t("inventory.title")}
-              </Typography>
-              {/* TODO: Add inventory stats */}
-            </Paper>
-          </Grid>
+      <Row gutter={[16, 16]}>
+        <Col xs={24}>
+          <SalesOverview />
+        </Col>
 
-          {/* Production Overview */}
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              <Typography
-                component="h2"
-                variant="h6"
-                color="primary"
-                gutterBottom
-              >
-                {t("production.title")}
-              </Typography>
-              {/* TODO: Add production stats */}
-            </Paper>
-          </Grid>
+        <Col xs={24} md={12}>
+          <InventoryOverview />
+        </Col>
 
-          {/* Sales Overview */}
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              <Typography
-                component="h2"
-                variant="h6"
-                color="primary"
-                gutterBottom
-              >
-                {t("sales.title")}
-              </Typography>
-              {/* TODO: Add sales stats */}
-            </Paper>
-          </Grid>
-
-          {/* Employee Overview */}
-          <Grid size={{ xs: 12, md: 6, lg: 3 }}>
-            <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              <Typography
-                component="h2"
-                variant="h6"
-                color="primary"
-                gutterBottom
-              >
-                {t("employees.title")}
-              </Typography>
-              {/* TODO: Add employee stats */}
-            </Paper>
-          </Grid>
-
-          {/* Recent Activity */}
-          <Grid size={{ xs: 12 }}>
-            <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
-              <Typography
-                component="h2"
-                variant="h6"
-                color="primary"
-                gutterBottom
-              >
-                Recent Activity
-              </Typography>
-              {/* TODO: Add activity feed */}
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+        <Col xs={24} md={12}>
+          <ProductionOverview />
+        </Col>
+      </Row>
+    </>
   );
 }

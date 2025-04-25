@@ -21,7 +21,9 @@ import {
   RecordProductionOutputDto,
 } from './dto/production-order.dto';
 import { ProductionOrderStatus } from '../entities/production-order.entity';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('production')
 @Controller('production')
 @UseGuards(JwtAuthGuard)
 export class ProductionController {
@@ -138,5 +140,15 @@ export class ProductionController {
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return this.productionService.getEmployeeProductionReport(id, startDate, endDate);
+  }
+
+  @Get('efficiency')
+  async getEfficiency() {
+    return this.productionService.getEfficiencyMetrics();
+  }
+
+  @Get('output')
+  async getOutput() {
+    return this.productionService.getProductionOutput();
   }
 }

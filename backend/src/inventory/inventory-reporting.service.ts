@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, Between, LessThan } from 'typeorm';
+import { Repository, DataSource, Between, LessThan, LessThanOrEqual, MoreThan, Raw } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { InventoryTransaction, TransactionType } from '../entities/inventory-transaction.entity';
 
@@ -305,6 +305,78 @@ export class InventoryReportingService {
       },
       netImpact: totalIn - totalOut,
     };
+  }
+
+  async getInventoryStats() {
+    const queryBuilder = this.productRepository.createQueryBuilder('product');
+
+    const stats = await queryBuilder
+      .select([
+        'COUNT(product.id) as totalProducts',
+        'SUM(product.currentStock) as totalStock',
+        'SUM(product.currentStock * product.unitPrice) as totalValue',
+        'COUNT(CASE WHEN product.isRawMaterial = true THEN 1 END) as rawMaterialCount',
+        'COUNT(CASE WHEN product.isRawMaterial = false THEN 1 END) as finishedProductCount',
+      ])
+      .getRawOne();
+
+    return {
+      ...stats,
+      lastUpdated: new Date(),
+      lowStockCount: await this.getLowStockCount(),
+      outOfStockCount: await this.getOutOfStockCount(),
+    };
+  }
+
+  async getInventoryStatus() {
+    const products = await this.productRepository.find({
+      select: ['id', 'name', 'currentStock', 'minStock', 'maxStock', 'isRawMaterial'],
+      order: {
+        currentStock: 'ASC',
+      },
+    });
+
+    return {
+      status: products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        currentStock: product.currentStock,
+        stockStatus: this.calculateStockStatus(product),
+        isRawMaterial: product.isRawMaterial,
+      })),
+      summary: {
+        optimal: products.filter(
+          (p) => p.currentStock >= p.minStock && p.currentStock <= p.maxStock
+        ).length,
+        low: products.filter((p) => p.currentStock < p.minStock && p.currentStock > 0).length,
+        outOfStock: products.filter((p) => p.currentStock <= 0).length,
+        excess: products.filter((p) => p.currentStock > p.maxStock).length,
+      },
+    };
+  }
+
+  private async getLowStockCount(): Promise<number> {
+    return this.productRepository.count({
+      where: {
+        currentStock: LessThan(Raw((alias) => `${alias}.minStock`)),
+        currentStock: MoreThan(0),
+      },
+    });
+  }
+
+  private async getOutOfStockCount(): Promise<number> {
+    return this.productRepository.count({
+      where: {
+        currentStock: LessThanOrEqual(0),
+      },
+    });
+  }
+
+  private calculateStockStatus(product: Product): 'OUT_OF_STOCK' | 'LOW' | 'OPTIMAL' | 'EXCESS' {
+    if (product.currentStock <= 0) return 'OUT_OF_STOCK';
+    if (product.currentStock < product.minStock) return 'LOW';
+    if (product.currentStock > product.maxStock) return 'EXCESS';
+    return 'OPTIMAL';
   }
 
   private calculateDailyMovement(

@@ -1,56 +1,37 @@
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Stack,
-  FormControlLabel,
-  Switch,
-} from "@mui/material";
+import { Card, Space, Switch, Typography } from "antd";
 import { useTranslation } from "react-i18next";
-import { NavBar } from "../components/NavBar";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { useTheme } from "../context/ThemeContext";
+import DashboardLayout from "../components/layout/DashboardLayout";
+
+const { Title } = Typography;
 
 export default function Settings() {
   const { t } = useTranslation();
   const { isDarkMode, toggleTheme } = useTheme();
 
   return (
-    <Box>
-      <NavBar />
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          {t("settings.title")}
-        </Typography>
+    <DashboardLayout>
+      <div style={{ maxWidth: 1200, margin: "32px auto", padding: "0 16px" }}>
+        <Title level={2}>{t("settings.title")}</Title>
 
-        <Paper sx={{ p: 3, mt: 2 }}>
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {t("settings.language")}
-              </Typography>
+        <Card style={{ marginTop: 16 }}>
+          <Space direction="vertical" size="large">
+            <div>
+              <Title level={4}>{t("settings.language")}</Title>
               <LanguageSwitcher />
-            </Box>
+            </div>
 
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {t("settings.theme")}
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isDarkMode}
-                    onChange={toggleTheme}
-                    name="darkMode"
-                  />
-                }
-                label={t("settings.darkMode")}
-              />
-            </Box>
-          </Stack>
-        </Paper>
-      </Container>
-    </Box>
+            <div>
+              <Title level={4}>{t("settings.theme")}</Title>
+              <Space>
+                <Switch checked={isDarkMode} onChange={toggleTheme} />
+                <span>{t("settings.darkMode")}</span>
+              </Space>
+            </div>
+          </Space>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 }

@@ -1,24 +1,25 @@
 import { useState } from "react";
 import {
-  Box,
-  Container,
   Typography,
-  Grid,
-  TextField,
-  Button,
-  FormControlLabel,
+  Row,
+  Col,
+  Input,
   Switch,
-  Alert,
-  Snackbar,
-} from "@mui/material";
-import { Add } from "@mui/icons-material";
+  Button,
+  notification,
+  Spin,
+  Space,
+  Modal,
+} from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { NavBar } from "../components/NavBar";
 import { ProductCard } from "../components/inventory/ProductCard";
 import { ProductForm } from "../components/inventory/ProductForm";
 import { inventoryApi } from "../services/inventoryService";
 import type { Product } from "../types/inventory";
+
+const { Search } = Input;
 
 export default function Inventory() {
   const { t } = useTranslation();
@@ -29,10 +30,6 @@ export default function Inventory() {
   );
   const [formOpen, setFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
 
   // Queries
   const { data: products, isLoading } = useQuery({
@@ -50,14 +47,11 @@ export default function Inventory() {
     mutationFn: inventoryApi.createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      setNotification({
-        message: t("inventory.productCreated"),
-        type: "success",
-      });
+      notification.success({ message: t("inventory.productCreated") });
       handleCloseForm();
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -66,14 +60,11 @@ export default function Inventory() {
       inventoryApi.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      setNotification({
-        message: t("inventory.productUpdated"),
-        type: "success",
-      });
+      notification.success({ message: t("inventory.productUpdated") });
       handleCloseForm();
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -81,13 +72,10 @@ export default function Inventory() {
     mutationFn: inventoryApi.deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      setNotification({
-        message: t("inventory.productDeleted"),
-        type: "success",
-      });
+      notification.success({ message: t("inventory.productDeleted") });
     },
     onError: () => {
-      setNotification({ message: t("common.error"), type: "error" });
+      notification.error({ message: t("common.error") });
     },
   });
 
@@ -103,9 +91,10 @@ export default function Inventory() {
   };
 
   const handleDeleteProduct = (product: Product) => {
-    if (window.confirm(t("inventory.deleteConfirmation"))) {
-      deleteProduct.mutate(product.id);
-    }
+    Modal.confirm({
+      title: t("inventory.deleteConfirmation"),
+      onOk: () => deleteProduct.mutate(product.id),
+    });
   };
 
   const handleSubmitProduct = (productData: Omit<Product, "id">) => {
@@ -125,101 +114,67 @@ export default function Inventory() {
   };
 
   return (
-    <Box>
-      <NavBar />
-
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            {t("inventory.title")}
-          </Typography>
-
+    <>
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Button
-            variant="contained"
-            startIcon={<Add />}
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={handleAddProduct}
           >
             {t("inventory.addProduct")}
           </Button>
-        </Box>
+        </div>
 
         {/* Filters */}
-        <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6} lg={4}>
-              <TextField
-                fullWidth
-                label={t("common.search")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={6} lg={4}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showRawMaterials === true}
-                    onChange={(e) =>
-                      setShowRawMaterials(e.target.checked ? true : undefined)
-                    }
-                  />
-                }
-                label={t("inventory.showRawMaterials")}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={12} lg={8}>
+            <Search
+              placeholder={t("common.search")}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={24} md={12} lg={8}>
+            <Switch
+              checked={showRawMaterials === true}
+              onChange={(checked) =>
+                setShowRawMaterials(checked ? true : undefined)
+              }
+              checkedChildren={t("inventory.showRawMaterials")}
+              unCheckedChildren={t("inventory.showProducts")}
+            />
+          </Col>
+        </Row>
 
         {/* Products Grid */}
         {isLoading ? (
-          <Typography>{t("common.loading")}</Typography>
+          <div style={{ textAlign: "center", padding: "40px" }}>
+            <Spin size="large" />
+          </div>
         ) : (
-          <Grid container spacing={3}>
-            {/* Stats Section */}
-            <Grid item xs={12} md={6} lg={4}>
-              {/* Add your stats components here */}
-            </Grid>
-
-            <Grid item xs={12} md={6} lg={4}>
-              {/* Add your stats components here */}
-            </Grid>
-
-            {/* Products Section */}
+          <Row gutter={[16, 16]}>
             {products?.map((product: Product) => (
-              <Grid item xs={12} md={6} lg={4} key={product.id}>
+              <Col xs={24} md={12} lg={8} key={product.id}>
                 <ProductCard
                   product={product}
                   onEdit={handleEditProduct}
                   onDelete={handleDeleteProduct}
                 />
-              </Grid>
+              </Col>
             ))}
-          </Grid>
+          </Row>
         )}
+      </Space>
 
-        {/* Product Form Dialog */}
-        <ProductForm
-          open={formOpen}
-          onClose={handleCloseForm}
-          onSubmit={handleSubmitProduct}
-          initialData={selectedProduct}
-        />
-
-        {/* Notifications */}
-        <Snackbar
-          open={!!notification}
-          autoHideDuration={6000}
-          onClose={() => setNotification(null)}
-        >
-          <Alert
-            onClose={() => setNotification(null)}
-            severity={notification?.type}
-            sx={{ width: "100%" }}
-          >
-            {notification?.message}
-          </Alert>
-        </Snackbar>
-      </Container>
-    </Box>
+      {/* Product Form Modal */}
+      <ProductForm
+        open={formOpen}
+        onClose={handleCloseForm}
+        onSubmit={handleSubmitProduct}
+        initialData={selectedProduct}
+      />
+    </>
   );
 }

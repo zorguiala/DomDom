@@ -1,24 +1,14 @@
 import { useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
+  Modal,
   Typography,
-  Box,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
+  InputNumber,
   Alert,
-  CircularProgress,
-  Grid,
-} from "@mui/material";
+  Table,
+  Space,
+  Spin,
+  Button,
+} from "antd";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -28,6 +18,8 @@ import {
   ProductionCost,
 } from "../../types/bom";
 import { bomApi } from "../../services/bomService";
+
+const { Title, Text } = Typography;
 
 interface BOMDetailsProps {
   open: boolean;
@@ -59,184 +51,162 @@ export function BOMDetails({ open, onClose, bom }: BOMDetailsProps) {
 
   const isLoading = loadingRequirements || loadingAvailability || loadingCost;
 
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {t("bom.details")}: {bom.name}
-      </DialogTitle>
+  const materialReqColumns = [
+    { title: t("bom.material"), dataIndex: ["product", "name"] },
+    {
+      title: t("bom.requiredQuantity"),
+      dataIndex: "requiredQuantity",
+      align: "right" as const,
+    },
+    { title: t("bom.unit"), dataIndex: "unit" },
+  ];
 
-      <DialogContent>
-        <Box sx={{ mb: 3 }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                {bom.description}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                type="number"
-                label={t("bom.desiredQuantity")}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                fullWidth
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
-          </Grid>
-        </Box>
+  const shortageColumns = [
+    { title: t("bom.material"), dataIndex: ["product", "name"] },
+    {
+      title: t("bom.required"),
+      dataIndex: "required",
+      align: "right" as const,
+    },
+    {
+      title: t("bom.available"),
+      dataIndex: "available",
+      align: "right" as const,
+    },
+    {
+      title: t("bom.shortage"),
+      dataIndex: "shortage",
+      align: "right" as const,
+    },
+    { title: t("bom.unit"), dataIndex: "unit" },
+  ];
+
+  const costColumns = [
+    { title: t("bom.material"), dataIndex: ["product", "name"] },
+    {
+      title: t("bom.quantity"),
+      dataIndex: "quantity",
+      align: "right" as const,
+    },
+    { title: t("bom.unit"), dataIndex: "unit" },
+    {
+      title: t("bom.unitCost"),
+      dataIndex: "unitCost",
+      align: "right" as const,
+      render: (value: number) => `$${value.toFixed(2)}`,
+    },
+    {
+      title: t("bom.totalCost"),
+      dataIndex: "totalCost",
+      align: "right" as const,
+      render: (value: number) => `$${value.toFixed(2)}`,
+    },
+  ];
+
+  return (
+    <Modal
+      open={open}
+      onCancel={onClose}
+      title={`${t("bom.details")}: ${bom.name}`}
+      width={800}
+      footer={[
+        <Button key="close" onClick={onClose}>
+          {t("common.close")}
+        </Button>,
+      ]}
+    >
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        <Text>{bom.description}</Text>
+
+        <div>
+          <Text>{t("bom.desiredQuantity")}</Text>
+          <InputNumber
+            value={quantity}
+            onChange={(value) => setQuantity(Number(value))}
+            min={0}
+            step={0.01}
+            style={{ marginLeft: 16 }}
+          />
+        </div>
 
         {isLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-            <CircularProgress />
-          </Box>
+          <div style={{ textAlign: "center", padding: "40px" }}>
+            <Spin size="large" />
+          </div>
         ) : (
           <>
             {/* Material Requirements */}
-            <Typography variant="h6" gutterBottom>
-              {t("bom.materialRequirements")}
-            </Typography>
-            <TableContainer component={Paper} sx={{ mb: 3 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{t("bom.material")}</TableCell>
-                    <TableCell align="right">
-                      {t("bom.requiredQuantity")}
-                    </TableCell>
-                    <TableCell>{t("bom.unit")}</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {requirements?.map((req: MaterialRequirement) => (
-                    <TableRow key={req.product.id}>
-                      <TableCell>{req.product.name}</TableCell>
-                      <TableCell align="right">
-                        {req.requiredQuantity}
-                      </TableCell>
-                      <TableCell>{req.unit}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <div>
+              <Title level={5}>{t("bom.materialRequirements")}</Title>
+              <Table
+                columns={materialReqColumns}
+                dataSource={requirements}
+                pagination={false}
+                rowKey={(record) => record.product.id}
+              />
+            </div>
 
             {/* Availability Check */}
-            <Typography variant="h6" gutterBottom>
-              {t("bom.availability")}
-            </Typography>
-            {availability && (
-              <>
-                <Alert
-                  severity={availability.isAvailable ? "success" : "warning"}
-                  sx={{ mb: 2 }}
-                >
-                  {availability.isAvailable
-                    ? t("bom.materialsAvailable")
-                    : t("bom.materialsShortage")}
-                </Alert>
-                {!availability.isAvailable && (
-                  <TableContainer component={Paper} sx={{ mb: 3 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>{t("bom.material")}</TableCell>
-                          <TableCell align="right">
-                            {t("bom.required")}
-                          </TableCell>
-                          <TableCell align="right">
-                            {t("bom.available")}
-                          </TableCell>
-                          <TableCell align="right">
-                            {t("bom.shortage")}
-                          </TableCell>
-                          <TableCell>{t("bom.unit")}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {availability.shortages.map((shortage) => (
-                          <TableRow key={shortage.product.id}>
-                            <TableCell>{shortage.product.name}</TableCell>
-                            <TableCell align="right">
-                              {shortage.required}
-                            </TableCell>
-                            <TableCell align="right">
-                              {shortage.available}
-                            </TableCell>
-                            <TableCell align="right">
-                              {shortage.shortage}
-                            </TableCell>
-                            <TableCell>{shortage.unit}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </>
-            )}
+            <div>
+              <Title level={5}>{t("bom.availability")}</Title>
+              {availability && (
+                <>
+                  <Alert
+                    type={availability.isAvailable ? "success" : "warning"}
+                    message={
+                      availability.isAvailable
+                        ? t("bom.materialsAvailable")
+                        : t("bom.materialsShortage")
+                    }
+                    style={{ marginBottom: 16 }}
+                  />
+                  {!availability.isAvailable && (
+                    <Table
+                      columns={shortageColumns}
+                      dataSource={availability.shortages}
+                      pagination={false}
+                      rowKey={(record) => record.product.id}
+                    />
+                  )}
+                </>
+              )}
+            </div>
 
             {/* Cost Breakdown */}
             {cost && (
-              <>
-                <Typography variant="h6" gutterBottom>
-                  {t("bom.costBreakdown")}
-                </Typography>
-                <TableContainer component={Paper} sx={{ mb: 3 }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>{t("bom.material")}</TableCell>
-                        <TableCell align="right">{t("bom.quantity")}</TableCell>
-                        <TableCell>{t("bom.unit")}</TableCell>
-                        <TableCell align="right">{t("bom.unitCost")}</TableCell>
-                        <TableCell align="right">
-                          {t("bom.totalCost")}
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {cost.costBreakdown.map((item) => (
-                        <TableRow key={item.product.id}>
-                          <TableCell>{item.product.name}</TableCell>
-                          <TableCell align="right">{item.quantity}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
-                          <TableCell align="right">
-                            ${item.unitCost.toFixed(2)}
-                          </TableCell>
-                          <TableCell align="right">
-                            ${item.totalCost.toFixed(2)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow>
-                        <TableCell colSpan={4} align="right">
+              <div>
+                <Title level={5}>{t("bom.costBreakdown")}</Title>
+                <Table
+                  columns={costColumns}
+                  dataSource={cost.costBreakdown}
+                  pagination={false}
+                  rowKey={(record) => record.product.id}
+                  summary={() => (
+                    <Table.Summary>
+                      <Table.Summary.Row>
+                        <Table.Summary.Cell index={0} colSpan={4} align="right">
                           <strong>{t("bom.totalMaterialCost")}:</strong>
-                        </TableCell>
-                        <TableCell align="right">
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={1} align="right">
                           <strong>${cost.materialCost.toFixed(2)}</strong>
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell colSpan={4} align="right">
+                        </Table.Summary.Cell>
+                      </Table.Summary.Row>
+                      <Table.Summary.Row>
+                        <Table.Summary.Cell index={0} colSpan={4} align="right">
                           <strong>{t("bom.totalProductionCost")}:</strong>
-                        </TableCell>
-                        <TableCell align="right">
+                        </Table.Summary.Cell>
+                        <Table.Summary.Cell index={1} align="right">
                           <strong>${cost.totalCost.toFixed(2)}</strong>
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </>
+                        </Table.Summary.Cell>
+                      </Table.Summary.Row>
+                    </Table.Summary>
+                  )}
+                />
+              </div>
             )}
           </>
         )}
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose}>{t("common.close")}</Button>
-      </DialogActions>
-    </Dialog>
+      </Space>
+    </Modal>
   );
 }

@@ -160,7 +160,10 @@ export class InventoryService {
       .getRawMany();
   }
 
-  async processBarcodeScan(barcodeScanDto: BarcodeScanDto, user: User): Promise<InventoryTransaction> {
+  async processBarcodeScan(
+    barcodeScanDto: BarcodeScanDto,
+    user: User
+  ): Promise<InventoryTransaction> {
     const product = await this.productRepository.findOne({
       where: { barcode: barcodeScanDto.barcode },
     });
@@ -180,7 +183,10 @@ export class InventoryService {
     );
   }
 
-  async processBatchTransactions(batchDto: BatchInventoryDto, user: User): Promise<InventoryTransaction[]> {
+  async processBatchTransactions(
+    batchDto: BatchInventoryDto,
+    user: User
+  ): Promise<InventoryTransaction[]> {
     const transactions: InventoryTransaction[] = [];
 
     for (const item of batchDto.items) {
@@ -215,10 +221,7 @@ export class InventoryService {
         '(SELECT AVG(unitPrice) FROM inventory_transactions WHERE product_id = product.id AND type = :purchaseType)',
         'averageCost'
       )
-      .addSelect(
-        'product.currentStock * COALESCE(product.lastPurchasePrice, 0)',
-        'totalValue'
-      )
+      .addSelect('product.currentStock * COALESCE(product.lastPurchasePrice, 0)', 'totalValue')
       .setParameter('purchaseType', TransactionType.PURCHASE)
       .where('product.isActive = :isActive', { isActive: true })
       .getRawMany();
@@ -263,7 +266,7 @@ export class InventoryService {
     );
 
     const totalValue = lowStockProducts.reduce(
-      (sum, product) => sum + (product.currentStock * (product.lastPurchasePrice || 0)),
+      (sum, product) => sum + product.currentStock * (product.lastPurchasePrice || 0),
       0
     );
 
@@ -272,5 +275,54 @@ export class InventoryService {
       totalValue,
       criticalItems,
     };
+  }
+
+  async getInventoryStats() {
+    const stats = await this.inventoryTransactionRepository
+      .createQueryBuilder('transaction')
+      .select([
+        'COUNT(DISTINCT transaction.productId) as totalProducts',
+        'SUM(CASE WHEN transaction.type = :inType THEN transaction.quantity ELSE 0 END) as totalIn',
+        'SUM(CASE WHEN transaction.type = :outType THEN transaction.quantity ELSE 0 END) as totalOut',
+      ])
+      .setParameters({
+        inType: TransactionType.IN,
+        outType: TransactionType.OUT,
+      })
+      .getRawOne();
+
+    return {
+      totalProducts: Number(stats.totalProducts) || 0,
+      totalInflow: Number(stats.totalIn) || 0,
+      totalOutflow: Number(stats.totalOut) || 0,
+      lastUpdated: new Date(),
+    };
+  }
+
+  async getInventoryStatus() {
+    const products = await this.productRepository
+      .createQueryBuilder('product')
+      .leftJoin('inventory_transaction', 'transaction', 'transaction.productId = product.id')
+      .select([
+        'product.id',
+        'product.name',
+        'SUM(CASE WHEN transaction.type = :inType THEN transaction.quantity ELSE -transaction.quantity END) as currentStock',
+      ])
+      .setParameter('inType', TransactionType.IN)
+      .groupBy('product.id')
+      .getRawMany();
+
+    return products.map((p) => ({
+      productId: p.id,
+      productName: p.name,
+      currentStock: Number(p.currentStock) || 0,
+      status: this.getStockStatus(Number(p.currentStock) || 0),
+    }));
+  }
+
+  private getStockStatus(quantity: number): 'LOW' | 'NORMAL' | 'HIGH' {
+    if (quantity <= 10) return 'LOW';
+    if (quantity <= 50) return 'NORMAL';
+    return 'HIGH';
   }
 }

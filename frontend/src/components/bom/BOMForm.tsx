@@ -1,17 +1,16 @@
 import { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Modal,
+  Form,
+  Input,
   Button,
-  Grid,
-  IconButton,
+  Row,
+  Col,
   Typography,
-  Box,
-} from "@mui/material";
-import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
+  Space,
+  InputNumber,
+} from "antd";
+import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { BOM, BOMInput, BOMItemInput } from "../../types/bom";
@@ -26,6 +25,8 @@ interface BOMFormProps {
   initialData?: BOM;
 }
 
+const { Title } = Typography;
+
 export function BOMForm({
   open,
   onClose,
@@ -33,13 +34,7 @@ export function BOMForm({
   initialData,
 }: BOMFormProps) {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<BOMInput>({
-    name: "",
-    description: "",
-    outputQuantity: 0,
-    outputUnit: "",
-    items: [],
-  });
+  const [form] = Form.useForm();
 
   // Query for raw materials
   const { data: rawMaterials } = useQuery({
@@ -48,236 +43,198 @@ export function BOMForm({
   });
 
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name,
-        description: initialData.description || "",
-        outputQuantity: initialData.outputQuantity,
-        outputUnit: initialData.outputUnit,
-        items: initialData.items.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          unit: item.unit,
-          wastagePercent: item.wastagePercent,
-        })),
-      });
-    } else {
-      setFormData({
-        name: "",
-        description: "",
-        outputQuantity: 0,
-        outputUnit: "",
-        items: [],
-      });
+    if (open) {
+      form.setFieldsValue(
+        initialData
+          ? {
+              name: initialData.name,
+              description: initialData.description || "",
+              outputQuantity: initialData.outputQuantity,
+              outputUnit: initialData.outputUnit,
+              items: initialData.items.map((item) => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                unit: item.unit,
+                wastagePercent: item.wastagePercent,
+              })),
+            }
+          : {
+              name: "",
+              description: "",
+              outputQuantity: 0,
+              outputUnit: "",
+              items: [],
+            }
+      );
     }
-  }, [initialData]);
+  }, [initialData, open, form]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleAddItem = () => {
-    setFormData((prev) => ({
-      ...prev,
-      items: [
-        ...prev.items,
-        {
-          productId: "",
-          quantity: 0,
-          unit: "",
-          wastagePercent: 0,
-        },
-      ],
-    }));
-  };
-
-  const handleRemoveItem = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleItemChange = (
-    index: number,
-    field: keyof BOMItemInput,
-    value: string | number
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      items: prev.items.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      ),
-    }));
+  const handleSubmit = (values: BOMInput) => {
+    onSubmit(values);
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>
-          {initialData ? t("bom.editBom") : t("bom.createBom")}
-        </DialogTitle>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      title={initialData ? t("bom.editBom") : t("bom.createBom")}
+      width={800}
+      footer={null}
+    >
+      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="name"
+              label={t("bom.name")}
+              rules={[{ required: true, message: t("common.required") }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
 
-        <DialogContent>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="name"
-                label={t("bom.name")}
-                value={formData.name}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
+          <Col span={6}>
+            <Form.Item
+              name="outputQuantity"
+              label={t("bom.outputQuantity")}
+              rules={[{ required: true, message: t("common.required") }]}
+            >
+              <InputNumber min={0} step={0.01} style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="outputQuantity"
-                label={t("bom.outputQuantity")}
-                type="number"
-                value={formData.outputQuantity}
-                onChange={handleChange}
-                fullWidth
-                required
-                inputProps={{ min: 0, step: 0.01 }}
-              />
-            </Grid>
+          <Col span={6}>
+            <Form.Item
+              name="outputUnit"
+              label={t("bom.outputUnit")}
+              rules={[{ required: true, message: t("common.required") }]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+        </Row>
 
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                name="outputUnit"
-                label={t("bom.outputUnit")}
-                value={formData.outputUnit}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
+        <Form.Item name="description" label={t("bom.description")}>
+          <Input.TextArea rows={2} />
+        </Form.Item>
 
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                name="description"
-                label={t("bom.description")}
-                value={formData.description}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={2}
-              />
-            </Grid>
-
-            {/* BOM Items Section */}
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 2,
-                }}
-              >
-                <Typography variant="h6">{t("bom.materials")}</Typography>
-                <Button
-                  startIcon={<AddIcon />}
-                  onClick={handleAddItem}
-                  variant="outlined"
-                  size="small"
-                >
-                  {t("bom.addMaterial")}
-                </Button>
-              </Box>
-
-              {formData.items.map((item, index) => (
-                <Grid container size={{ xs: 12 }} spacing={2} key={index}>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <ProductSelect
-                      value={item.productId}
-                      onChange={(value) =>
-                        handleItemChange(index, "productId", value)
-                      }
-                      products={rawMaterials || []}
-                      label={t("bom.material")}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <TextField
-                      label={t("bom.quantity")}
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          "quantity",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      fullWidth
-                      required
-                      inputProps={{ min: 0, step: 0.01 }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                    <TextField
-                      label={t("bom.unit")}
-                      value={item.unit}
-                      onChange={(e) =>
-                        handleItemChange(index, "unit", e.target.value)
-                      }
-                      fullWidth
-                      required
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <TextField
-                      label={t("bom.wastagePercent")}
-                      type="number"
-                      value={item.wastagePercent || 0}
-                      onChange={(e) =>
-                        handleItemChange(
-                          index,
-                          "wastagePercent",
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      fullWidth
-                      inputProps={{ min: 0, max: 100, step: 0.1 }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-                    <IconButton
-                      onClick={() => handleRemoveItem(index)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              ))}
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={onClose}>{t("common.cancel")}</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={formData.items.length === 0}
+        {/* BOM Items Section */}
+        <div style={{ marginBottom: 16 }}>
+          <Space
+            style={{
+              width: "100%",
+              justifyContent: "space-between",
+              marginBottom: 16,
+            }}
           >
-            {initialData ? t("common.save") : t("common.create")}
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
+            <Title level={5} style={{ margin: 0 }}>
+              {t("bom.materials")}
+            </Title>
+            <Form.List name="items">
+              {(fields, { add, remove }) => (
+                <>
+                  <Button
+                    type="dashed"
+                    onClick={() => add({ quantity: 0, wastagePercent: 0 })}
+                    icon={<PlusOutlined />}
+                  >
+                    {t("bom.addMaterial")}
+                  </Button>
+
+                  {fields.map((field, index) => (
+                    <Row
+                      gutter={[16, 16]}
+                      key={field.key}
+                      style={{ marginTop: 16 }}
+                    >
+                      <Col span={8}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, "productId"]}
+                          rules={[
+                            { required: true, message: t("common.required") },
+                          ]}
+                        >
+                          <ProductSelect
+                            products={rawMaterials || []}
+                            label={t("bom.material")}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col span={4}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, "quantity"]}
+                          label={t("bom.quantity")}
+                          rules={[
+                            { required: true, message: t("common.required") },
+                          ]}
+                        >
+                          <InputNumber
+                            min={0}
+                            step={0.01}
+                            style={{ width: "100%" }}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col span={4}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, "unit"]}
+                          label={t("bom.unit")}
+                          rules={[
+                            { required: true, message: t("common.required") },
+                          ]}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col span={6}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, "wastagePercent"]}
+                          label={t("bom.wastagePercent")}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            style={{ width: "100%" }}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col
+                        span={2}
+                        style={{ display: "flex", alignItems: "center" }}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => remove(field.name)}
+                        />
+                      </Col>
+                    </Row>
+                  ))}
+                </>
+              )}
+            </Form.List>
+          </Space>
+        </div>
+
+        <Form.Item>
+          <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+            <Button onClick={onClose}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit">
+              {initialData ? t("common.save") : t("common.create")}
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 }

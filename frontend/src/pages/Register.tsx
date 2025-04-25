@@ -1,165 +1,120 @@
-import { useState } from 'react';
-import {
-  Box,
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Link,
-  Grid,
-} from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../context/AuthContext';
+import { useState } from "react";
+import { Card, Form, Input, Button, Alert, Typography, Space } from "antd";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
+
+const { Title } = Typography;
 
 export default function Register() {
   const { t } = useTranslation();
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-  });
+  const [error, setError] = useState("");
+  const [form] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
-    
-    const { password, confirmPassword } = formData;
 
-    if (password !== confirmPassword) {
-      setError(t('auth.passwordMismatch'));
+    if (values.password !== values.confirmPassword) {
+      setError(t("auth.passwordMismatch"));
       setIsSubmitting(false);
       return;
     }
 
     try {
       await register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
       });
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
-      setError(t('auth.registrationError'));
+      setError(t("auth.registrationError"));
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography component="h1" variant="h5">
-          {t('auth.register')}
-        </Typography>
+    <div
+      style={{
+        maxWidth: 400,
+        margin: "64px auto",
+        padding: "0 16px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Title level={2}>{t("auth.register")}</Title>
 
-        <Paper elevation={3} sx={{ p: 4, mt: 3, width: '100%' }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+      <Card style={{ width: "100%" }}>
+        {error && (
+          <Alert message={error} type="error" style={{ marginBottom: 24 }} />
+        )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  required
-                  fullWidth
-                  label="First Name"
-                  name="firstName"
-                  autoComplete="given-name"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Last Name"
-                  name="lastName"
-                  autoComplete="family-name"
-                  value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Confirm Password"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({ ...formData, confirmPassword: e.target.value })
-                  }
-                />
-              </Grid>
-            </Grid>
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item
+            name="firstName"
+            label={t("auth.firstName")}
+            rules={[{ required: true, message: t("auth.required") }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="lastName"
+            label={t("auth.lastName")}
+            rules={[{ required: true, message: t("auth.required") }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label={t("auth.email")}
+            rules={[
+              { required: true, message: t("auth.required") },
+              { type: "email", message: t("auth.invalidEmail") },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label={t("auth.password")}
+            rules={[{ required: true, message: t("auth.required") }]}
+          >
+            <Input.Password />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            label={t("auth.confirmPassword")}
+            rules={[{ required: true, message: t("auth.required") }]}
+          >
+            <Input.Password />
+          </Form.Item>
+
+          <Space direction="vertical" style={{ width: "100%" }}>
             <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={isSubmitting}
+              type="primary"
+              htmlType="submit"
+              loading={isSubmitting}
+              block
             >
-              Sign Up
+              {t("auth.signUp")}
             </Button>
-            <Button fullWidth variant="text" onClick={() => navigate("/login")}>
-              Already have an account? Sign In
+
+            <Button type="link" onClick={() => navigate("/login")} block>
+              {t("auth.alreadyHaveAccount")}
             </Button>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+          </Space>
+        </Form>
+      </Card>
+    </div>
   );
 }
