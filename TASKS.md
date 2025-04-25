@@ -5,6 +5,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 ## 🔄 Currently In Progress
 
 ### Production Management Frontend Implementation
+
 - ✅ Create production types in `types/production.ts`
 - ✅ Implement production API service in `services/productionServices/productionApi.ts`
 - ✅ Implement useRecordProduction hook in `services/productionServices/use-record-production`
@@ -18,6 +19,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - [ ] Create production reports view
 
 ### BOM Management Improvements
+
 - [ ] Enhance BOM component UI/UX
 - [ ] Add material requirements calculation view
 - [ ] Add cost calculation view
@@ -27,6 +29,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 ## 📅 Upcoming Tasks
 
 ### Sales Management Frontend Implementation
+
 - [ ] Create sales types in `types/sales.ts`
 - [ ] Implement sales API service
 - [ ] Create SalesOrderList component
@@ -36,12 +39,14 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - [ ] Add sales dashboard widgets
 
 ### Employee Management Frontend Implementation
+
 - [ ] Create employee management interface
 - [ ] Implement attendance tracking UI
 - [ ] Create employee productivity metrics view
 - [ ] Implement employee scheduling features
 
 ### Document Generation Frontend Implementation
+
 - [ ] Create document template management interface
 - [ ] Implement document generation UI
 - [ ] Create document preview functionality
@@ -50,6 +55,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 ## ✅ Completed Tasks
 
 ### Core System Setup
+
 - ✅ Initialize NestJS backend
 - ✅ Initialize React frontend with Vite
 - ✅ Set up database models and migrations
@@ -57,6 +63,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - ✅ Create main navigation and layout
 
 ### Inventory Management
+
 - ✅ Create inventory types
 - ✅ Implement inventory API service
 - ✅ Create product management interface
@@ -64,22 +71,26 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - ✅ Add low stock alerts
 
 ### BOM Management
+
 - ✅ Create BOM types
 - ✅ Implement BOM API service
 - ✅ Create basic BOM management interface
 
 ## 🔍 Discovered During Work
+
 - [ ] Need to implement batch production tracking
 - [ ] Consider adding quality control checkpoints to production process
 - [ ] Improve error handling in production recording form
 - [ ] Add notifications for completed production orders
 
 ## 🐛 Bugs to Fix
+
 - [ ] Correct error in production record counting
 - [ ] Fix date formatting issues in production order details
 - [ ] Address performance issues when loading large number of orders
 
 ## 📈 Future Enhancements
+
 - [ ] Add drag-and-drop functionality to production scheduling
 - [ ] Implement barcode scanning for inventory tracking
 - [ ] Create mobile-responsive views for shop floor access

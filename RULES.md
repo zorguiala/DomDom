@@ -30,11 +30,13 @@ These high-level principles guide how to work with AI tools efficiently and effe
 - **Always put types in a central location** in the `src/types` directory for better organization and reusability.
 
 ### Frontend Structure Guidelines
+
 - Keep React components focused and single-purpose
 - Separate business logic from UI using hooks
 - Group related components in feature folders
 
 ### Backend Structure Guidelines
+
 - Follow NestJS module structure
 - Keep controllers thin, move business logic to services
 - Use DTOs for data validation and transformation

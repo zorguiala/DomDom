@@ -14,7 +14,9 @@ import { Employee } from "../../types/employee";
 
 export const productionApi = {
   // Production Orders
-  getAllOrders: async (status?: ProductionOrderStatus): Promise<ProductionOrder[]> => {
+  getAllOrders: async (
+    status?: ProductionOrderStatus
+  ): Promise<ProductionOrder[]> => {
     const response = await api.get("/production/orders", {
       params: { status },
     });
@@ -26,18 +28,29 @@ export const productionApi = {
     return response.data;
   },
 
-  createOrder: async (orderData: CreateProductionOrderDto): Promise<ProductionOrder> => {
+  createOrder: async (
+    orderData: CreateProductionOrderDto
+  ): Promise<ProductionOrder> => {
     const response = await api.post("/production/orders", orderData);
     return response.data;
   },
 
-  updateOrder: async (id: string, orderData: UpdateProductionOrderDto): Promise<ProductionOrder> => {
+  updateOrder: async (
+    id: string,
+    orderData: UpdateProductionOrderDto
+  ): Promise<ProductionOrder> => {
     const response = await api.put(`/production/orders/${id}`, orderData);
     return response.data;
   },
 
-  updateOrderStatus: async (id: string, statusData: UpdateProductionOrderStatusDto): Promise<ProductionOrder> => {
-    const response = await api.put(`/production/orders/${id}/status`, statusData);
+  updateOrderStatus: async (
+    id: string,
+    statusData: UpdateProductionOrderStatusDto
+  ): Promise<ProductionOrder> => {
+    const response = await api.put(
+      `/production/orders/${id}/status`,
+      statusData
+    );
     return response.data;
   },
 
@@ -46,20 +59,30 @@ export const productionApi = {
   },
 
   // Production Records
-  getProductionRecords: async (orderId: string): Promise<ProductionRecord[]> => {
+  getProductionRecords: async (
+    orderId: string
+  ): Promise<ProductionRecord[]> => {
     const response = await api.get("/production/records", {
       params: { productionOrderId: orderId },
     });
     return response.data;
   },
 
-  recordProduction: async (orderId: string, data: RecordProductionDto): Promise<ProductionOrder> => {
-    const response = await api.post(`/production/orders/${orderId}/output`, data);
+  recordProduction: async (
+    orderId: string,
+    data: RecordProductionDto
+  ): Promise<ProductionOrder> => {
+    const response = await api.post(
+      `/production/orders/${orderId}/output`,
+      data
+    );
     return response.data;
   },
 
   // Production Progress
-  getProductionProgress: async (orderId: string): Promise<ProductionProgress> => {
+  getProductionProgress: async (
+    orderId: string
+  ): Promise<ProductionProgress> => {
     const response = await api.get(`/production/orders/${orderId}/progress`);
     return response.data;
   },
@@ -67,12 +90,20 @@ export const productionApi = {
   // Stats and Metrics
   getActiveOrders: async (): Promise<ProductionOrder[]> => {
     const response = await api.get("/production/orders", {
-      params: { status: [ProductionOrderStatus.PLANNED, ProductionOrderStatus.IN_PROGRESS] },
+      params: {
+        status: [
+          ProductionOrderStatus.PLANNED,
+          ProductionOrderStatus.IN_PROGRESS,
+        ],
+      },
     });
     return response.data;
   },
 
-  getProductionStats: async (startDate: Date, endDate: Date): Promise<ProductionStats> => {
+  getProductionStats: async (
+    startDate: Date,
+    endDate: Date
+  ): Promise<ProductionStats> => {
     const response = await api.get("/production/stats", {
       params: {
         startDate: startDate.toISOString(),

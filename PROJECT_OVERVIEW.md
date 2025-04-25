@@ -7,6 +7,7 @@ DomDom is an integrated operational management system for food production and ma
 ## Technology Stack
 
 ### Backend
+
 - **Framework**: NestJS (Node.js)
 - **Language**: TypeScript
 - **Database**: PostgreSQL
@@ -15,6 +16,7 @@ DomDom is an integrated operational management system for food production and ma
 - **API Documentation**: Swagger/OpenAPI
 
 ### Frontend
+
 - **Framework**: React
 - **Language**: TypeScript
 - **UI Library**: Ant Design (antd)
@@ -25,11 +27,13 @@ DomDom is an integrated operational management system for food production and ma
 ## Core Modules and Features
 
 ### Authentication & User Management
+
 - Role-based access control
 - User registration and authentication
 - JWT-based sessions
 
 ### Inventory Management
+
 - Real-time tracking of stock levels
 - Raw materials, work-in-process, and finished goods tracking
 - Inventory transactions history
@@ -38,12 +42,14 @@ DomDom is an integrated operational management system for food production and ma
 - Barcode scanning support
 
 ### BOM (Bill of Materials) Management
+
 - Recipe/formula creation and management
 - Raw material requirements calculation
 - Production costs calculation
 - BOM versioning
 
 ### Production Management
+
 - Production order creation and tracking
 - Raw material consumption
 - Output recording
@@ -52,24 +58,28 @@ DomDom is an integrated operational management system for food production and ma
 - Production efficiency reporting
 
 ### Sales Management
+
 - Direct sales recording
 - Commercial agent sales tracking
 - Inventory updates tied to sales
 - Sales analysis and reporting
 
 ### Employee Management
+
 - Attendance tracking
 - Production output tracking
 - Employee performance metrics
 - Productivity reporting
 
 ### Document Generation
+
 - Invoice generation
 - "Bon de Sortie" (delivery note) generation
 - Custom report generation
 - PDF/Excel export options
 
 ### Dashboard & Reporting
+
 - Real-time operational metrics
 - Inventory status
 - Production efficiency
@@ -77,6 +87,7 @@ DomDom is an integrated operational management system for food production and ma
 - Employee productivity
 
 ### Reminders & Maintenance Tracking
+
 - Bill payment reminders
 - Equipment maintenance scheduling
 - Notification system
@@ -84,6 +95,7 @@ DomDom is an integrated operational management system for food production and ma
 ## Project Structure
 
 ### Backend Structure
+
 - **auth/**: Authentication and authorization
 - **bom/**: Bill of Materials management
 - **documents/**: Document generation and management
@@ -97,6 +109,7 @@ DomDom is an integrated operational management system for food production and ma
 - **common/**: Shared utilities and helpers
 
 ### Frontend Structure
+
 - **src/components/**: Reusable React components
 - **src/pages/**: Page components for each route
 - **src/services/**: API communication services
@@ -109,7 +122,9 @@ DomDom is an integrated operational management system for food production and ma
 ## Main Features Implementation Status
 
 ### Backend Implementation
+
 The backend has most of the core functionality implemented:
+
 - ✅ User authentication and authorization
 - ✅ Inventory tracking and management
 - ✅ BOM creation and management
@@ -121,7 +136,9 @@ The backend has most of the core functionality implemented:
 - ✅ API endpoints for operational data
 
 ### Frontend Implementation
+
 The frontend currently has partial implementation of features:
+
 - ✅ User authentication
 - ✅ Basic navigation and layout
 - ✅ Dashboard with preliminary widgets
@@ -134,7 +151,9 @@ The frontend currently has partial implementation of features:
 - ❌ Reminders system (not implemented)
 
 ### Implementation Priority
+
 Current development priorities for frontend implementation:
+
 1. Production management (in progress)
 2. Complete BOM management
 3. Sales recording and management
@@ -145,21 +164,25 @@ Current development priorities for frontend implementation:
 ## Deployment and Environment
 
 The application can be deployed as:
+
 1. A web application accessible via browser
 2. An Electron desktop application for Windows (optional)
 
 ## Getting Started
 
 ### Backend Setup
+
 1. Install dependencies: `cd backend && npm install`
 2. Configure database connection in `backend/src/config/database.config.ts`
 3. Run database migrations: `npm run migration:run`
 4. Start the development server: `npm run start:dev`
 
 ### Frontend Setup
+
 1. Install dependencies: `cd frontend && npm install`
 2. Configure API URL in `.env` or `frontend/src/services/api.ts`
 3. Start the development server: `npm run dev`
 
 ## API Documentation
+
 API documentation is available at `/api/docs` when the backend server is running.
