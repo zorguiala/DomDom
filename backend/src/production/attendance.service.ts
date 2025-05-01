@@ -6,6 +6,19 @@ import { Employee } from '../entities/employee.entity';
 import { User } from '../entities/user.entity';
 import { ClockInOutDto, AttendanceQueryDto } from './dto/attendance.dto';
 
+/**
+ * Attendance summary for an employee
+ */
+interface AttendanceSummaryItem {
+  employee: Employee;
+  totalDays: number;
+  totalHours: number;
+  records: EmployeeAttendance[];
+}
+
+/**
+ * Service for managing employee attendance
+ */
 @Injectable()
 export class AttendanceService {
   constructor(
@@ -15,6 +28,9 @@ export class AttendanceService {
     private employeeRepository: Repository<Employee>
   ) {}
 
+  /**
+   * Record employee clock in
+   */
   async clockIn(clockInDto: ClockInOutDto, user: User): Promise<EmployeeAttendance> {
     const employee = await this.employeeRepository.findOne({
       where: { id: clockInDto.employeeId },
@@ -46,6 +62,9 @@ export class AttendanceService {
     return this.attendanceRepository.save(attendance);
   }
 
+  /**
+   * Record employee clock out
+   */
   async clockOut(clockOutDto: ClockInOutDto, user: User): Promise<EmployeeAttendance> {
     const employee = await this.employeeRepository.findOne({
       where: { id: clockOutDto.employeeId },
@@ -70,6 +89,7 @@ export class AttendanceService {
     // Update with clock out time
     attendance.clockOut = new Date();
     attendance.notes = clockOutDto.notes || attendance.notes;
+    attendance.recordedBy = user; // Using the user parameter to record who clocked out the employee
 
     // Calculate duration in hours
     const clockIn = new Date(attendance.clockIn);
@@ -82,6 +102,9 @@ export class AttendanceService {
     return this.attendanceRepository.save(attendance);
   }
 
+  /**
+   * Get attendance records based on query filters
+   */
   async getAttendanceRecords(queryDto: AttendanceQueryDto): Promise<EmployeeAttendance[]> {
     const startDate = new Date(queryDto.startDate);
     const endDate = new Date(queryDto.endDate);
@@ -108,7 +131,10 @@ export class AttendanceService {
     });
   }
 
-  async getAttendanceSummary(startDate: Date, endDate: Date): Promise<any> {
+  /**
+   * Get attendance summary statistics for the specified date range
+   */
+  async getAttendanceSummary(startDate: Date, endDate: Date): Promise<AttendanceSummaryItem[]> {
     const records = await this.attendanceRepository.find({
       where: {
         clockIn: Between(startDate, endDate),
@@ -117,24 +143,27 @@ export class AttendanceService {
       relations: ['employee'],
     });
 
-    const summary = records.reduce((acc, record) => {
-      const employeeId = record.employee.id;
+    const summary: Record<string, AttendanceSummaryItem> = records.reduce(
+      (acc, record) => {
+        const employeeId = record.employee.id;
 
-      if (!acc[employeeId]) {
-        acc[employeeId] = {
-          employee: record.employee,
-          totalDays: 0,
-          totalHours: 0,
-          records: [],
-        };
-      }
+        if (!acc[employeeId]) {
+          acc[employeeId] = {
+            employee: record.employee,
+            totalDays: 0,
+            totalHours: 0,
+            records: [],
+          };
+        }
 
-      acc[employeeId].totalDays += 1;
-      acc[employeeId].totalHours += Number(record.durationHours) || 0;
-      acc[employeeId].records.push(record);
+        acc[employeeId].totalDays += 1;
+        acc[employeeId].totalHours += Number(record.durationHours) || 0;
+        acc[employeeId].records.push(record);
 
-      return acc;
-    }, {});
+        return acc;
+      },
+      {} as Record<string, AttendanceSummaryItem>
+    );
 
     return Object.values(summary);
   }

@@ -1,18 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Product } from '../entities/product.entity';
 import { InventoryTransaction } from '../entities/inventory-transaction.entity';
-import { InventoryService } from './inventory.service';
 import { InventoryController } from './inventory.controller';
-import { ProductService } from './product.service';
-import { ProductController } from './product.controller';
-import { InventoryReportingService } from './inventory-reporting.service';
-import { InventoryReportingController } from './inventory-reporting.controller';
+import { InventoryTransactionService } from './services/inventory-transaction.service';
+import { InventoryStockService } from './services/inventory-stock.service';
+import { InventoryAnalyticsService } from './services/inventory-analytics.service';
+import { ProductsModule } from '../products/products.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product, InventoryTransaction])],
-  providers: [InventoryService, ProductService, InventoryReportingService],
-  controllers: [InventoryController, ProductController, InventoryReportingController],
-  exports: [InventoryService, ProductService, InventoryReportingService],
+  imports: [TypeOrmModule.forFeature([InventoryTransaction]), ProductsModule],
+  providers: [InventoryTransactionService, InventoryStockService, InventoryAnalyticsService],
+  controllers: [InventoryController],
+  exports: [InventoryTransactionService, InventoryStockService, InventoryAnalyticsService],
 })
 export class InventoryModule {}

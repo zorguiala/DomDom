@@ -3,16 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { InventoryTransaction } from '../entities/inventory-transaction.entity';
-
-interface LowStockAlert {
-  isLow: boolean;
-  currentStock: number;
-  minimumStock: number;
-  product: Product;
-}
+import { LowStockAlert } from '../types/product.types';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
-export class ProductService {
+export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -20,8 +16,11 @@ export class ProductService {
     private readonly transactionRepository: Repository<InventoryTransaction>
   ) {}
 
-  async create(data: Partial<Product>): Promise<Product> {
-    const product = this.productRepository.create(data);
+  async create(createProductDto: CreateProductDto): Promise<Product> {
+    const product = this.productRepository.create({
+      ...createProductDto,
+      currentStock: createProductDto.initialStock,
+    });
     return this.productRepository.save(product);
   }
 
@@ -29,9 +28,12 @@ export class ProductService {
     const query = this.productRepository.createQueryBuilder('product');
 
     if (search) {
-      query.where('(product.name ILIKE :search OR product.sku ILIKE :search OR product.barcode ILIKE :search)', {
-        search: `%${search}%`,
-      });
+      query.where(
+        '(product.name ILIKE :search OR product.sku ILIKE :search OR product.barcode ILIKE :search)',
+        {
+          search: `%${search}%`,
+        }
+      );
     }
 
     if (isRawMaterial !== undefined) {
@@ -53,9 +55,9 @@ export class ProductService {
     return product;
   }
 
-  async update(id: string, data: Partial<Product>): Promise<Product> {
+  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
     const product = await this.findOne(id);
-    Object.assign(product, data);
+    Object.assign(product, updateProductDto);
     return this.productRepository.save(product);
   }
 

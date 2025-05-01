@@ -126,50 +126,49 @@ async function seedEmployees() {
     employeeRepository.create({
       firstName: 'John',
       lastName: 'Doe',
-      email: 'john.doe@domdom.com',
+      email: 'john.doe@domdom.com', // Optional email
       phoneNumber: '+1234567890',
       position: 'Supervisor',
       role: EmployeeRole.SUPERVISOR,
       employeeId: 'EMP001',
       hireDate: new Date(),
-      salary: 50000,
       monthlySalary: 50000,
       dailyRate: 200,
       hourlyRate: 25,
       isActive: true,
+      address: '123 Main St', // Added address field
+      // Production metrics
       productivityRate: 0.85,
       qualityScore: 0.9,
       efficiencyScore: 0.88,
       totalProductionCount: 0,
       totalQualityIssues: 0,
+      // Sales related
       isCommissionBased: false,
       commissionRate: 0,
-      daysAbsent: 0,
-      daysLate: 0,
     }),
     employeeRepository.create({
       firstName: 'Jane',
       lastName: 'Smith',
-      email: 'jane.smith@domdom.com',
-      phoneNumber: '+1234567891',
+      phoneNumber: '+1234567891', // Email omitted to test optional email
       position: 'Worker',
       role: EmployeeRole.WORKER,
       employeeId: 'EMP002',
       hireDate: new Date(),
-      salary: 40000,
       monthlySalary: 40000,
       dailyRate: 160,
       hourlyRate: 20,
       isActive: true,
+      address: '456 Oak St',
+      // Production metrics
       productivityRate: 0.8,
       qualityScore: 0.85,
       efficiencyScore: 0.82,
       totalProductionCount: 0,
       totalQualityIssues: 0,
+      // Sales related
       isCommissionBased: false,
       commissionRate: 0,
-      daysAbsent: 0,
-      daysLate: 0,
     }),
   ];
 
@@ -391,24 +390,57 @@ async function seedAttendance() {
   const employeeRepository = AppDataSource.getRepository(Employee);
   const userRepository = AppDataSource.getRepository(User);
 
-  const employee = await employeeRepository.findOne({ where: { email: 'john.doe@domdom.com' } });
-  const user = await userRepository.findOne({ where: { email: 'admin@domdom.com' } });
+  // Get all employees to create attendance records for each
+  const employees = await employeeRepository.find();
+  const adminUser = await userRepository.findOne({ where: { email: 'admin@domdom.com' } });
 
-  if (!employee || !user) {
+  if (!employees.length || !adminUser) {
     throw new Error('Required entities not found');
   }
 
-  const attendance = attendanceRepository.create({
-    employee: employee,
-    clockIn: new Date(),
-    clockOut: new Date(),
-    notes: 'Sample attendance record',
-    durationHours: 8,
-    recordedBy: user,
-  });
+  const currentDate = new Date();
+  const attendanceRecords = [] as EmployeeAttendance[];
 
-  await attendanceRepository.save(attendance);
-  console.log('Attendance records seeded successfully');
+  // Create attendance records for the past 7 days
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setDate(currentDate.getDate() - i);
+
+    // Skip weekends (Saturday = 6, Sunday = 0)
+    if (date.getDay() === 0 || date.getDay() === 6) continue;
+
+    for (const employee of employees) {
+      // Random attendance (90% chance of attendance)
+      if (Math.random() < 0.9) {
+        // Create clock-in time between 7:30 AM and 8:30 AM
+        const clockIn = new Date(date);
+        clockIn.setHours(7 + Math.floor(Math.random() * 2));
+        clockIn.setMinutes(30 + Math.floor(Math.random() * 60));
+
+        // Create clock-out time between 4:30 PM and 5:30 PM
+        const clockOut = new Date(date);
+        clockOut.setHours(16 + Math.floor(Math.random() * 2));
+        clockOut.setMinutes(30 + Math.floor(Math.random() * 60));
+
+        const duration = (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+
+        const attendance = attendanceRepository.create({
+          employee: employee,
+          clockIn: clockIn,
+          clockOut: clockOut,
+          notes: `Regular workday`,
+          durationHours: Number(duration.toFixed(2)),
+          recordedBy: adminUser,
+        });
+
+        attendanceRecords.push(attendance);
+      }
+    }
+  }
+
+  await attendanceRepository.save(attendanceRecords);
+  console.log(`Created ${attendanceRecords.length} attendance records successfully`);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 seed();

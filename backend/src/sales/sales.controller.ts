@@ -1,103 +1,51 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { SalesService } from './sales.service';
+import { CreateSaleDto, SaleReportFilterDto, SaleReportDto } from '../types/sale.types';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { DirectSaleDto } from './dto/direct-sale.dto';
-import { AgentAssignmentDto, AgentReturnDto } from './dto/commercial-sale.dto';
 
+@ApiTags('sales')
 @Controller('sales')
 @UseGuards(JwtAuthGuard)
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
-  @Post('direct')
-  async createDirectSale(@Request() req, @Body() data: DirectSaleDto) {
-    return this.salesService.createDirectSale(data, req.user);
-  }
-
-  @Post('commercial/assign')
-  async createCommercialAssignment(@Request() req, @Body() data: AgentAssignmentDto) {
-    return this.salesService.createCommercialAssignment(data, req.user);
-  }
-
-  @Post('commercial/return')
-  async processCommercialReturn(@Request() req, @Body() data: AgentReturnDto) {
-    return this.salesService.processCommercialReturn(data, req.user);
+  @Post()
+  @ApiOperation({ summary: 'Create a new sale' })
+  @ApiResponse({ status: 201 })
+  async createSale(@Body() dto: CreateSaleDto) {
+    return await this.salesService.createSale(dto);
   }
 
   @Get()
-  async findAll(
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-    @Query('userId') userId?: string
+  @ApiOperation({ summary: 'List sales with filtering, pagination, and sorting' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'sort', required: false, description: 'ASC or DESC' })
+  @ApiResponse({ status: 200 })
+  async listSales(
+    @Query() query: { page?: number; limit?: number; search?: string; sort?: string }
   ) {
-    const start = startDate ? new Date(startDate) : undefined;
-    const end = endDate ? new Date(endDate) : undefined;
-
-    if ((startDate && !end) || (!startDate && end)) {
-      throw new BadRequestException('Both startDate and endDate must be provided together');
-    }
-
-    return this.salesService.findAll(start, end, userId);
+    return await this.salesService.listSales(query);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.salesService.findOne(id);
+  @ApiOperation({ summary: 'Get sale details' })
+  @ApiParam({ name: 'id', required: true })
+  @ApiResponse({ status: 200 })
+  async getSale(@Param('id') id: string) {
+    return await this.salesService.getSale(id);
   }
 
-  @Get(':id/invoice')
-  async generateInvoice(@Param('id') id: string) {
-    return this.salesService.generateInvoice(id);
-  }
-
-  @Get('reports/sales')
-  async getSalesReport(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
-    if (!startDate || !endDate) {
-      throw new BadRequestException('startDate and endDate are required');
-    }
-    return this.salesService.getSalesReport(new Date(startDate), new Date(endDate));
-  }
-
-  @Get('reports/top-products')
-  async getTopProducts(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @Query('limit') limit?: string
-  ) {
-    if (!startDate || !endDate) {
-      throw new BadRequestException('startDate and endDate are required');
-    }
-    return this.salesService.getTopProducts(
-      new Date(startDate),
-      new Date(endDate),
-      limit ? parseInt(limit, 10) : undefined
-    );
-  }
-
-  @Get('daily/:date')
-  async getDailySales(@Param('date') dateString: string) {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      throw new BadRequestException('Invalid date format');
-    }
-    return this.salesService.getDailySales(date);
-  }
-
-  @Get('dashboard/overview')
-  async getSalesOverview(@Query('startDate') startDate: string, @Query('endDate') endDate: string) {
-    if (!startDate || !endDate) {
-      throw new BadRequestException('startDate and endDate are required');
-    }
-    return this.salesService.getSalesOverview(new Date(startDate), new Date(endDate));
+  @Get('report')
+  @ApiOperation({ summary: 'Get sales report (filterable)' })
+  @ApiQuery({ name: 'startDate', required: false })
+  @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'productId', required: false })
+  @ApiQuery({ name: 'customerName', required: false })
+  @ApiResponse({ status: 200, type: SaleReportDto })
+  async getSalesReport(@Query() filter: SaleReportFilterDto) {
+    return await this.salesService.getSalesReport(filter);
   }
 }

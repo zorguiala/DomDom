@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { ProductsModule } from './products/products.module';
 import { BOMModule } from './bom/bom.module';
 import { ProductionModule } from './production/production.module';
 import { SalesModule } from './sales/sales.module';
@@ -26,6 +27,7 @@ import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-clas
     }),
     AuthModule,
     InventoryModule,
+    ProductsModule,
     BOMModule,
     ProductionModule,
     SalesModule,

@@ -18,7 +18,7 @@ export class Employee extends BaseEntity {
   @Column()
   lastName: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   email: string;
 
   @Column()
@@ -27,20 +27,20 @@ export class Employee extends BaseEntity {
   @Column()
   position: string;
 
-  @Column()
+  @Column({ type: 'timestamp' })
   hireDate: Date;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  salary: number;
+  monthlySalary: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  dailyRate: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  hourlyRate: number;
 
   @Column({ default: true })
   isActive: boolean;
-
-  @OneToMany(() => EmployeeAttendance, (attendance) => attendance.employee)
-  attendanceRecords: EmployeeAttendance[];
-
-  @OneToMany(() => ProductionRecord, (record) => record.employee)
-  productionRecords: ProductionRecord[];
 
   @Column({ unique: true })
   employeeId: string;
@@ -54,15 +54,6 @@ export class Employee extends BaseEntity {
     default: EmployeeRole.WORKER,
   })
   role: EmployeeRole;
-
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  monthlySalary: number;
-
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  dailyRate: number;
-
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  hourlyRate: number;
 
   // Production metrics
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
@@ -80,15 +71,17 @@ export class Employee extends BaseEntity {
   @Column({ type: 'int', default: 0 })
   totalQualityIssues: number;
 
+  // Sales related
   @Column({ default: false })
   isCommissionBased: boolean;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   commissionRate: number;
 
-  @Column({ default: 0 })
-  daysAbsent: number;
+  // Relationships
+  @OneToMany(() => EmployeeAttendance, (attendance) => attendance.employee)
+  attendanceRecords: EmployeeAttendance[];
 
-  @Column({ default: 0 })
-  daysLate: number;
+  @OneToMany(() => ProductionRecord, (record) => record.employee)
+  productionRecords: ProductionRecord[];
 }

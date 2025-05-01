@@ -11,12 +11,14 @@ import {
   ParseFloatPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { InventoryService } from './inventory.service';
 import { TransactionType } from '../entities/inventory-transaction.entity';
-import { User } from '../entities/user.entity';
 import { BatchInventoryDto } from './dto/batch-inventory.dto';
 import { BarcodeScanDto } from './dto/barcode-scan.dto';
 import { StockReportItem, InventoryValuation } from './types/inventory.types';
+import { InventoryTransactionService } from './services/inventory-transaction.service';
+import { InventoryStockService } from './services/inventory-stock.service';
+import { InventoryAnalyticsService } from './services/inventory-analytics.service';
+import { User } from '../entities/user.entity';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -25,7 +27,11 @@ interface RequestWithUser extends Request {
 @Controller('inventory')
 @UseGuards(JwtAuthGuard)
 export class InventoryController {
-  constructor(private inventoryService: InventoryService) {}
+  constructor(
+    private readonly transactionService: InventoryTransactionService,
+    private readonly stockService: InventoryStockService,
+    private readonly analyticsService: InventoryAnalyticsService
+  ) {}
 
   @Post('transaction')
   async recordTransaction(
@@ -41,14 +47,16 @@ export class InventoryController {
       throw new BadRequestException('Missing required fields');
     }
 
-    return this.inventoryService.recordTransaction(
-      productId,
-      type,
-      quantity,
-      unitPrice,
-      req.user,
-      reference,
-      notes
+    return this.transactionService.create(
+      {
+        productId,
+        type,
+        quantity,
+        unitPrice,
+        reference,
+        notes,
+      },
+      req.user
     );
   }
 
@@ -76,12 +84,12 @@ export class InventoryController {
       }
     }
 
-    return this.inventoryService.getTransactionHistory(productId, type, startDate, endDate);
+    return this.transactionService.findAll(startDate, endDate, type, productId);
   }
 
   @Get('low-stock')
   async getLowStockProducts(@Query('threshold', ParseIntPipe) threshold?: number) {
-    return this.inventoryService.getLowStockProducts(threshold);
+    return this.stockService.getLowStockProducts(threshold);
   }
 
   @Get('report')
@@ -100,7 +108,7 @@ export class InventoryController {
       throw new BadRequestException('Invalid date format');
     }
 
-    return this.inventoryService.getStockReport(startDate, endDate);
+    return this.analyticsService.getStockReport(startDate, endDate);
   }
 
   @Post('batch')
@@ -108,7 +116,7 @@ export class InventoryController {
     @Body() batchDto: BatchInventoryDto,
     @Request() req: RequestWithUser
   ) {
-    return this.inventoryService.processBatchTransactions(batchDto, req.user);
+    return this.transactionService.processBatchTransactions(batchDto, req.user);
   }
 
   @Post('barcode-scan')
@@ -116,12 +124,12 @@ export class InventoryController {
     @Body() barcodeScanDto: BarcodeScanDto,
     @Request() req: RequestWithUser
   ) {
-    return this.inventoryService.processBarcodeScan(barcodeScanDto, req.user);
+    return this.transactionService.processBarcodeScan(barcodeScanDto, req.user);
   }
 
   @Get('valuation')
   async getInventoryValuation(): Promise<InventoryValuation[]> {
-    return this.inventoryService.getInventoryValuation();
+    return this.analyticsService.getInventoryValuation();
   }
 
   @Get('adjustments')
@@ -147,21 +155,21 @@ export class InventoryController {
       }
     }
 
-    return this.inventoryService.getStockAdjustmentHistory(productId, startDate, endDate);
+    return this.transactionService.findAll(
+      startDate,
+      endDate,
+      TransactionType.ADJUSTMENT,
+      productId
+    );
   }
 
   @Get('low-stock-alerts')
   async getLowStockAlerts(@Query('threshold', ParseIntPipe) threshold?: number) {
-    return this.inventoryService.getLowStockAlerts(threshold);
-  }
-
-  @Get('stats')
-  async getInventoryStats() {
-    return this.inventoryService.getInventoryStats();
+    return this.stockService.getLowStockAlerts(threshold);
   }
 
   @Get('status')
   async getInventoryStatus() {
-    return this.inventoryService.getInventoryStatus();
+    return this.stockService.getInventoryStatus();
   }
 }

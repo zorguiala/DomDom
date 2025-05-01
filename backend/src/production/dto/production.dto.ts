@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsBoolean,
   IsUUID,
-  Min,
   IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';

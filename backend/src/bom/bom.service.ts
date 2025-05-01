@@ -7,12 +7,14 @@ import { Product } from '../entities/product.entity';
 import { InventoryService } from '../inventory/inventory.service';
 import { User } from '../entities/user.entity';
 import { CreateBOMDto, UpdateBOMDto } from './dto/bom.dto';
+import {
+  MaterialRequirementsDto,
+  MaterialRequirementItemDto,
+  MaterialCostDto,
+  MaterialCostItemDto,
+} from '../types/bomCalculation.dto';
 
-interface MaterialRequirement {
-  product: Product;
-  requiredQuantity: number;
-  unit: string;
-}
+// Removed unused MaterialRequirement interface
 
 interface AvailabilityCheck {
   isAvailable: boolean;
@@ -219,18 +221,43 @@ export class BOMService {
   async calculateMaterialRequirements(
     id: string,
     desiredQuantity: number
-  ): Promise<MaterialRequirement[]> {
+  ): Promise<MaterialRequirementsDto> {
     const bom = await this.findOne(id);
     const scaleFactor = desiredQuantity / bom.outputQuantity;
-
-    return bom.items.map((item) => {
+    const items: MaterialRequirementItemDto[] = bom.items.map((item) => {
       const requiredQuantity = item.quantity * scaleFactor * (1 + (item.wastagePercent || 0) / 100);
       return {
-        product: item.product,
+        materialId: item.product.id,
+        materialName: item.product.name,
         requiredQuantity,
         unit: item.unit,
       };
     });
+    return { items };
+  }
+
+  async calculateMaterialCost(id: string, desiredQuantity: number): Promise<MaterialCostDto> {
+    const bom = await this.findOne(id);
+    const scaleFactor = desiredQuantity / bom.outputQuantity;
+    let totalCost = 0;
+    const items: MaterialCostItemDto[] = await Promise.all(
+      bom.items.map((item) => {
+        const requiredQuantity =
+          item.quantity * scaleFactor * (1 + (item.wastagePercent || 0) / 100);
+        const unitCost = item.product.price || 0;
+        const cost = requiredQuantity * unitCost;
+        totalCost += cost;
+        return {
+          materialId: item.product.id,
+          materialName: item.product.name,
+          requiredQuantity,
+          unit: item.unit,
+          unitCost,
+          totalCost: cost,
+        };
+      })
+    );
+    return { items, totalCost };
   }
 
   async checkAvailability(id: string, desiredQuantity: number): Promise<AvailabilityCheck> {
@@ -238,19 +265,19 @@ export class BOMService {
     const shortages: AvailabilityCheck['shortages'] = [];
     let isAvailable = true;
 
-    for (const requirement of requirements) {
+    for (const requirement of requirements.items) {
       const product = await this.productRepository.findOne({
-        where: { id: requirement.product.id },
+        where: { id: requirement.materialId },
       });
 
       if (!product) {
-        throw new NotFoundException(`Product ${requirement.product.id} not found`);
+        throw new NotFoundException(`Product ${requirement.materialId} not found`);
       }
 
       if (product.currentStock < requirement.requiredQuantity) {
         isAvailable = false;
         shortages.push({
-          product: requirement.product,
+          product: product,
           required: requirement.requiredQuantity,
           available: product.currentStock,
           shortage: requirement.requiredQuantity - product.currentStock,
@@ -267,20 +294,20 @@ export class BOMService {
     let materialCost = 0;
     const costBreakdown: ProductionCost['costBreakdown'] = [];
 
-    for (const requirement of requirements) {
+    for (const requirement of requirements.items) {
       const product = await this.productRepository.findOne({
-        where: { id: requirement.product.id },
+        where: { id: requirement.materialId },
       });
 
       if (!product) {
-        throw new NotFoundException(`Product ${requirement.product.id} not found`);
+        throw new NotFoundException(`Product ${requirement.materialId} not found`);
       }
 
       const totalCost = requirement.requiredQuantity * product.price;
       materialCost += totalCost;
 
       costBreakdown.push({
-        product: requirement.product,
+        product: product,
         quantity: requirement.requiredQuantity,
         unit: requirement.unit,
         unitCost: product.price,

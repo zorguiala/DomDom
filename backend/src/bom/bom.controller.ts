@@ -14,13 +14,8 @@ import {
 import { BOMService } from './bom.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateBOMDto, UpdateBOMDto } from './dto/bom.dto';
-
-// Define interfaces for return types
-interface MaterialRequirement {
-  product: any;
-  requiredQuantity: number;
-  unit: string;
-}
+import { MaterialRequirementsDto, MaterialCostDto } from '../types/bomCalculation.dto';
+import { ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 
 interface AvailabilityCheck {
   isAvailable: boolean;
@@ -52,6 +47,7 @@ export class BOMController {
 
   @Post()
   async create(@Request() req, @Body() createBomDto: CreateBOMDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.bomService.create(createBomDto, req.user);
   }
 
@@ -75,17 +71,41 @@ export class BOMController {
     return this.bomService.remove(id);
   }
 
+  /**
+   * Calculate material requirements for a BOM and quantity
+   */
   @Get(':id/material-requirements')
-  async getMaterialRequirements(@Param('id') id: string, @Query('quantity') quantity: string): Promise<MaterialRequirement[]> {
-    if (!quantity) {
-      throw new BadRequestException('Quantity parameter is required');
-    }
+  @ApiOperation({ summary: 'Calculate material requirements for a BOM and quantity' })
+  @ApiParam({ name: 'id', description: 'BOM ID' })
+  @ApiQuery({ name: 'quantity', required: true, type: Number })
+  @ApiResponse({ status: 200, type: MaterialRequirementsDto })
+  async getMaterialRequirements(
+    @Param('id') id: string,
+    @Query('quantity') quantity: number
+  ): Promise<MaterialRequirementsDto> {
+    return this.bomService.calculateMaterialRequirements(id, Number(quantity));
+  }
 
-    return this.bomService.calculateMaterialRequirements(id, parseFloat(quantity));
+  /**
+   * Calculate material cost for a BOM and quantity
+   */
+  @Get(':id/cost')
+  @ApiOperation({ summary: 'Calculate material cost for a BOM and quantity' })
+  @ApiParam({ name: 'id', description: 'BOM ID' })
+  @ApiQuery({ name: 'quantity', required: true, type: Number })
+  @ApiResponse({ status: 200, type: MaterialCostDto })
+  async getMaterialCost(
+    @Param('id') id: string,
+    @Query('quantity') quantity: number
+  ): Promise<MaterialCostDto> {
+    return this.bomService.calculateMaterialCost(id, Number(quantity));
   }
 
   @Get(':id/availability')
-  async checkAvailability(@Param('id') id: string, @Query('quantity') quantity: string): Promise<AvailabilityCheck> {
+  async checkAvailability(
+    @Param('id') id: string,
+    @Query('quantity') quantity: string
+  ): Promise<AvailabilityCheck> {
     if (!quantity) {
       throw new BadRequestException('Quantity parameter is required');
     }
@@ -94,7 +114,10 @@ export class BOMController {
   }
 
   @Get(':id/cost')
-  async calculateCost(@Param('id') id: string, @Query('quantity') quantity: string): Promise<ProductionCost> {
+  async calculateCost(
+    @Param('id') id: string,
+    @Query('quantity') quantity: string
+  ): Promise<ProductionCost> {
     if (!quantity) {
       throw new BadRequestException('Quantity parameter is required');
     }

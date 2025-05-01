@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { EmployeeAttendance } from '../entities/employee-attendance.entity';
+import { Repository } from 'typeorm';
 import { Employee } from '../entities/employee.entity';
+import { EmployeeAttendance } from '../entities/employee-attendance.entity';
+import { EmployeeAttendanceSummary } from '../types/employee.types';
+import { CreateEmployeeDto, MarkAttendanceDto } from './dto/employee.dto';
+import { getTodayAttendance } from './services/attendance.service';
+import { createEmployee, markAttendance } from './services/employee-creation.service';
 
 @Injectable()
 export class EmployeesService {
@@ -13,31 +17,15 @@ export class EmployeesService {
     private employeeRepository: Repository<Employee>
   ) {}
 
-  async getTodayAttendance() {
-    const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+  async getTodayAttendance(): Promise<EmployeeAttendanceSummary> {
+    return getTodayAttendance(this.employeeAttendanceRepository, this.employeeRepository);
+  }
 
-    const totalEmployees = await this.employeeRepository.count();
-    const attendance = await this.employeeAttendanceRepository.find({
-      where: {
-        checkInTime: Between(startOfDay, endOfDay),
-      },
-      relations: ['employee'],
-    });
+  async createEmployee(dto: CreateEmployeeDto): Promise<Employee> {
+    return createEmployee(this.employeeRepository, dto);
+  }
 
-    return {
-      date: today,
-      totalEmployees,
-      presentCount: attendance.length,
-      absentCount: totalEmployees - attendance.length,
-      attendanceRate: totalEmployees > 0 ? (attendance.length / totalEmployees) * 100 : 0,
-      attendance: attendance.map((record) => ({
-        employeeId: record.employee.id,
-        employeeName: record.employee.name,
-        checkInTime: record.checkInTime,
-        checkOutTime: record.checkOutTime,
-      })),
-    };
+  async markAttendance(dto: MarkAttendanceDto): Promise<EmployeeAttendance> {
+    return markAttendance(this.employeeRepository, this.employeeAttendanceRepository, dto);
   }
 }

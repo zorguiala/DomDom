@@ -11,6 +11,10 @@ import { ProductionController } from './production.controller';
 import { AttendanceController } from './attendance.controller';
 import { ProductionService } from './production.service';
 import { AttendanceService } from './attendance.service';
+import { ProductionOrderService } from './services/production-order.service';
+import { ProductionRecordService } from './services/production-record.service';
+import { MaterialConsumptionService } from './services/material-consumption.service';
+import { EmployeeProductivityService } from './services/employee-productivity.service';
 
 @Module({
   imports: [
@@ -25,7 +29,23 @@ import { AttendanceService } from './attendance.service';
     InventoryModule,
   ],
   controllers: [ProductionController, AttendanceController],
-  providers: [ProductionService, AttendanceService],
-  exports: [ProductionService, AttendanceService],
+  providers: [
+    ProductionService,
+    AttendanceService,
+    // Register the new specialized services
+    ProductionOrderService,
+    ProductionRecordService,
+    MaterialConsumptionService,
+    EmployeeProductivityService,
+  ],
+  exports: [
+    ProductionService,
+    AttendanceService,
+    // Export the new specialized services
+    ProductionOrderService,
+    ProductionRecordService,
+    MaterialConsumptionService,
+    EmployeeProductivityService,
+  ],
 })
 export class ProductionModule {}
