@@ -1,12 +1,13 @@
-import { Space } from "antd";
+import { SalesList } from "../components/sales/sales-list";
+import { Typography } from "antd";
 import { useTranslation } from "react-i18next";
 
-export default function Sales() {
+export default function SalesPage() {
   const { t } = useTranslation();
-
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      {/* TODO: Add sales management features */}
-    </Space>
+    <div style={{ padding: 24 }}>
+      <Typography.Title level={2}>{t("sales.title", "Sales")}</Typography.Title>
+      <SalesList />
+    </div>
   );
 }

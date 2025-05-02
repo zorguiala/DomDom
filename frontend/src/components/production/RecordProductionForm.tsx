@@ -37,7 +37,7 @@ export function RecordProductionForm({
   const queryClient = useQueryClient();
 
   // Get employees for select dropdown
-  const { data: employees, isLoading: isLoadingEmployees } = useQuery({
+  const { data: employees = [], isLoading: isLoadingEmployees } = useQuery({
     queryKey: ["employees"],
     queryFn: () => productionApi.getEmployees(),
     enabled: open,
@@ -125,7 +125,7 @@ export function RecordProductionForm({
               <Text>
                 {t("production.progress")}: {productionOrder.completedQuantity}{" "}
                 / {productionOrder.quantity} (
-                {remainingQuantity > 0
+                {remainingQuantity !== undefined && remainingQuantity > 0
                   ? t("production.remaining", { count: remainingQuantity })
                   : t("production.completed")}
                 )
@@ -163,9 +163,9 @@ export function RecordProductionForm({
               ]}
             >
               <Select placeholder={t("production.selectEmployee")}>
-                {employees?.map((employee) => (
+                {employees.map((employee) => (
                   <Select.Option key={employee.id} value={employee.id}>
-                    {employee.name}
+                    {employee.firstName} {employee.lastName}
                   </Select.Option>
                 ))}
               </Select>

@@ -1,24 +1,18 @@
-import { useState, useEffect } from "react";
 import {
   Modal,
   Typography,
   Descriptions,
   Progress,
   Button,
-  Card,
   Table,
   Tag,
   Spin,
 } from "antd";
-import { FileTextOutlined, BarChartOutlined } from "@ant-design/icons";
+import { BarChartOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { productionApi } from "../../services/productionServices/productionApi";
-import {
-  ProductionOrder,
-  ProductionOrderStatus,
-  ProductionRecord,
-} from "../../types/production";
+import { ProductionOrder, ProductionOrderStatus } from "../../types/production";
 
 const { Title, Text } = Typography;
 
@@ -40,19 +34,14 @@ export function ProductionOrderDetails({
   const { t } = useTranslation();
 
   // Fetch order details
-  const {
-    data: orderDetails,
-    isLoading: isLoadingDetails,
-    error,
-    refetch,
-  } = useQuery({
+  const { data: orderDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ["production-order-details", orderId],
     queryFn: () => productionApi.getOrderById(orderId),
     enabled: open && Boolean(orderId),
   });
 
   // Fetch production progress
-  const { data: progress, isLoading: isLoadingProgress } = useQuery({
+  const { isLoading: isLoadingProgress } = useQuery({
     queryKey: ["production-order-progress", orderId],
     queryFn: () => productionApi.getProductionProgress(orderId),
     enabled: open && Boolean(orderId),
@@ -101,7 +90,7 @@ export function ProductionOrderDetails({
     }
   };
 
-  const getPriorityLabel = (priority: string) => {
+  const getPriorityLabel = (priority?: string) => {
     switch (priority) {
       case "high":
         return t("production.priority.high");
@@ -110,7 +99,7 @@ export function ProductionOrderDetails({
       case "low":
         return t("production.priority.low");
       default:
-        return priority;
+        return priority || "-";
     }
   };
 
@@ -191,8 +180,14 @@ export function ProductionOrderDetails({
         <>
           <Descriptions bordered column={2}>
             <Descriptions.Item label={t("production.status")} span={2}>
-              <Tag color={getStatusTagColor(orderDetails?.status)}>
-                {getStatusLabel(orderDetails?.status)}
+              <Tag
+                color={getStatusTagColor(
+                  orderDetails?.status || ProductionOrderStatus.PLANNED
+                )}
+              >
+                {getStatusLabel(
+                  orderDetails?.status || ProductionOrderStatus.PLANNED
+                )}
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={t("production.bomName")} span={2}>
@@ -208,7 +203,9 @@ export function ProductionOrderDetails({
               {getPriorityLabel(orderDetails?.priority)}
             </Descriptions.Item>
             <Descriptions.Item label={t("production.plannedStartDate")}>
-              {new Date(orderDetails?.plannedStartDate).toLocaleDateString()}
+              {orderDetails?.plannedStartDate
+                ? new Date(orderDetails.plannedStartDate).toLocaleDateString()
+                : "-"}
             </Descriptions.Item>
             {orderDetails?.actualStartDate && (
               <Descriptions.Item label={t("production.actualStartDate")}>
@@ -222,7 +219,7 @@ export function ProductionOrderDetails({
             )}
             {orderDetails?.assignedTo && (
               <Descriptions.Item label={t("production.assignedTo")}>
-                {orderDetails.assignedTo.name}
+                {orderDetails.assignedTo.firstName}
               </Descriptions.Item>
             )}
             {orderDetails?.notes && (

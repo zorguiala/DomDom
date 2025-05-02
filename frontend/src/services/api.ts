@@ -31,6 +31,13 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    console.error("API Response Error:", {
+      status: error.response?.status,
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      data: error.response?.data,
+    });
+
     // Only handle 401 errors that aren't from the auth endpoints
     if (
       error.response?.status === 401 &&
@@ -71,6 +78,11 @@ export interface RegisterData {
 }
 
 export const authApi = {
+  setToken: (token: string) => {
+    // Set token for future API calls
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  },
+
   login: async (credentials: LoginCredentials) => {
     try {
       const response = await api.post("/auth/login", {
@@ -93,6 +105,26 @@ export const authApi = {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(error.response?.data?.message || "Registration failed");
+      }
+      throw error;
+    }
+  },
+
+  getProfile: async () => {
+    try {
+      const response = await api.get("/auth/me");
+      return response.data;
+    } catch (error) {
+      console.error("authApi.getProfile: Error fetching profile", error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to fetch profile";
+        console.error("authApi.getProfile: Error details", {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: errorMessage,
+        });
+        throw new Error(errorMessage);
       }
       throw error;
     }
@@ -142,23 +174,23 @@ export const dashboardApi = {
     return response.data;
   },
 
-  // Employee Attendance
-  getEmployeePresence: async () => {
-    const response = await api.get("/employees/attendance/today");
-    return response.data;
-  },
+  // Employee Attendance (DISABLED: endpoint does not exist)
+  // getEmployeePresence: async () => {
+  //   const response = await api.get("/employees/attendance/today");
+  //   return response.data;
+  // },
 
-  // Recent Activities
-  getRecentActivities: async () => {
-    const response = await api.get("/activities/recent");
-    return response.data;
-  },
+  // Recent Activities (DISABLED: endpoint does not exist)
+  // getRecentActivities: async () => {
+  //   const response = await api.get("/activities/recent");
+  //   return response.data;
+  // },
 
-  // System Alerts
-  getSystemAlerts: async () => {
-    const response = await api.get("/alerts");
-    return response.data;
-  },
+  // System Alerts (DISABLED: endpoint does not exist)
+  // getSystemAlerts: async () => {
+  //   const response = await api.get("/alerts");
+  //   return response.data;
+  // },
 };
 
 export default api;

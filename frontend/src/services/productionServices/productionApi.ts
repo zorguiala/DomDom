@@ -9,6 +9,7 @@ import {
   UpdateProductionOrderDto,
   UpdateProductionOrderStatusDto,
   RecordProductionDto,
+  ProductionOrderPagination,
 } from "../../types/production";
 import { Employee } from "../../types/employee";
 
@@ -16,10 +17,12 @@ export const productionApi = {
   // Production Orders
   getAllOrders: async (
     status?: ProductionOrderStatus
-  ): Promise<ProductionOrder[]> => {
+  ): Promise<ProductionOrderPagination> => {
     const response = await api.get("/production/orders", {
       params: { status },
     });
+    console.log("getAllOrders response", response.data);
+
     return response.data;
   },
 

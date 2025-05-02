@@ -26,7 +26,7 @@ import * as ExcelJS from 'exceljs';
 import * as fs from 'fs';
 import * as path from 'path';
 import { SalesService } from '../sales/sales.service';
-import { ProductService } from '../inventory/product.service';
+import { ProductsService } from '../products/products.service';
 import { ProductionService } from '../production/production.service';
 
 // Define interfaces for content types to improve type safety
@@ -103,7 +103,7 @@ export class DocumentsService {
     @InjectRepository(DocumentTemplate)
     private templateRepository: Repository<DocumentTemplate>,
     private salesService: SalesService,
-    private productService: ProductService,
+    private ProductsService: ProductsService,
     private productionService: ProductionService
   ) {
     // Ensure the documents directory exists
@@ -143,7 +143,7 @@ export class DocumentsService {
       where: { isActive: true },
       order: { createdAt: 'DESC' },
     });
-    return templates.map(template => this.mapTemplateToResponse(template));
+    return templates.map((template) => this.mapTemplateToResponse(template));
   }
 
   async getTemplateById(id: string): Promise<TemplateDetailsResponseDto> {
@@ -175,7 +175,9 @@ export class DocumentsService {
   ): Promise<DocumentResponseDto> {
     let templateContent: string | null = null;
     if (documentData.templateId) {
-      const template = await this.templateRepository.findOne({ where: { id: documentData.templateId } });
+      const template = await this.templateRepository.findOne({
+        where: { id: documentData.templateId },
+      });
       if (template) {
         templateContent = template.content;
       }
@@ -192,6 +194,7 @@ export class DocumentsService {
     } else if (documentData.format === DocumentFormat.EXCEL) {
       await this.createExcel(documentData, templateContent, outputPath);
     } else {
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       throw new Error(`Unsupported format: ${documentData.format}`);
     }
 
@@ -212,7 +215,7 @@ export class DocumentsService {
   }
 
   async generateInvoice(data: GenerateInvoiceDto, user: User): Promise<DocumentResponseDto> {
-    const sale = await this.salesService.findOne(data.saleId);
+    const sale = await this.salesService.getSale(data.saleId);
     if (!sale) {
       throw new NotFoundException(`Sale with ID ${data.saleId} not found`);
     }
@@ -247,7 +250,7 @@ export class DocumentsService {
     // Fetch product details for each item
     const items = await Promise.all(
       data.items.map(async (item) => {
-        const product = await this.productService.findOne(item.productId);
+        const product = await this.ProductsService.findOne(item.productId);
         return {
           product: { name: product.name },
           quantity: item.quantity,
@@ -288,7 +291,9 @@ export class DocumentsService {
     data: GenerateProductionReportDto,
     user: User
   ): Promise<DocumentResponseDto> {
-    const startDate = data.startDate ? new Date(data.startDate) : new Date(new Date().setDate(new Date().getDate() - 30));
+    const startDate = data.startDate
+      ? new Date(data.startDate)
+      : new Date(new Date().setDate(new Date().getDate() - 30));
     const endDate = data.endDate ? new Date(data.endDate) : new Date();
 
     // Get production records with filters
@@ -296,7 +301,7 @@ export class DocumentsService {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       employeeId: data.employeeId,
-      bomId: data.bomId
+      bomId: data.bomId,
     });
 
     const totalQuantity = records.reduce((sum, record) => sum + record.quantity, 0);
@@ -337,14 +342,14 @@ export class DocumentsService {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument();
       const stream = fs.createWriteStream(outputPath);
-      
+
       doc.pipe(stream);
-      
+
       // Add content to PDF
       this.addContentToPDF(doc, documentData, templateContent);
-      
+
       doc.end();
-      
+
       stream.on('finish', () => resolve());
       stream.on('error', (err) => reject(err));
     });
@@ -385,7 +390,7 @@ export class DocumentsService {
   private renderInvoicePDF(doc: PDFKit.PDFDocument, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const invoice = content.invoice;
-    
+
     if (!invoice) {
       doc.text('Invoice data not available');
       return;
@@ -394,12 +399,12 @@ export class DocumentsService {
     // Header
     doc.fontSize(16).text('INVOICE', { align: 'center' });
     doc.moveDown();
-    
+
     // Invoice details
     doc.fontSize(12);
     doc.text(`Invoice Number: ${invoice.invoiceNumber}`);
     doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`);
-    
+
     // Customer details
     if (invoice.customer) {
       doc.moveDown();
@@ -410,12 +415,12 @@ export class DocumentsService {
         doc.text(`${invoice.customer.firstName} ${invoice.customer.lastName}`);
       }
     }
-    
+
     // Items table
     if (invoice.items && invoice.items.length > 0) {
       doc.moveDown();
       doc.text('Items:', { underline: true });
-      
+
       // Table header
       const tableTop = doc.y;
       doc.fontSize(10);
@@ -423,7 +428,7 @@ export class DocumentsService {
       doc.text('Quantity', 200, tableTop);
       doc.text('Unit Price', 300, tableTop);
       doc.text('Total', 400, tableTop);
-      
+
       // Table rows
       let y = tableTop + 20;
       for (const item of invoice.items) {
@@ -433,7 +438,7 @@ export class DocumentsService {
         doc.text(item.totalPrice?.toFixed(2) || '0.00', 400, y);
         y += 20;
       }
-      
+
       // Totals
       doc.moveDown();
       doc.fontSize(12);
@@ -448,7 +453,7 @@ export class DocumentsService {
   private renderBonDeSortiePDF(doc: PDFKit.PDFDocument, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const bonDeSortie = content.bonDeSortie;
-    
+
     if (!bonDeSortie) {
       doc.text('Bon de Sortie data not available');
       return;
@@ -457,17 +462,17 @@ export class DocumentsService {
     // Header
     doc.fontSize(16).text('BON DE SORTIE', { align: 'center' });
     doc.moveDown();
-    
+
     // Reference and date
     doc.fontSize(12);
     doc.text(`Reference: ${bonDeSortie.reference}`);
     doc.text(`Date: ${new Date(bonDeSortie.date).toLocaleDateString()}`);
-    
+
     // Items table
     if (bonDeSortie.items && bonDeSortie.items.length > 0) {
       doc.moveDown();
       doc.text('Items:', { underline: true });
-      
+
       // Table header
       const tableTop = doc.y;
       doc.fontSize(10);
@@ -476,7 +481,7 @@ export class DocumentsService {
       doc.text('Unit', 300, tableTop);
       doc.text('Unit Price', 400, tableTop);
       doc.text('Total', 500, tableTop);
-      
+
       // Table rows
       let y = tableTop + 20;
       for (const item of bonDeSortie.items) {
@@ -487,7 +492,7 @@ export class DocumentsService {
         doc.text(item.total?.toFixed(2) || '0.00', 500, y);
         y += 20;
       }
-      
+
       // Totals
       doc.moveDown();
       doc.fontSize(12);
@@ -495,7 +500,7 @@ export class DocumentsService {
       doc.text(`Total Quantity: ${bonDeSortie.totalQuantity}`, { align: 'right' });
       doc.text(`Total Value: ${bonDeSortie.totalValue.toFixed(2)}`, { align: 'right' });
     }
-    
+
     // Notes
     if (bonDeSortie.notes) {
       doc.moveDown();
@@ -507,7 +512,7 @@ export class DocumentsService {
   private renderReportPDF(doc: PDFKit.PDFDocument, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const report = content.productionReport;
-    
+
     if (!report) {
       doc.text('Report data not available');
       return;
@@ -516,21 +521,23 @@ export class DocumentsService {
     // Header
     doc.fontSize(16).text('PRODUCTION REPORT', { align: 'center' });
     doc.moveDown();
-    
+
     // Date range
     doc.fontSize(12);
-    doc.text(`Period: ${new Date(report.startDate).toLocaleDateString()} - ${new Date(report.endDate).toLocaleDateString()}`);
-    
+    doc.text(
+      `Period: ${new Date(report.startDate).toLocaleDateString()} - ${new Date(report.endDate).toLocaleDateString()}`
+    );
+
     // Summary
     doc.moveDown();
     doc.text(`Total Records: ${report.totalRecords}`);
     doc.text(`Total Quantity: ${report.totalQuantity}`);
-    
+
     // Records table
     if (report.records && report.records.length > 0) {
       doc.moveDown();
       doc.text('Production Records:', { underline: true });
-      
+
       // Table header
       const tableTop = doc.y;
       doc.fontSize(10);
@@ -539,12 +546,16 @@ export class DocumentsService {
       doc.text('BOM', 250, tableTop);
       doc.text('Quantity', 350, tableTop);
       doc.text('Quality Checked', 450, tableTop);
-      
+
       // Table rows
       let y = tableTop + 20;
       for (const record of report.records) {
         doc.text(new Date(record.createdAt).toLocaleDateString(), 50, y);
-        doc.text(record.employee ? `${record.employee.firstName} ${record.employee.lastName}` : 'N/A', 150, y);
+        doc.text(
+          record.employee ? `${record.employee.firstName} ${record.employee.lastName}` : 'N/A',
+          150,
+          y
+        );
         doc.text(record.bom?.name || 'N/A', 250, y);
         doc.text(record.quantity.toString(), 350, y);
         doc.text(record.qualityChecked ? 'Yes' : 'No', 450, y);
@@ -560,7 +571,7 @@ export class DocumentsService {
   ): Promise<void> {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Document');
-    
+
     // Add content to Excel
     if (templateContent && documentData.content) {
       // Template processing for Excel is more complex and would require a different approach
@@ -581,14 +592,14 @@ export class DocumentsService {
           worksheet.addRow(['Document content not available']);
       }
     }
-    
+
     await workbook.xlsx.writeFile(outputPath);
   }
 
   private renderInvoiceExcel(sheet: ExcelJS.Worksheet, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const invoice = content.invoice;
-    
+
     if (!invoice) {
       sheet.addRow(['Invoice data not available']);
       return;
@@ -597,11 +608,11 @@ export class DocumentsService {
     // Header
     sheet.addRow(['INVOICE']);
     sheet.addRow([]);
-    
+
     // Invoice details
     sheet.addRow(['Invoice Number:', invoice.invoiceNumber]);
     sheet.addRow(['Date:', new Date(invoice.date).toLocaleDateString()]);
-    
+
     // Customer details
     if (invoice.customer) {
       sheet.addRow([]);
@@ -612,25 +623,25 @@ export class DocumentsService {
         sheet.addRow([`${invoice.customer.firstName} ${invoice.customer.lastName}`]);
       }
     }
-    
+
     // Items table
     if (invoice.items && invoice.items.length > 0) {
       sheet.addRow([]);
       sheet.addRow(['Items:']);
-      
+
       // Table header
       sheet.addRow(['Product', 'Quantity', 'Unit Price', 'Total']);
-      
+
       // Table rows
       for (const item of invoice.items) {
         sheet.addRow([
           item.product?.name || 'Unknown',
           item.quantity || 0,
           item.unitPrice || 0,
-          item.totalPrice || 0
+          item.totalPrice || 0,
         ]);
       }
-      
+
       // Totals
       sheet.addRow([]);
       sheet.addRow(['', '', 'Total Amount:', invoice.totalAmount]);
@@ -644,7 +655,7 @@ export class DocumentsService {
   private renderBonDeSortieExcel(sheet: ExcelJS.Worksheet, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const bonDeSortie = content.bonDeSortie;
-    
+
     if (!bonDeSortie) {
       sheet.addRow(['Bon de Sortie data not available']);
       return;
@@ -653,19 +664,19 @@ export class DocumentsService {
     // Header
     sheet.addRow(['BON DE SORTIE']);
     sheet.addRow([]);
-    
+
     // Reference and date
     sheet.addRow(['Reference:', bonDeSortie.reference]);
     sheet.addRow(['Date:', new Date(bonDeSortie.date).toLocaleDateString()]);
-    
+
     // Items table
     if (bonDeSortie.items && bonDeSortie.items.length > 0) {
       sheet.addRow([]);
       sheet.addRow(['Items:']);
-      
+
       // Table header
       sheet.addRow(['Product', 'Quantity', 'Unit', 'Unit Price', 'Total']);
-      
+
       // Table rows
       for (const item of bonDeSortie.items) {
         sheet.addRow([
@@ -673,17 +684,17 @@ export class DocumentsService {
           item.quantity,
           item.unit || '',
           item.unitPrice || 0,
-          item.total || 0
+          item.total || 0,
         ]);
       }
-      
+
       // Totals
       sheet.addRow([]);
       sheet.addRow(['', '', '', 'Total Items:', bonDeSortie.totalItems]);
       sheet.addRow(['', '', '', 'Total Quantity:', bonDeSortie.totalQuantity]);
       sheet.addRow(['', '', '', 'Total Value:', bonDeSortie.totalValue]);
     }
-    
+
     // Notes
     if (bonDeSortie.notes) {
       sheet.addRow([]);
@@ -695,7 +706,7 @@ export class DocumentsService {
   private renderReportExcel(sheet: ExcelJS.Worksheet, documentData: CreateDocumentDto): void {
     const content = documentData.content as DocumentContent;
     const report = content.productionReport;
-    
+
     if (!report) {
       sheet.addRow(['Report data not available']);
       return;
@@ -704,23 +715,26 @@ export class DocumentsService {
     // Header
     sheet.addRow(['PRODUCTION REPORT']);
     sheet.addRow([]);
-    
+
     // Date range
-    sheet.addRow(['Period:', `${new Date(report.startDate).toLocaleDateString()} - ${new Date(report.endDate).toLocaleDateString()}`]);
-    
+    sheet.addRow([
+      'Period:',
+      `${new Date(report.startDate).toLocaleDateString()} - ${new Date(report.endDate).toLocaleDateString()}`,
+    ]);
+
     // Summary
     sheet.addRow([]);
     sheet.addRow(['Total Records:', report.totalRecords]);
     sheet.addRow(['Total Quantity:', report.totalQuantity]);
-    
+
     // Records table
     if (report.records && report.records.length > 0) {
       sheet.addRow([]);
       sheet.addRow(['Production Records:']);
-      
+
       // Table header
       sheet.addRow(['Date', 'Employee', 'BOM', 'Quantity', 'Quality Checked']);
-      
+
       // Table rows
       for (const record of report.records) {
         sheet.addRow([
@@ -728,7 +742,7 @@ export class DocumentsService {
           record.employee ? `${record.employee.firstName} ${record.employee.lastName}` : 'N/A',
           record.bom?.name || 'N/A',
           record.quantity,
-          record.qualityChecked ? 'Yes' : 'No'
+          record.qualityChecked ? 'Yes' : 'No',
         ]);
       }
     }
@@ -737,29 +751,29 @@ export class DocumentsService {
   private processTemplate(template: string, data: Record<string, any>): string {
     const flattenedData = this.flattenObject(data);
     let processedContent = template;
-    
+
     // Replace placeholders with actual values
     for (const [key, value] of Object.entries(flattenedData)) {
       const placeholder = new RegExp(`{{${key}}}`, 'g');
       processedContent = processedContent.replace(placeholder, String(value));
     }
-    
+
     return processedContent;
   }
 
   private flattenObject(obj: Record<string, any>, prefix = ''): Record<string, any> {
     const flattened: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(obj)) {
       const newKey = prefix ? `${prefix}.${key}` : key;
-      
+
       if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
         Object.assign(flattened, this.flattenObject(value, newKey));
       } else {
         flattened[newKey] = value;
       }
     }
-    
+
     return flattened;
   }
 
@@ -784,7 +798,7 @@ export class DocumentsService {
       where: { createdById: userId },
       order: { createdAt: 'DESC' },
     });
-    return documents.map(document => this.mapDocumentToResponse(document));
+    return documents.map((document) => this.mapDocumentToResponse(document));
   }
 
   // Helper methods for mapping entities to DTOs

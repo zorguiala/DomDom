@@ -15,7 +15,6 @@ import { ProductionOrderService } from './services/production-order.service';
 import { ProductionRecordService } from './services/production-record.service';
 import { MaterialConsumptionService } from './services/material-consumption.service';
 import { EmployeeProductivityService } from './services/employee-productivity.service';
-import { QueryRunner } from 'typeorm';
 import {
   EfficiencyMetrics,
   ProductionOutput,
@@ -126,12 +125,8 @@ export class ProductionService {
     };
   }
 
-  async consumeProductionMaterials(
-    order: ProductionOrder,
-    user: User,
-    queryRunner: QueryRunner
-  ): Promise<void> {
-    await this.materialConsumptionService.consumeProductionMaterials(order, user, queryRunner);
+  async consumeProductionMaterials(order: ProductionOrder, user: User): Promise<void> {
+    await this.materialConsumptionService.consumeProductionMaterials(order, user);
   }
 
   async calculateEmployeeProductivity(

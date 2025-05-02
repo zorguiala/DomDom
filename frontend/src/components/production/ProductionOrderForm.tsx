@@ -141,11 +141,13 @@ export function ProductionOrderForm({
                 ]}
               >
                 <Select placeholder={t("production.selectBom")}>
-                  {boms?.map((bom) => (
-                    <Select.Option key={bom.id} value={bom.id}>
-                      {bom.name}
-                    </Select.Option>
-                  ))}
+                  {(boms as { id: string; name: string }[] | undefined)?.map(
+                    (bom) => (
+                      <Select.Option key={bom.id} value={bom.id}>
+                        {bom.name}
+                      </Select.Option>
+                    )
+                  )}
                 </Select>
               </Form.Item>
             </Col>

@@ -34,6 +34,21 @@ export class CreateSaleDto {
   @ApiProperty({ type: [CreateSaleItemDto] }) items: CreateSaleItemDto[];
 }
 
+export class UpdateSaleItemDto {
+  @ApiProperty() productId: string;
+  @ApiProperty() quantity: number;
+  @ApiProperty() unitPrice: number;
+}
+
+export class UpdateSaleDto {
+  @ApiProperty({ required: false }) customerName?: string;
+  @ApiProperty({ type: [UpdateSaleItemDto], required: false }) items?: UpdateSaleItemDto[];
+  @ApiProperty({ required: false }) status?: SaleStatus;
+  @ApiProperty({ required: false }) notes?: string;
+  @ApiProperty({ required: false }) discount?: number;
+  @ApiProperty({ required: false }) paymentMethod?: string;
+}
+
 export class SaleReportFilterDto {
   @ApiProperty({ required: false }) startDate?: string;
   @ApiProperty({ required: false }) endDate?: string;

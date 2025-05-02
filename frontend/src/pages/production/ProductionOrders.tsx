@@ -14,6 +14,8 @@ import {
   message,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import type { TablePaginationConfig } from "antd/es/table";
+import type { SorterResult } from "antd/es/table/interface";
 import productionService, {
   ProductionOrder,
 } from "../../services/production.service";
@@ -27,18 +29,45 @@ const statusColors = {
   cancelled: "error",
 };
 
+interface TableParams {
+  pagination?: TablePaginationConfig;
+  sortField?: string;
+  sortOrder?: string;
+}
+
 const ProductionOrders: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [tableParams, setTableParams] = useState<TableParams>({
+    pagination: {
+      current: 1,
+      pageSize: 20,
+      total: 0,
+    },
+  });
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (params: TableParams = tableParams) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await productionService.getOrders();
-      setOrders(data);
+      const { current, pageSize } = params.pagination || {};
+      const response = await productionService.getOrders({
+        page: current,
+        limit: pageSize,
+        sortBy: params.sortField,
+        sortOrder: params.sortOrder?.toUpperCase(),
+      });
+
+      setOrders(response.data);
+      setTableParams({
+        ...params,
+        pagination: {
+          ...params.pagination,
+          total: response.total,
+        },
+      });
     } catch (error) {
       message.error("Failed to fetch production orders");
     } finally {
@@ -65,21 +94,38 @@ const ProductionOrders: React.FC = () => {
     }
   };
 
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    _: any,
+    sorter: SorterResult<ProductionOrder>
+  ) => {
+    const params: TableParams = {
+      pagination,
+      sortField: sorter.field as string,
+      sortOrder: sorter.order === "descend" ? "DESC" : "ASC",
+    };
+    setTableParams(params);
+    fetchOrders(params);
+  };
+
   const columns: ColumnsType<ProductionOrder> = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
+      sorter: true,
     },
     {
       title: "BOM",
       dataIndex: ["bom", "name"],
       key: "bom",
+      sorter: true,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      sorter: true,
       render: (status: string) => (
         <Tag color={statusColors[status]}>{status.toUpperCase()}</Tag>
       ),
@@ -147,6 +193,8 @@ const ProductionOrders: React.FC = () => {
           dataSource={orders}
           rowKey="id"
           loading={loading}
+          pagination={tableParams.pagination}
+          onChange={handleTableChange}
         />
       </Card>
 

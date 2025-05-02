@@ -15,7 +15,12 @@ export enum ProductionOrderPriority {
   MEDIUM = "medium",
   HIGH = "high",
 }
-
+export type ProductionOrderPagination = {
+  data: ProductionOrder[];
+  limit: number;
+  page: number;
+  total: number;
+};
 export interface ProductionOrder {
   id: string;
   bom: BOM;

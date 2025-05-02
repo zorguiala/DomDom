@@ -45,10 +45,13 @@ export default function Production() {
   const [recordFormOpen, setRecordFormOpen] = useState(false);
 
   // Queries
-  const { data: orders, isLoading } = useQuery({
+  const { data: { data: orders } = { data: [] }, isLoading } = useQuery({
     queryKey: ["production-orders", search, statusFilter],
     queryFn: () => productionApi.getAllOrders(statusFilter),
   });
+
+  // Always use an array for orders, regardless of API response shape
+  const orderList: ProductionOrder[] = Array.isArray(orders) ? orders : [];
 
   // Mutations
   const createOrder = useMutation({
@@ -173,6 +176,123 @@ export default function Production() {
     handleCloseRecordForm();
   };
 
+  // Tabs items array for Ant Design v5+
+  const tabItems = [
+    {
+      key: "all",
+      label: t("production.allOrders"),
+      children: (
+        <>
+          <div style={{ marginBottom: 16 }}>
+            <Row gutter={16} align="middle">
+              <Col xs={24} md={8}>
+                <Search
+                  placeholder={t("common.search")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  allowClear
+                />
+              </Col>
+              <Col xs={24} md={8}>
+                <Select
+                  style={{ width: "100%" }}
+                  placeholder={t("production.filterByStatus")}
+                  allowClear
+                  value={statusFilter}
+                  onChange={(value) => setStatusFilter(value)}
+                >
+                  <Option value={ProductionOrderStatus.PLANNED}>
+                    {t("production.status.planned")}
+                  </Option>
+                  <Option value={ProductionOrderStatus.IN_PROGRESS}>
+                    {t("production.status.inProgress")}
+                  </Option>
+                  <Option value={ProductionOrderStatus.COMPLETED}>
+                    {t("production.status.completed")}
+                  </Option>
+                </Select>
+              </Col>
+            </Row>
+          </div>
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              <Spin size="large" />
+            </div>
+          ) : (
+            <ProductionOrderList
+              orders={orderList}
+              onView={handleViewOrder}
+              onEdit={handleEditOrder}
+              onDelete={handleDeleteOrder}
+              onUpdateStatus={handleUpdateStatus}
+              onRecordProduction={handleRecordProduction}
+            />
+          )}
+        </>
+      ),
+    },
+    {
+      key: "inProgress",
+      label: t("production.inProgress"),
+      children: isLoading ? (
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <ProductionOrderList
+          orders={orderList.filter(
+            (order) => order.status === ProductionOrderStatus.IN_PROGRESS
+          )}
+          onView={handleViewOrder}
+          onEdit={handleEditOrder}
+          onDelete={handleDeleteOrder}
+          onUpdateStatus={handleUpdateStatus}
+          onRecordProduction={handleRecordProduction}
+        />
+      ),
+    },
+    {
+      key: "planned",
+      label: t("production.planned"),
+      children: isLoading ? (
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <ProductionOrderList
+          orders={orderList.filter(
+            (order) => order.status === ProductionOrderStatus.PLANNED
+          )}
+          onView={handleViewOrder}
+          onEdit={handleEditOrder}
+          onDelete={handleDeleteOrder}
+          onUpdateStatus={handleUpdateStatus}
+          onRecordProduction={handleRecordProduction}
+        />
+      ),
+    },
+    {
+      key: "completed",
+      label: t("production.completed"),
+      children: isLoading ? (
+        <div style={{ textAlign: "center", padding: "40px" }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <ProductionOrderList
+          orders={orderList.filter(
+            (order) => order.status === ProductionOrderStatus.COMPLETED
+          )}
+          onView={handleViewOrder}
+          onEdit={handleEditOrder}
+          onDelete={handleDeleteOrder}
+          onUpdateStatus={handleUpdateStatus}
+          onRecordProduction={handleRecordProduction}
+        />
+      ),
+    },
+  ];
+
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
       <div
@@ -190,113 +310,7 @@ export default function Production() {
       </div>
 
       <Card>
-        <Tabs defaultActiveKey="all">
-          <TabPane tab={t("production.allOrders")} key="all">
-            <div style={{ marginBottom: 16 }}>
-              <Row gutter={16} align="middle">
-                <Col xs={24} md={8}>
-                  <Search
-                    placeholder={t("common.search")}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    allowClear
-                  />
-                </Col>
-                <Col xs={24} md={8}>
-                  <Select
-                    style={{ width: "100%" }}
-                    placeholder={t("production.filterByStatus")}
-                    allowClear
-                    value={statusFilter}
-                    onChange={(value) => setStatusFilter(value)}
-                  >
-                    <Option value={ProductionOrderStatus.PLANNED}>
-                      {t("production.status.planned")}
-                    </Option>
-                    <Option value={ProductionOrderStatus.IN_PROGRESS}>
-                      {t("production.status.inProgress")}
-                    </Option>
-                    <Option value={ProductionOrderStatus.COMPLETED}>
-                      {t("production.status.completed")}
-                    </Option>
-                  </Select>
-                </Col>
-              </Row>
-            </div>
-
-            {isLoading ? (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <Spin size="large" />
-              </div>
-            ) : (
-              <ProductionOrderList
-                orders={orders || []}
-                onView={handleViewOrder}
-                onEdit={handleEditOrder}
-                onDelete={handleDeleteOrder}
-                onUpdateStatus={handleUpdateStatus}
-                onRecordProduction={handleRecordProduction}
-              />
-            )}
-          </TabPane>
-
-          <TabPane tab={t("production.inProgress")} key="inProgress">
-            {isLoading ? (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <Spin size="large" />
-              </div>
-            ) : (
-              <ProductionOrderList
-                orders={(orders || []).filter(
-                  (order) => order.status === ProductionOrderStatus.IN_PROGRESS
-                )}
-                onView={handleViewOrder}
-                onEdit={handleEditOrder}
-                onDelete={handleDeleteOrder}
-                onUpdateStatus={handleUpdateStatus}
-                onRecordProduction={handleRecordProduction}
-              />
-            )}
-          </TabPane>
-
-          <TabPane tab={t("production.planned")} key="planned">
-            {isLoading ? (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <Spin size="large" />
-              </div>
-            ) : (
-              <ProductionOrderList
-                orders={(orders || []).filter(
-                  (order) => order.status === ProductionOrderStatus.PLANNED
-                )}
-                onView={handleViewOrder}
-                onEdit={handleEditOrder}
-                onDelete={handleDeleteOrder}
-                onUpdateStatus={handleUpdateStatus}
-                onRecordProduction={handleRecordProduction}
-              />
-            )}
-          </TabPane>
-
-          <TabPane tab={t("production.completed")} key="completed">
-            {isLoading ? (
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <Spin size="large" />
-              </div>
-            ) : (
-              <ProductionOrderList
-                orders={(orders || []).filter(
-                  (order) => order.status === ProductionOrderStatus.COMPLETED
-                )}
-                onView={handleViewOrder}
-                onEdit={handleEditOrder}
-                onDelete={handleDeleteOrder}
-                onUpdateStatus={handleUpdateStatus}
-                onRecordProduction={handleRecordProduction}
-              />
-            )}
-          </TabPane>
-        </Tabs>
+        <Tabs defaultActiveKey="all" items={tabItems} />
       </Card>
 
       {/* Production Order Form Modal */}

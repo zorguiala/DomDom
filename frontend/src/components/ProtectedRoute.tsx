@@ -15,6 +15,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
+    console.warn("ProtectedRoute: No user, redirecting to /login", {
+      location: location.pathname,
+    });
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

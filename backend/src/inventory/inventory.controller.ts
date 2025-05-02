@@ -88,7 +88,15 @@ export class InventoryController {
   }
 
   @Get('low-stock')
-  async getLowStockProducts(@Query('threshold', ParseIntPipe) threshold?: number) {
+  async getLowStockProducts(@Query('threshold') thresholdRaw?: string) {
+    let threshold: number | undefined = undefined;
+    if (thresholdRaw !== undefined && thresholdRaw !== '') {
+      const parsed = parseInt(thresholdRaw, 10);
+      if (isNaN(parsed)) {
+        throw new BadRequestException('Threshold must be a number');
+      }
+      threshold = parsed;
+    }
     return this.stockService.getLowStockProducts(threshold);
   }
 

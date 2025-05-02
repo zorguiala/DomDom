@@ -1,7 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Card, Form, Input, Button, Table, Space, message, Row, Col, Select, Typography, Divider, Statistic, Alert } from 'antd';
-import { UserOutlined, ShoppingCartOutlined, FileTextOutlined, TeamOutlined, InboxOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import {
+  Layout,
+  Card,
+  Form,
+  Input,
+  Button,
+  Table,
+  Space,
+  message,
+  Row,
+  Col,
+  Select,
+  Typography,
+  Divider,
+  Statistic,
+  Alert,
+} from "antd";
+import {
+  UserOutlined,
+  ShoppingCartOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  InboxOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+} from "@ant-design/icons";
+import api from "../services/api";
 
 const { Title } = Typography;
 const { Content } = Layout;
@@ -20,7 +44,7 @@ interface ProductionOrder {
   bomId: string;
   quantity: number;
   plannedStartDate: string;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   status: string;
 }
 
@@ -34,7 +58,7 @@ interface Document {
 interface InventoryTransaction {
   id: string;
   productId: string;
-  type: 'IN' | 'OUT';
+  type: "IN" | "OUT";
   quantity: number;
   unitPrice: number;
   reference?: string;
@@ -43,17 +67,19 @@ interface InventoryTransaction {
 const TestPage: React.FC = () => {
   // State management
   const [users, setUsers] = useState<User[]>([]);
-  const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>([]);
+  const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>(
+    []
+  );
   const [documents, setDocuments] = useState<Document[]>([]);
   const [inventoryStats, setInventoryStats] = useState({
     totalItems: 0,
     lowStockItems: 0,
-    totalValue: 0
+    totalValue: 0,
   });
   const [messageApi, contextHolder] = message.useMessage();
 
   // API endpoints
-  const API_BASE_URL = 'http://localhost:3000/api';
+  const API_BASE_URL = "http://localhost:3000/api";
   const ENDPOINTS = {
     users: `${API_BASE_URL}/users`,
     productionOrders: `${API_BASE_URL}/production/orders`,
@@ -73,104 +99,109 @@ const TestPage: React.FC = () => {
   // API calls
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(ENDPOINTS.users);
+      const response = await api.get(ENDPOINTS.users);
       setUsers(response.data);
     } catch (error) {
-      messageApi.error('Failed to fetch users');
+      messageApi.error("Failed to fetch users");
     }
   };
 
   const fetchProductionOrders = async () => {
     try {
-      const response = await axios.get(ENDPOINTS.productionOrders);
+      const response = await api.get(ENDPOINTS.productionOrders);
       setProductionOrders(response.data);
     } catch (error) {
-      messageApi.error('Failed to fetch production orders');
+      messageApi.error("Failed to fetch production orders");
     }
   };
 
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get(ENDPOINTS.documents);
+      const response = await api.get(ENDPOINTS.documents);
       setDocuments(response.data);
     } catch (error) {
-      messageApi.error('Failed to fetch documents');
+      messageApi.error("Failed to fetch documents");
     }
   };
 
   const fetchInventoryStats = async () => {
     try {
-      const response = await axios.get(`${ENDPOINTS.inventory}/stats`);
+      const response = await api.get(`${ENDPOINTS.inventory}/stats`);
       setInventoryStats(response.data);
     } catch (error) {
-      messageApi.error('Failed to fetch inventory statistics');
+      messageApi.error("Failed to fetch inventory statistics");
     }
   };
 
   const handleCreateUser = async (values: any) => {
     try {
-      const response = await axios.post(ENDPOINTS.users, values);
-      messageApi.success('User created successfully');
+      const response = await api.post(ENDPOINTS.users, values);
+      messageApi.success("User created successfully");
       setUsers([...users, response.data]);
     } catch (error) {
-      messageApi.error('Failed to create user');
+      messageApi.error("Failed to create user");
     }
   };
 
   const handleCreateProductionOrder = async (values: any) => {
     try {
-      const response = await axios.post(ENDPOINTS.productionOrders, values);
-      messageApi.success('Production order created successfully');
+      const response = await api.post(ENDPOINTS.productionOrders, values);
+      messageApi.success("Production order created successfully");
       fetchProductionOrders();
     } catch (error) {
-      messageApi.error('Failed to create production order');
+      messageApi.error("Failed to create production order");
     }
   };
 
   const handleCreateDocument = async (values: any) => {
     try {
-      const response = await axios.post(ENDPOINTS.documents, values);
-      messageApi.success('Document created successfully');
+      const response = await api.post(ENDPOINTS.documents, values);
+      messageApi.success("Document created successfully");
       fetchDocuments();
     } catch (error) {
-      messageApi.error('Failed to create document');
+      messageApi.error("Failed to create document");
     }
   };
 
   const handleInventoryUpdate = async (values: any) => {
     try {
-      const response = await axios.post(`${ENDPOINTS.inventory}/transactions`, values);
-      messageApi.success('Inventory updated successfully');
+      const response = await api.post(
+        `${ENDPOINTS.inventory}/transactions`,
+        values
+      );
+      messageApi.success("Inventory updated successfully");
       fetchInventoryStats();
     } catch (error) {
-      messageApi.error('Failed to update inventory');
+      messageApi.error("Failed to update inventory");
     }
   };
 
   // Table columns
   const userColumns = [
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
     },
     {
-      title: 'First Name',
-      dataIndex: 'firstName',
-      key: 'firstName',
+      title: "First Name",
+      dataIndex: "firstName",
+      key: "firstName",
     },
     {
-      title: 'Last Name',
-      dataIndex: 'lastName',
-      key: 'lastName',
+      title: "Last Name",
+      dataIndex: "lastName",
+      key: "lastName",
     },
     {
-      title: 'Actions',
-      key: 'actions',
+      title: "Actions",
+      key: "actions",
       render: (_: any, record: User) => (
         <Space>
           <Button type="link">Edit</Button>
-          <Button type="link" danger>Delete</Button>
+          <Button type="link" danger>
+            Delete
+          </Button>
         </Space>
       ),
     },
@@ -179,7 +210,7 @@ const TestPage: React.FC = () => {
   return (
     <Layout>
       {contextHolder}
-      <Content style={{ padding: '24px' }}>
+      <Content style={{ padding: "24px" }}>
         {/* Statistics Cards */}
         <Row gutter={[24, 24]}>
           <Col span={6}>
@@ -188,7 +219,7 @@ const TestPage: React.FC = () => {
                 title="Total Inventory Items"
                 value={inventoryStats.totalItems}
                 prefix={<InboxOutlined />}
-                valueStyle={{ color: '#3f8600' }}
+                valueStyle={{ color: "#3f8600" }}
               />
             </Card>
           </Col>
@@ -198,7 +229,7 @@ const TestPage: React.FC = () => {
                 title="Low Stock Items"
                 value={inventoryStats.lowStockItems}
                 prefix={<ArrowDownOutlined />}
-                valueStyle={{ color: '#cf1322' }}
+                valueStyle={{ color: "#cf1322" }}
               />
             </Card>
           </Col>
@@ -234,7 +265,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Email"
                       name="email"
-                      rules={[{ required: true, message: 'Please input email!' }]}
+                      rules={[
+                        { required: true, message: "Please input email!" },
+                      ]}
                     >
                       <Input prefix={<UserOutlined />} placeholder="Email" />
                     </Form.Item>
@@ -243,7 +276,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="First Name"
                       name="firstName"
-                      rules={[{ required: true, message: 'Please input first name!' }]}
+                      rules={[
+                        { required: true, message: "Please input first name!" },
+                      ]}
                     >
                       <Input placeholder="First Name" />
                     </Form.Item>
@@ -252,7 +287,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Last Name"
                       name="lastName"
-                      rules={[{ required: true, message: 'Please input last name!' }]}
+                      rules={[
+                        { required: true, message: "Please input last name!" },
+                      ]}
                     >
                       <Input placeholder="Last Name" />
                     </Form.Item>
@@ -277,7 +314,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="BOM ID"
                       name="bomId"
-                      rules={[{ required: true, message: 'Please select BOM!' }]}
+                      rules={[
+                        { required: true, message: "Please select BOM!" },
+                      ]}
                     >
                       <Select placeholder="Select BOM">
                         <Option value="bom1">BOM #1</Option>
@@ -289,7 +328,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Quantity"
                       name="quantity"
-                      rules={[{ required: true, message: 'Please input quantity!' }]}
+                      rules={[
+                        { required: true, message: "Please input quantity!" },
+                      ]}
                     >
                       <Input type="number" min={1} />
                     </Form.Item>
@@ -298,7 +339,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Priority"
                       name="priority"
-                      rules={[{ required: true, message: 'Please select priority!' }]}
+                      rules={[
+                        { required: true, message: "Please select priority!" },
+                      ]}
                     >
                       <Select placeholder="Select priority">
                         <Option value="low">Low</Option>
@@ -309,7 +352,11 @@ const TestPage: React.FC = () => {
                   </Col>
                 </Row>
                 <Form.Item>
-                  <Button type="primary" icon={<ShoppingCartOutlined />} htmlType="submit">
+                  <Button
+                    type="primary"
+                    icon={<ShoppingCartOutlined />}
+                    htmlType="submit"
+                  >
                     Create Production Order
                   </Button>
                 </Form.Item>
@@ -326,12 +373,19 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Document Type"
                       name="documentType"
-                      rules={[{ required: true, message: 'Please select document type!' }]}
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select document type!",
+                        },
+                      ]}
                     >
                       <Select placeholder="Select type">
                         <Option value="invoice">Invoice</Option>
                         <Option value="bon_de_sortie">Bon de Sortie</Option>
-                        <Option value="production_order">Production Order</Option>
+                        <Option value="production_order">
+                          Production Order
+                        </Option>
                         <Option value="report">Report</Option>
                       </Select>
                     </Form.Item>
@@ -340,7 +394,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Title"
                       name="title"
-                      rules={[{ required: true, message: 'Please input title!' }]}
+                      rules={[
+                        { required: true, message: "Please input title!" },
+                      ]}
                     >
                       <Input />
                     </Form.Item>
@@ -349,7 +405,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Format"
                       name="format"
-                      rules={[{ required: true, message: 'Please select format!' }]}
+                      rules={[
+                        { required: true, message: "Please select format!" },
+                      ]}
                     >
                       <Select placeholder="Select format">
                         <Option value="pdf">PDF</Option>
@@ -359,7 +417,11 @@ const TestPage: React.FC = () => {
                   </Col>
                 </Row>
                 <Form.Item>
-                  <Button type="primary" icon={<FileTextOutlined />} htmlType="submit">
+                  <Button
+                    type="primary"
+                    icon={<FileTextOutlined />}
+                    htmlType="submit"
+                  >
                     Generate Document
                   </Button>
                 </Form.Item>
@@ -376,7 +438,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Product"
                       name="productId"
-                      rules={[{ required: true, message: 'Please select product!' }]}
+                      rules={[
+                        { required: true, message: "Please select product!" },
+                      ]}
                     >
                       <Select placeholder="Select product">
                         <Option value="prod1">Product 1</Option>
@@ -388,7 +452,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Transaction Type"
                       name="type"
-                      rules={[{ required: true, message: 'Please select type!' }]}
+                      rules={[
+                        { required: true, message: "Please select type!" },
+                      ]}
                     >
                       <Select placeholder="Select type">
                         <Option value="IN">Stock In</Option>
@@ -400,7 +466,9 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Quantity"
                       name="quantity"
-                      rules={[{ required: true, message: 'Please input quantity!' }]}
+                      rules={[
+                        { required: true, message: "Please input quantity!" },
+                      ]}
                     >
                       <Input type="number" min={1} />
                     </Form.Item>
@@ -409,14 +477,20 @@ const TestPage: React.FC = () => {
                     <Form.Item
                       label="Unit Price"
                       name="unitPrice"
-                      rules={[{ required: true, message: 'Please input unit price!' }]}
+                      rules={[
+                        { required: true, message: "Please input unit price!" },
+                      ]}
                     >
                       <Input type="number" min={0} step={0.01} />
                     </Form.Item>
                   </Col>
                 </Row>
                 <Form.Item>
-                  <Button type="primary" icon={<InboxOutlined />} htmlType="submit">
+                  <Button
+                    type="primary"
+                    icon={<InboxOutlined />}
+                    htmlType="submit"
+                  >
                     Update Inventory
                   </Button>
                 </Form.Item>

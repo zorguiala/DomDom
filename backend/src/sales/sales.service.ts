@@ -79,6 +79,51 @@ export class SalesService {
     return sale;
   }
 
+  async updateSale(id: string, dto: UpdateSaleDto): Promise<Sale> {
+    const sale = await this.saleRepo.findOne({ where: { id }, relations: ['items'] });
+    if (!sale) throw new NotFoundException('Sale not found');
+    if (dto.customerName !== undefined) sale.customerName = dto.customerName;
+    if (dto.status !== undefined) sale.status = dto.status;
+    if (dto.notes !== undefined) sale.notes = dto.notes;
+    if (dto.discount !== undefined) sale.discount = dto.discount;
+    if (dto.paymentMethod !== undefined) sale.paymentMethod = dto.paymentMethod;
+    // Update items if provided
+    if (dto.items) {
+      // Remove old items
+      await this.saleItemRepo.delete({ sale: { id: sale.id } });
+      let total = 0;
+      const items: SaleItem[] = [];
+      for (const itemDto of dto.items) {
+        const product = await this.productRepo.findOne({ where: { id: itemDto.productId } });
+        if (!product) throw new NotFoundException(`Product ${itemDto.productId} not found`);
+        const itemTotal = itemDto.quantity * itemDto.unitPrice;
+        total += itemTotal;
+        items.push(
+          this.saleItemRepo.create({
+            product,
+            quantity: itemDto.quantity,
+            unitPrice: itemDto.unitPrice,
+            totalPrice: itemTotal,
+            finalPrice: itemTotal,
+            discount: 0,
+            sale,
+          })
+        );
+      }
+      sale.items = await this.saleItemRepo.save(items);
+      sale.totalAmount = total;
+      sale.finalAmount = total - (sale.discount || 0);
+    }
+    return this.saleRepo.save(sale);
+  }
+
+  async deleteSale(id: string): Promise<{ deleted: boolean }> {
+    const sale = await this.saleRepo.findOne({ where: { id } });
+    if (!sale) throw new NotFoundException('Sale not found');
+    await this.saleRepo.remove(sale);
+    return { deleted: true };
+  }
+
   async getSalesReport(filter: SaleReportFilterDto): Promise<SaleReportDto> {
     const qb = this.saleItemRepo
       .createQueryBuilder('item')

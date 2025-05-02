@@ -1,12 +1,11 @@
-import { ReactNode } from "react";
 import { Layout as AntLayout, theme } from "antd";
 import { NavBar } from "./NavBar";
 import { Sidebar } from "./Sidebar";
 
-const { Content } = AntLayout;
+const { Header, Sider, Content } = AntLayout;
 
 interface LayoutProps {
-  children: ReactNode;
+  children: JSX.Element;
 }
 
 export function Layout({ children }: LayoutProps) {
@@ -16,22 +15,25 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <AntLayout style={{ minHeight: "100vh" }}>
-      <NavBar />
+      <Header style={{ padding: 0, background: colorBgContainer, zIndex: 10 }}>
+        <NavBar />
+      </Header>
       <AntLayout>
-        <Sidebar />
-        <AntLayout style={{ padding: "24px" }}>
-          <Content
-            style={{
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-              padding: 24,
-              minHeight: 280,
-            }}
-          >
-            {children}
-          </Content>
-        </AntLayout>
+        <Sider width={220} style={{ background: colorBgContainer }}>
+          <Sidebar />
+        </Sider>
+        <Content
+          style={{
+            background: colorBgContainer,
+            borderRadius: borderRadiusLG,
+            padding: 24,
+            minHeight: 280,
+            margin: 24,
+          }}
+        >
+          {children}
+        </Content>
       </AntLayout>
     </AntLayout>
   );
-} 
+}

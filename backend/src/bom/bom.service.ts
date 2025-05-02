@@ -4,7 +4,6 @@ import { Repository, DataSource, QueryRunner } from 'typeorm';
 import { BOM } from '../entities/bom.entity';
 import { BOMItem } from '../entities/bom-item.entity';
 import { Product } from '../entities/product.entity';
-import { InventoryService } from '../inventory/inventory.service';
 import { User } from '../entities/user.entity';
 import { CreateBOMDto, UpdateBOMDto } from './dto/bom.dto';
 import {
@@ -48,7 +47,6 @@ export class BOMService {
     private bomItemRepository: Repository<BOMItem>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
-    private inventoryService: InventoryService,
     private dataSource: DataSource
   ) {}
 

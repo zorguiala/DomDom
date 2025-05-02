@@ -21,6 +21,7 @@ interface AuthContextType {
     lastName: string;
   }) => Promise<void>;
   logout: () => void;
+  token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,23 +30,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("token")
+  );
 
   useEffect(() => {
-    // Check for existing auth token and user data
-    const token = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-
-    if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        // Invalid stored user data
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+    if (token) {
+      // If using Axios, set default Authorization header
+      if (authApi.setToken) {
+        authApi.setToken(token);
+      } else {
+        console.warn("Auth context: setToken method not found on authApi");
       }
+
+      setIsLoading(true);
+      authApi
+        .getProfile()
+        .then((profile) => {
+          setUser(profile);
+          localStorage.setItem("user", JSON.stringify(profile));
+        })
+        .catch((err) => {
+          console.error("Auth context: Failed to fetch profile", err);
+          setUser(null);
+          setToken(null);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, []);
+  }, [token]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -53,19 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await authApi.login({ email, password });
 
       if (response && response.access_token) {
+        setToken(response.access_token);
         localStorage.setItem("token", response.access_token);
-
-        // Extract user data from the response
-        const userData = {
-          id: response.user.id,
-          email: response.user.email,
-          firstName: response.user.firstName,
-          lastName: response.user.lastName,
-          isAdmin: response.user.isAdmin,
-        };
-
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
+        setUser(response.user);
+        localStorage.setItem("user", JSON.stringify(response.user));
       } else {
         throw new Error("Invalid response from server");
       }
@@ -85,9 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
       const response = await authApi.register(data);
+      setToken(response.access_token);
       localStorage.setItem("token", response.access_token);
-      localStorage.setItem("user", JSON.stringify(response.user));
       setUser(response.user);
+      localStorage.setItem("user", JSON.stringify(response.user));
     } catch (e) {
       setError(e as Error);
       throw e;
@@ -95,9 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    setToken(null);
+    setUser(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUser(null);
   };
 
   return (
@@ -109,6 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         register,
         logout,
+        token,
       }}
     >
       {children}

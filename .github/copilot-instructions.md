@@ -250,6 +250,59 @@ When assisting with refactoring tasks:
    - Verify controllers delegate business logic to services
    - Maintain proper error handling throughout
 
+## 🗺️ Project Structure Map
+
+The following is a high-level map of the DomDom project structure to help with navigation and context:
+
+### Root Level
+
+- LICENSE
+- package.json, package-lock.json
+- README.md, PLANNING.md, RULES.md, TASKS.md, PROJECT_OVERVIEW.md, Project Requirements Document.md
+- .github/ (GitHub configs, Copilot instructions)
+
+### backend/
+
+- API.md, package.json, README.md, nest-cli.json, tsconfig\*.json
+- data-source.ts (TypeORM config)
+- src/
+  - app.\* (NestJS entrypoint)
+  - config/ (database and ORM configs)
+  - database/ (data-source, seed, migrations)
+  - entities/ (TypeORM entities: attendance, bom, document, employee, inventory, product, production-order, etc.)
+  - types/ (centralized backend types)
+  - auth/, bom/, documents/, employees/, inventory/, production/, products/, reminders/, repositories/, sales/, services/, users/ (feature modules: controllers, services, DTOs, types, etc.)
+  - common/ (filters, shared logic)
+  - interfaces/ (shared interfaces)
+  - test/ (e2e tests)
+
+### frontend/
+
+- package.json, README.md, vite.config.ts, vitest.config.ts, tsconfig\*.json
+- public/ (static assets, locales)
+- scripts/ (build/dev scripts)
+- src/
+  - App.tsx, main.tsx, App.css, index.css, vite-env.d.ts
+  - assets/ (images, etc.)
+  - components/ (React components, grouped by feature)
+  - context/ (React context providers)
+  - hooks/ (custom React hooks)
+  - i18n/ (internationalization setup)
+  - pages/ (top-level pages)
+  - services/ (API clients, business logic)
+  - test/ (frontend test setup)
+  - types/ (centralized frontend types)
+  - utils/ (utility functions)
+
+---
+
+- Types are centralized in `src/types/` for both backend and frontend.
+- Feature modules are grouped by domain (e.g., production, employees, sales).
+- Documentation and planning files are at the root.
+- .github/ contains Copilot instructions and project automation configs.
+
+_This map will be updated as the project evolves. Use it for quick navigation and context when assisting with development tasks._
+
 ---
 
 _Follow these instructions for all development work on the DomDom project._

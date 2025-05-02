@@ -64,8 +64,7 @@ export class ProductionRecordService {
       await this.materialConsumptionService.addFinishedProductToInventory(
         order,
         dto.quantity,
-        user,
-        queryRunner
+        user
       );
 
       // Auto-complete the order if target quantity reached

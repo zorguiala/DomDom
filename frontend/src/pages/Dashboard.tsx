@@ -1,5 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Typography, Progress, Table, Tag, Space, Spin, Alert } from 'antd';
+import React, { useEffect, useState } from "react";
+import {
+  Row,
+  Col,
+  Card,
+  Typography,
+  Progress,
+  Table,
+  Tag,
+  Space,
+  Spin,
+  Alert,
+} from "antd";
 import {
   ShoppingOutlined,
   DollarOutlined,
@@ -8,8 +19,8 @@ import {
   WarningOutlined,
   InfoCircleOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined
-} from '@ant-design/icons';
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import {
   AreaChart,
   Area,
@@ -20,10 +31,9 @@ import {
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
-} from 'recharts';
-import { dashboardApi } from '../services/api';
-import DashboardLayout from '../components/layout/DashboardLayout';
+  Cell,
+} from "recharts";
+import { dashboardApi } from "../services/api";
 
 const { Title, Text } = Typography;
 
@@ -37,7 +47,7 @@ interface StatsCardProps {
 }
 
 interface AlertProps {
-  severity: 'error' | 'warning' | 'info' | 'success';
+  severity: "error" | "warning" | "info" | "success";
   title: string;
   message: string;
   time: string;
@@ -62,35 +72,49 @@ interface ActivityItem {
   user: string;
   module: string;
   timestamp: string;
-  status: 'Completed' | 'Failed' | 'In Progress';
+  status: "Completed" | "Failed" | "In Progress";
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ title, value, change, icon, iconColor }) => (
+const StatsCard: React.FC<StatsCardProps> = ({
+  title,
+  value,
+  change,
+  icon,
+  iconColor,
+}) => (
   <Card>
-    <Space direction="vertical" size="small" style={{ width: '100%' }}>
+    <Space direction="vertical" size="small" style={{ width: "100%" }}>
       <Space>
-        <div style={{ color: iconColor, fontSize: '24px' }}>{icon}</div>
-        <Title level={5} style={{ margin: 0 }}>{title}</Title>
+        <div style={{ color: iconColor, fontSize: "24px" }}>{icon}</div>
+        <Title level={5} style={{ margin: 0 }}>
+          {title}
+        </Title>
       </Space>
-      <Text style={{ fontSize: '24px' }}>{value}</Text>
-      <Text type={change >= 0 ? 'success' : 'danger'}>
-        {change >= 0 ? '+' : ''}{change}% from last period
+      <Text style={{ fontSize: "24px" }}>{value}</Text>
+      <Text type={change >= 0 ? "success" : "danger"}>
+        {change >= 0 ? "+" : ""}
+        {change}% from last period
       </Text>
     </Space>
   </Card>
 );
 
-const AlertItem: React.FC<AlertProps> = ({ severity, title, message, time }) => {
+const AlertItem: React.FC<AlertProps> = ({
+  severity,
+  title,
+  message,
+  time,
+}) => {
   const getIcon = () => {
     switch (severity) {
-      case 'error':
-        return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
-      case 'warning':
-        return <WarningOutlined style={{ color: '#faad14' }} />;
-      case 'info':
-        return <InfoCircleOutlined style={{ color: '#1890ff' }} />;
-      case 'success':
-        return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+      case "error":
+        return <CloseCircleOutlined style={{ color: "#ff4d4f" }} />;
+      case "warning":
+        return <WarningOutlined style={{ color: "#faad14" }} />;
+      case "info":
+        return <InfoCircleOutlined style={{ color: "#1890ff" }} />;
+      case "success":
+        return <CheckCircleOutlined style={{ color: "#52c41a" }} />;
     }
   };
 
@@ -114,9 +138,15 @@ export default function Dashboard() {
     efficiency: { value: 0, change: 0 },
     employees: { present: 0, total: 0, change: 0 },
   });
-  const [salesData, setSalesData] = useState<Array<{ date: string; directSales: number; commercialSales: number }>>([]);
-  const [inventoryStatus, setInventoryStatus] = useState<InventoryStatusItem[]>([]);
-  const [productionData, setProductionData] = useState<ProductionDataItem[]>([]);
+  const [salesData, setSalesData] = useState<
+    Array<{ date: string; directSales: number; commercialSales: number }>
+  >([]);
+  const [inventoryStatus, setInventoryStatus] = useState<InventoryStatusItem[]>(
+    []
+  );
+  const [productionData, setProductionData] = useState<ProductionDataItem[]>(
+    []
+  );
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [alerts, setAlerts] = useState<AlertProps[]>([]);
 
@@ -161,7 +191,7 @@ export default function Dashboard() {
         setActivities(recentActivities);
         setAlerts(systemAlerts);
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoading(false);
       }
@@ -172,189 +202,188 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div style={{ width: '100%', textAlign: 'center', padding: '40px' }}>
-          <Spin size="large" />
-        </div>
-      </DashboardLayout>
+      <div style={{ width: "100%", textAlign: "center", padding: "40px" }}>
+        <Spin size="large" />
+      </div>
     );
   }
 
   const productionColumns = [
-    { title: 'Product', dataIndex: 'product', key: 'product' },
-    { title: 'Planned', dataIndex: 'planned', key: 'planned', align: 'right' },
-    { title: 'Actual', dataIndex: 'actual', key: 'actual', align: 'right' },
+    { title: "Product", dataIndex: "product", key: "product" },
+    { title: "Planned", dataIndex: "planned", key: "planned", align: "right" },
+    { title: "Actual", dataIndex: "actual", key: "actual", align: "right" },
     {
-      title: 'Variance',
-      dataIndex: 'variance',
-      key: 'variance',
-      align: 'right',
+      title: "Variance",
+      dataIndex: "variance",
+      key: "variance",
+      align: "right",
       render: (variance: number) => (
-        <Tag color={variance >= 0 ? 'success' : 'error'}>
-          {variance}%
-        </Tag>
+        <Tag color={variance >= 0 ? "success" : "error"}>{variance}%</Tag>
       ),
     },
   ];
 
   const activityColumns = [
-    { title: 'Activity', dataIndex: 'description', key: 'description' },
-    { title: 'User', dataIndex: 'user', key: 'user' },
-    { title: 'Module', dataIndex: 'module', key: 'module' },
+    { title: "Activity", dataIndex: "description", key: "description" },
+    { title: "User", dataIndex: "user", key: "user" },
+    { title: "Module", dataIndex: "module", key: "module" },
     {
-      title: 'Date & Time',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
+      title: "Date & Time",
+      dataIndex: "timestamp",
+      key: "timestamp",
       render: (timestamp: string) => new Date(timestamp).toLocaleString(),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (status: string) => {
-        const color = status === 'Completed' ? 'success' : status === 'Failed' ? 'error' : 'warning';
+        const color =
+          status === "Completed"
+            ? "success"
+            : status === "Failed"
+            ? "error"
+            : "warning";
         return <Tag color={color}>{status}</Tag>;
       },
     },
   ];
 
   return (
-    <DashboardLayout>
-      <Row gutter={[16, 16]}>
-        {/* Stats Cards */}
-        <Col xs={24} sm={12} md={6}>
-          <StatsCard
-            title="Total Inventory Items"
-            value={stats.inventory.total}
-            change={stats.inventory.change}
-            icon={<ShoppingOutlined />}
-            iconColor="#1890ff"
+    <Row gutter={[16, 16]}>
+      {/* Stats Cards */}
+      <Col xs={24} sm={12} md={6}>
+        <StatsCard
+          title="Total Inventory Items"
+          value={stats.inventory.total}
+          change={stats.inventory.change}
+          icon={<ShoppingOutlined />}
+          iconColor="#1890ff"
+        />
+      </Col>
+      <Col xs={24} sm={12} md={6}>
+        <StatsCard
+          title="Today's Sales"
+          value={`$${stats.sales.total.toLocaleString()}`}
+          change={stats.sales.change}
+          icon={<DollarOutlined />}
+          iconColor="#52c41a"
+        />
+      </Col>
+      <Col xs={24} sm={12} md={6}>
+        <StatsCard
+          title="Production Efficiency"
+          value={`${stats.efficiency.value}%`}
+          change={stats.efficiency.change}
+          icon={<LineChartOutlined />}
+          iconColor="#faad14"
+        />
+      </Col>
+      <Col xs={24} sm={12} md={6}>
+        <StatsCard
+          title="Employees Present"
+          value={`${stats.employees.present}/${stats.employees.total}`}
+          change={stats.employees.change}
+          icon={<TeamOutlined />}
+          iconColor="#722ed1"
+        />
+      </Col>
+
+      {/* Charts */}
+      <Col xs={24} md={16}>
+        <Card>
+          <Title level={5}>Sales Overview</Title>
+          <div style={{ height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="directSales"
+                  stackId="1"
+                  stroke="#1890ff"
+                  fill="#1890ff"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="commercialSales"
+                  stackId="1"
+                  stroke="#52c41a"
+                  fill="#52c41a"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </Col>
+
+      <Col xs={24} md={8}>
+        <Card>
+          <Title level={5}>Inventory Status</Title>
+          <div style={{ height: 300 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={inventoryStatus}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  label
+                >
+                  {inventoryStatus.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </Col>
+
+      {/* Production Output */}
+      <Col xs={24} md={16}>
+        <Card>
+          <Title level={5}>Production Output</Title>
+          <Table
+            columns={productionColumns}
+            dataSource={productionData}
+            pagination={false}
+            size="small"
           />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatsCard
-            title="Today's Sales"
-            value={`$${stats.sales.total.toLocaleString()}`}
-            change={stats.sales.change}
-            icon={<DollarOutlined />}
-            iconColor="#52c41a"
+        </Card>
+      </Col>
+
+      {/* System Alerts */}
+      <Col xs={24} md={8}>
+        <Card>
+          <Title level={5}>System Alerts</Title>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            {alerts.map((alert, index) => (
+              <AlertItem key={index} {...alert} />
+            ))}
+          </Space>
+        </Card>
+      </Col>
+
+      {/* Recent Activities */}
+      <Col xs={24}>
+        <Card>
+          <Title level={5}>Recent Activities</Title>
+          <Table
+            columns={activityColumns}
+            dataSource={activities}
+            pagination={{ pageSize: 5 }}
+            size="small"
           />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatsCard
-            title="Production Efficiency"
-            value={`${stats.efficiency.value}%`}
-            change={stats.efficiency.change}
-            icon={<LineChartOutlined />}
-            iconColor="#faad14"
-          />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <StatsCard
-            title="Employees Present"
-            value={`${stats.employees.present}/${stats.employees.total}`}
-            change={stats.employees.change}
-            icon={<TeamOutlined />}
-            iconColor="#722ed1"
-          />
-        </Col>
-
-        {/* Charts */}
-        <Col xs={24} md={16}>
-          <Card>
-            <Title level={5}>Sales Overview</Title>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Area
-                    type="monotone"
-                    dataKey="directSales"
-                    stackId="1"
-                    stroke="#1890ff"
-                    fill="#1890ff"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="commercialSales"
-                    stackId="1"
-                    stroke="#52c41a"
-                    fill="#52c41a"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </Col>
-
-        <Col xs={24} md={8}>
-          <Card>
-            <Title level={5}>Inventory Status</Title>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={inventoryStatus}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    label
-                  >
-                    {inventoryStatus.map((entry, index) => (
-                      <Cell key={index} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </Col>
-
-        {/* Production Output */}
-        <Col xs={24} md={16}>
-          <Card>
-            <Title level={5}>Production Output</Title>
-            <Table
-              columns={productionColumns}
-              dataSource={productionData}
-              pagination={false}
-              size="small"
-            />
-          </Card>
-        </Col>
-
-        {/* System Alerts */}
-        <Col xs={24} md={8}>
-          <Card>
-            <Title level={5}>System Alerts</Title>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              {alerts.map((alert, index) => (
-                <AlertItem key={index} {...alert} />
-              ))}
-            </Space>
-          </Card>
-        </Col>
-
-        {/* Recent Activities */}
-        <Col xs={24}>
-          <Card>
-            <Title level={5}>Recent Activities</Title>
-            <Table
-              columns={activityColumns}
-              dataSource={activities}
-              pagination={{ pageSize: 5 }}
-              size="small"
-            />
-          </Card>
-        </Col>
-      </Row>
-    </DashboardLayout>
+        </Card>
+      </Col>
+    </Row>
   );
 }

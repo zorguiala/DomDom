@@ -1,6 +1,11 @@
-import { Controller, Post, Body, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Param, UseGuards, Put, Delete } from '@nestjs/common';
 import { SalesService } from './sales.service';
-import { CreateSaleDto, SaleReportFilterDto, SaleReportDto } from '../types/sale.types';
+import {
+  CreateSaleDto,
+  SaleReportFilterDto,
+  SaleReportDto,
+  UpdateSaleDto,
+} from '../types/sale.types';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -47,5 +52,21 @@ export class SalesController {
   @ApiResponse({ status: 200, type: SaleReportDto })
   async getSalesReport(@Query() filter: SaleReportFilterDto) {
     return await this.salesService.getSalesReport(filter);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a sale' })
+  @ApiParam({ name: 'id', required: true })
+  @ApiResponse({ status: 200 })
+  async updateSale(@Param('id') id: string, @Body() dto: UpdateSaleDto) {
+    return await this.salesService.updateSale(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a sale' })
+  @ApiParam({ name: 'id', required: true })
+  @ApiResponse({ status: 200 })
+  async deleteSale(@Param('id') id: string) {
+    return await this.salesService.deleteSale(id);
   }
 }

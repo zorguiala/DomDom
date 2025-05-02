@@ -52,68 +52,103 @@ export interface ProductionRecordFilters {
   productionOrderId?: number;
 }
 
-const productionService = {
+interface GetOrdersParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  status?: string;
+  employeeId?: number;
+  bomId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+class ProductionService {
+  private baseUrl = "/api";
+
   // Get all production orders
-  getProductionOrders: async () => {
+  async getProductionOrders() {
     const response = await api.get("/production/orders");
     return response.data;
-  },
+  }
 
   // Get a specific production order
-  getProductionOrder: async (id: number) => {
+  async getProductionOrder(id: number) {
     const response = await api.get(`/production/orders/${id}`);
     return response.data;
-  },
+  }
 
   // Create a new production order
-  createProductionOrder: async (productionOrder: Partial<ProductionOrder>) => {
+  async createProductionOrder(productionOrder: Partial<ProductionOrder>) {
     const response = await api.post("/production/orders", productionOrder);
     return response.data;
-  },
+  }
 
   // Update a production order
-  updateProductionOrder: async (
+  async updateProductionOrder(
     id: number,
     productionOrder: Partial<ProductionOrder>
-  ) => {
+  ) {
     const response = await api.put(`/production/orders/${id}`, productionOrder);
     return response.data;
-  },
+  }
 
   // Delete a production order
-  deleteProductionOrder: async (id: number) => {
+  async deleteProductionOrder(id: number) {
     const response = await api.delete(`/production/orders/${id}`);
     return response.data;
-  },
+  }
 
   // Record production output
-  recordProductionOutput: async (orderId: number, output: ProductionOutput) => {
+  async recordProductionOutput(orderId: number, output: ProductionOutput) {
     const response = await api.post(
       `/production/orders/${orderId}/output`,
       output
     );
     return response.data;
-  },
+  }
 
   // Get production progress
-  getProductionProgress: async (orderId: number) => {
+  async getProductionProgress(orderId: number) {
     const response = await api.get(`/production/orders/${orderId}/progress`);
     return response.data;
-  },
+  }
 
   // Get production records with optional filters
-  getProductionRecords: async (filters: ProductionRecordFilters = {}) => {
+  async getProductionRecords(filters: ProductionRecordFilters = {}) {
     const response = await api.get("/production/records", { params: filters });
     return response.data;
-  },
+  }
 
   // Get employee efficiency data
-  getEmployeeEfficiency: async (startDate?: string, endDate?: string) => {
+  async getEmployeeEfficiency(startDate?: string, endDate?: string) {
     const response = await api.get("/production/employees/efficiency", {
       params: { startDate, endDate },
     });
     return response.data;
-  },
-};
+  }
 
-export default productionService;
+  // Get orders with pagination and sorting
+  async getOrders(params: GetOrdersParams = {}) {
+    const queryParams = new URLSearchParams();
+
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+    if (params.status) queryParams.append("status", params.status);
+    if (params.employeeId)
+      queryParams.append("employeeId", params.employeeId.toString());
+    if (params.bomId) queryParams.append("bomId", params.bomId.toString());
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
+
+    const response = await api.get(
+      `${this.baseUrl}/production-orders?${queryParams}`
+    );
+    return response.data;
+  }
+}
+
+export const productionService = new ProductionService();

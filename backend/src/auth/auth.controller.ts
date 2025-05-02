@@ -1,29 +1,39 @@
-import { Controller, Post, Body, UseGuards, Request, Put, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Put, Param, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { ChangePasswordDto, ResetPasswordRequestDto } from './dto/password.dto';
+import { UserService } from './services/user.service';
+import { User } from '../entities/user.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private userService: UserService
+  ) {}
 
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req): Promise<{ access_token: string }> {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async login(@Request() req: { user: User }): Promise<{ access_token: string }> {
     return this.authService.login(req.user);
   }
 
   @Post('register')
-  async register(@Body() userData: any) {
+  async register(@Body() userData: CreateUserDto) {
     return this.authService.register(userData);
   }
 
   @UseGuards(JwtAuthGuard)
   @Put('change-password')
-  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+  async changePassword(
+    @Request() req: { user: User },
+    @Body() changePasswordDto: ChangePasswordDto
+  ) {
     await this.authService.changePassword(
-      req.user.userId,
+      req.user.id,
       changePasswordDto.currentPassword,
       changePasswordDto.newPassword
     );
@@ -41,5 +51,21 @@ export class AuthController {
   async unlockAccount(@Param('userId') userId: string) {
     await this.authService.unlockAccount(userId);
     return { message: 'Account unlocked successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getProfile(
+    @Request() req: { user: User }
+  ): Promise<
+    | { id: string; email: string; firstName: string; lastName: string; isAdmin: boolean }
+    | { error: string }
+  > {
+    const userId: string = req.user.id;
+    const user = await this.userService.getProfile(userId);
+    if (!user) {
+      return { error: 'User not found' };
+    }
+    return user;
   }
 }

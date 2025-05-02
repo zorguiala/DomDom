@@ -119,13 +119,16 @@ export class EmployeeProductivityService {
     // Calculate daily production statistics
     const dailyStats = this.calculateDailyProductionStats(records, attendances as Attendance[]);
 
-    // Update employee metrics
+    // Calculate days absent as a local variable
+    const daysAbsent = workingDays - daysWorked;
+
+    // Update employee metrics (do not set daysAbsent on employee)
     employee.productivityRate = productivityRate;
     employee.qualityScore = qualityScore;
     employee.efficiencyScore = efficiencyScore;
     employee.totalProductionCount = totalProduced;
     employee.totalQualityIssues = qualityIssues;
-    employee.daysAbsent = workingDays - daysWorked;
+    // Removed: employee.daysAbsent = workingDays - daysWorked;
 
     await this.employeeRepository.save(employee);
 
@@ -141,7 +144,7 @@ export class EmployeeProductivityService {
         totalRecords: records.length,
         daysWorked,
         workingDays,
-        daysAbsent: workingDays - daysWorked,
+        daysAbsent,
       },
     };
   }

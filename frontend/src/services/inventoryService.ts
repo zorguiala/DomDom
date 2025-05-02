@@ -58,10 +58,25 @@ export const inventoryApi = {
     return response.data;
   },
 
+  createTransaction: async (data: {
+    productId: string;
+    type: "IN" | "OUT";
+    quantity: number;
+    unitPrice: number;
+    reference?: string;
+    notes?: string;
+  }) => {
+    const response = await api.post("/inventory/transaction", data);
+    return response.data;
+  },
+
   getLowStockProducts: async (threshold?: number) => {
-    const response = await api.get("/inventory/low-stock", {
-      params: { threshold },
-    });
+    // Only send threshold if it's a valid number
+    const params: any = {};
+    if (typeof threshold === "number" && !isNaN(threshold)) {
+      params.threshold = threshold;
+    }
+    const response = await api.get("/inventory/low-stock", { params });
     return response.data;
   },
 
