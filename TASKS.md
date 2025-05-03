@@ -9,7 +9,6 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - [x] Read rules and coding style and plan refactoring approach
 - [ ] Frontend Component Refactoring:
   - [ ] Resolve component duplication:
-    - [ ] Audit duplicate components in src/components and feature folders (Sidebar, Layout, NavBar)
     - [ ] Compare implementations and determine which to keep
     - [ ] Consolidate to a single implementation in the appropriate location
     - [ ] Update all imports to reference the correct component files
@@ -42,6 +41,9 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - ✅ Create ProductionOrderForm component for creating/editing orders
 - ✅ Create ProductionOrderDetails component for viewing order details
 - ✅ Create RecordProductionForm for recording production outputs
+- ✅ Refactor production components to use hooks and strict types (see `frontend/src/components/production/` and `frontend/src/hooks/`)
+- ✅ Fix Ant Design Tabs deprecation and filter errors (see `frontend/src/pages/production.tsx`)
+- ✅ Ensure all production types are in `frontend/src/types/production.ts`
 - [ ] Add search and filtering functionality for production orders:
   - [ ] Implement search by order number/name/product
   - [ ] Add date range filtering
@@ -72,6 +74,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - ✅ Create SalesOrderList component (see `frontend/src/components/sales/sales-list.tsx`)
 - ✅ Implement direct sales recording interface (see `frontend/src/components/sales/sales-form.tsx`)
 - ✅ Implement commercial sales recording interface (see `frontend/src/components/sales/sales-form.tsx`)
+- ✅ Implement full CRUD for sales (see `frontend/src/components/sales/` and `frontend/src/hooks/use-sales.ts`)
 - [ ] Create invoice generation UI
 - [ ] Add sales dashboard widgets
 

@@ -11,19 +11,10 @@ import {
   Space,
   Modal,
   Table,
-  Tag,
   Drawer,
   Alert,
-  Form,
-  InputNumber,
-  Select,
 } from "antd";
-import {
-  PlusOutlined,
-  BarcodeOutlined,
-  HistoryOutlined,
-  SwapOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, HistoryOutlined, SwapOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryApi } from "../services/inventoryService";
@@ -32,7 +23,6 @@ import { ProductForm } from "../components/inventory/product-form";
 import { StockTransactionForm } from "../components/inventory/stock-transaction-form";
 
 const { Search } = Input;
-const { Option } = Select;
 
 export default function Inventory() {
   const { t } = useTranslation();
@@ -280,7 +270,7 @@ export default function Inventory() {
             if (selectedProduct) {
               updateProduct.mutate({ id: selectedProduct.id, data });
             } else {
-              createProduct.mutate(data);
+              createProduct.mutate({ ...data, createdAt: "", updatedAt: "" });
             }
           }}
           onCancel={() => setFormOpen(false)}

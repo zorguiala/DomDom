@@ -15,7 +15,7 @@ export function SalesList() {
   const { data, isLoading } = useSales();
   const { mutate: deleteSale } = useDeleteSale();
   const { mutate: createSale, isLoading: isCreating } = useCreateSale();
-  const { mutate: updateSale, isLoading: isUpdating } = useUpdateSale();
+  const { mutate: updateSale, isPending: isUpdating } = useUpdateSale();
   const [formOpen, setFormOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | undefined>();
 
@@ -39,7 +39,7 @@ export function SalesList() {
 
   const handleFormSubmit = (values: CreateSaleDto) => {
     if (editingSale) {
-      updateSale({ id: editingSale.id, update: values });
+      updateSale({ id: editingSale.id, update: values as Partial<Sale> });
       message.success(t("sales.updated"));
     } else {
       createSale(values);

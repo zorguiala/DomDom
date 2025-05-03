@@ -24,12 +24,13 @@ export function useSale(id: string) {
 
 export function useCreateSale() {
   const queryClient = useQueryClient();
-  return useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: (data: CreateSaleDto) => salesService.createSale(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales"] });
     },
   });
+  return { mutate, isLoading: isPending };
 }
 
 export function useUpdateSale() {

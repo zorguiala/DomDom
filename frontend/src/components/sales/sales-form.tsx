@@ -1,4 +1,4 @@
-import { Modal, Form, Input, Button, InputNumber, Select } from "antd";
+import { Modal, Form, Input, Button, InputNumber } from "antd";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Sale, CreateSaleDto } from "../../types/sales";
@@ -87,7 +87,7 @@ export function SalesForm({
         >
           {(fields, { add, remove }, { errors }) => (
             <>
-              {fields.map((field, idx) => (
+              {fields.map((field) => (
                 <div
                   key={field.key}
                   style={{ display: "flex", gap: 8, marginBottom: 8 }}
@@ -95,7 +95,6 @@ export function SalesForm({
                   <Form.Item
                     {...field}
                     name={[field.name, "productId"]}
-                    fieldKey={[field.fieldKey, "productId"]}
                     rules={[
                       {
                         required: true,
@@ -111,7 +110,6 @@ export function SalesForm({
                   <Form.Item
                     {...field}
                     name={[field.name, "quantity"]}
-                    fieldKey={[field.fieldKey, "quantity"]}
                     rules={[
                       {
                         required: true,
@@ -127,7 +125,6 @@ export function SalesForm({
                   <Form.Item
                     {...field}
                     name={[field.name, "unitPrice"]}
-                    fieldKey={[field.fieldKey, "unitPrice"]}
                     rules={[
                       {
                         required: true,
