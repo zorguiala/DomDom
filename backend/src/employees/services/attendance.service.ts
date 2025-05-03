@@ -61,6 +61,34 @@ export class AttendanceService {
     return this.attendanceRepository.save(attendance);
   }
 
+  async getAllAttendance(startDate?: Date, endDate?: Date): Promise<EmployeeAttendance[]> {
+    if (startDate && endDate) {
+      return this.attendanceRepository.find({
+        where: {
+          clockIn: Between(startOfDay(startDate), endOfDay(endDate)),
+        },
+        relations: ['employee'],
+        order: {
+          clockIn: 'DESC',
+        },
+      });
+    }
+    
+    // If no dates provided, return records from the last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    return this.attendanceRepository.find({
+      where: {
+        clockIn: Between(startOfDay(thirtyDaysAgo), endOfDay(new Date())),
+      },
+      relations: ['employee'],
+      order: {
+        clockIn: 'DESC',
+      },
+    });
+  }
+
   async getTodayAttendance(): Promise<EmployeeAttendanceSummary> {
     const allEmployees = await this.employeeRepository.count({
       where: { isActive: true },

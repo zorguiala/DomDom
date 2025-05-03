@@ -1,34 +1,17 @@
 import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
-import { SaleItem } from './sale-item.entity';
 import { Employee } from './employee.entity';
-
-export enum SaleType {
-  DIRECT = 'direct',
-  COMMERCIAL = 'commercial',
-}
-
-export enum SaleStatus {
-  DRAFT = 'draft',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum PaymentMethod {
-  CASH = 'cash',
-  CREDIT_CARD = 'credit_card',
-  BANK_TRANSFER = 'bank_transfer',
-  MOBILE_MONEY = 'mobile_money',
-}
+import { SaleType, SaleStatus, PaymentMethod } from '../types/sale.types';
+import { Product } from './product.entity';
+import { SaleItem } from './sale-item.entity';
 
 @Entity('sales')
 export class Sale extends BaseEntity {
   @Column('enum', { enum: SaleType })
   type: SaleType;
 
-  @Column('enum', { enum: SaleStatus, default: SaleStatus.DRAFT })
+  @Column('enum', { enum: SaleStatus, default: SaleStatus.PENDING })
   status: SaleStatus;
 
   @ManyToOne(() => User)

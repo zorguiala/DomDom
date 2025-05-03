@@ -12,6 +12,7 @@ import { SalesModule } from './sales/sales.module';
 import { DocumentsModule } from './documents/documents.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { UsersModule } from './users/users.module';
+import { EmployeesModule } from './employees/employees.module';
 import { User } from './entities/user.entity';
 import { databaseConfig } from './config/database.config';
 import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
@@ -34,6 +35,7 @@ import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-clas
     DocumentsModule,
     RemindersModule,
     UsersModule,
+    EmployeesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

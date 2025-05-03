@@ -15,3 +15,11 @@ export interface Employee {
   qualityScore?: number;
   efficiencyScore?: number;
 }
+
+export interface EmployeeProductivity {
+  id: string;
+  employeeId: string;
+  period: string; // e.g. '2025-05'
+  output: number;
+  efficiency: number; // percentage
+}

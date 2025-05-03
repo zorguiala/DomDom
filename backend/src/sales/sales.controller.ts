@@ -2,9 +2,11 @@ import { Controller, Post, Body, Get, Query, Param, UseGuards, Put, Delete } fro
 import { SalesService } from './sales.service';
 import {
   CreateSaleDto,
+  UpdateSaleDto
+} from './dto/sale.dto';
+import {
   SaleReportFilterDto,
   SaleReportDto,
-  UpdateSaleDto,
 } from '../types/sale.types';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -68,5 +70,62 @@ export class SalesController {
   @ApiResponse({ status: 200 })
   async deleteSale(@Param('id') id: string) {
     return await this.salesService.deleteSale(id);
+  }
+
+  @Get('daily/:date')
+  @ApiOperation({ summary: 'Get daily sales for a specific date' })
+  @ApiParam({ name: 'date', required: true, description: 'Date in YYYY-MM-DD format' })
+  @ApiResponse({ status: 200 })
+  async getDailySales(@Param('date') date: string) {
+    // Validate date format
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+      throw new Error('Invalid date format. Use YYYY-MM-DD');
+    }
+    
+    // Create start and end of the requested day
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+    
+    return await this.salesService.getDailySales(startDate, endDate);
+  }
+
+  @Get('overview')
+  @ApiOperation({ summary: 'Get sales overview data' })
+  @ApiQuery({ name: 'startDate', required: false, description: 'Start date in ISO format' })
+  @ApiQuery({ name: 'endDate', required: false, description: 'End date in ISO format' })
+  @ApiResponse({ status: 200 })
+  async getSalesOverview(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    let start: Date;
+    let end: Date;
+    
+    if (startDate) {
+      start = new Date(startDate);
+      if (isNaN(start.getTime())) {
+        throw new Error('Invalid startDate format');
+      }
+    } else {
+      // Default to 30 days ago
+      start = new Date();
+      start.setDate(start.getDate() - 30);
+    }
+    
+    if (endDate) {
+      end = new Date(endDate);
+      if (isNaN(end.getTime())) {
+        throw new Error('Invalid endDate format');
+      }
+    } else {
+      // Default to today
+      end = new Date();
+    }
+    
+    return await this.salesService.getSalesOverview(start, end);
   }
 }

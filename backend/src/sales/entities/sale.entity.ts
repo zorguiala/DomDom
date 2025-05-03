@@ -1,18 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { SaleItem } from './sale-item.entity';
 import { User } from '../../users/entities/user.entity';
-import { SaleType, SaleStatus } from '../dto/sale.dto';
+import { SaleType, SaleStatus, PaymentMethod } from '../../types/sale.types';
 
 @Entity('sales')
 export class Sale {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    type: 'enum',
-    enum: SaleType,
-    default: SaleType.DIRECT
-  })
+  @Column({ enum: SaleType, default: SaleType.DIRECT })
   type: SaleType;
 
   @Column({ nullable: true })
@@ -21,6 +17,14 @@ export class Sale {
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'agentId' })
   agent: User;
+
+  @Column({ 
+    type: 'enum', 
+    enum: PaymentMethod, 
+    default: PaymentMethod.CASH,
+    nullable: true 
+  })
+  paymentMethod: PaymentMethod;
 
   @Column({ type: 'timestamp' })
   saleDate: Date;
@@ -49,4 +53,4 @@ export class Sale {
 
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

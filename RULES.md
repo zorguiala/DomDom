@@ -6,6 +6,24 @@ These guidelines provide structured rules for working with AI tools (GitHub Copi
 
 These high-level principles guide how to work with AI tools efficiently and effectively:
 
+- Keep files under 500 lines - split into modules when needed
+  - Update TASKS.md file if there is any update needed
+  - In tasks description be specific as much as possible
+  - One task per message is ideal
+  - Write documentation and comments as you go
+  - Be specific in requests and provide examples
+  - Test early and often
+  - don't use any type unless it's necessary and if you used them add eslint ignore rule
+  - To improve maintainability in modules, you can split large files into multiple smaller files, such as creating a services or utils folder with related functions. Then, import these functions where needed.
+  - always check and update README.md, PLANNING.md, RULES.md, TASKS.md, PROJECT_OVERVIEW.md on each task you work on
+  - create a branch in git for each task you work on and the name of the branch doesn't surpass 50 characters then push it
+  - the commit message must start with 'chore:','fix:','add:','delete:' etc ...
+  - you only push the commit when i tell you the task is complete
+  - keep a map for the project files to make your work easier
+  - when working on task don't hesitate to update both frontend and backend if needed
+  - when working on the project try to create subfolder to keep it clean as possible
+  - i'm using powershell windows
+
 1. Use markdown files to manage the project (README.md, PLANNING.md, TASKS.md).
 2. Keep files under 500 lines. Split into modules when needed.
 3. Start fresh conversations often. Long threads degrade response quality.

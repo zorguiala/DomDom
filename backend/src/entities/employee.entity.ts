@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { EmployeeAttendance } from './employee-attendance.entity';
 import { ProductionRecord } from './production-record.entity';
+import { EmployeeSchedule } from './employee-schedule.entity';
 
 export enum EmployeeRole {
   WORKER = 'worker',
@@ -84,4 +85,7 @@ export class Employee extends BaseEntity {
 
   @OneToMany(() => ProductionRecord, (record) => record.employee)
   productionRecords: ProductionRecord[];
+
+  @OneToMany(() => EmployeeSchedule, (schedule) => schedule.employee)
+  schedules: EmployeeSchedule[];
 }
