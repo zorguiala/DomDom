@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EmployeeRole } from '../../entities/enums/employee.enum';
+import { EmployeeScheduleShift } from '../../entities/employee-schedule.entity';
 
 export class CreateEmployeeDto {
   @IsString()
@@ -131,3 +132,19 @@ export class MarkAttendanceDto {
   @IsOptional()
   notes?: string;
 }
+
+export class CreateScheduleDto {
+  @IsString()
+  @IsEnum(EmployeeScheduleShift)
+  shift: EmployeeScheduleShift;
+
+  @IsDate()
+  @Type(() => Date)
+  date: Date;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+export class UpdateScheduleDto extends CreateScheduleDto {}

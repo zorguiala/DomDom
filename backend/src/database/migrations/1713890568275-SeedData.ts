@@ -10,7 +10,7 @@ import { ProductionRecord } from '../../entities/production-record.entity';
 import { Sale } from '../../entities/sale.entity';
 import { SaleItem } from '../../entities/sale-item.entity';
 import * as bcrypt from 'bcrypt';
-import { SaleType, SaleStatus } from '../../entities/sale.entity';
+import { SaleType, SaleStatus } from '../../entities/enums/sale.enum';
 
 export class SeedData1713890568275 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {

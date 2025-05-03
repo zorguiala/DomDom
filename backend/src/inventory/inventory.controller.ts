@@ -180,4 +180,9 @@ export class InventoryController {
   async getInventoryStatus() {
     return this.stockService.getInventoryStatus();
   }
+
+  @Get('stats')
+  async getInventoryStats() {
+    return this.analyticsService.getInventoryStats();
+  }
 }

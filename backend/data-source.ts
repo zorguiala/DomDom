@@ -7,6 +7,7 @@ import { BOMItem } from './src/entities/bom-item.entity';
 import { InventoryTransaction } from './src/entities/inventory-transaction.entity';
 import { Employee } from './src/entities/employee.entity';
 import { EmployeeAttendance } from './src/entities/employee-attendance.entity';
+import { EmployeeSchedule } from './src/entities/employee-schedule.entity';
 import { ProductionRecord } from './src/entities/production-record.entity';
 import { Sale } from './src/entities/sale.entity';
 import { SaleItem } from './src/entities/sale-item.entity';
@@ -33,6 +34,7 @@ export default new DataSource({
     InventoryTransaction,
     Employee,
     EmployeeAttendance,
+    EmployeeSchedule,
     ProductionRecord,
     Sale,
     SaleItem,

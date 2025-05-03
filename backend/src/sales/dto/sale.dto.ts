@@ -12,36 +12,13 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export enum SaleType {
-  DIRECT = 'DIRECT',
-  COMMERCIAL = 'COMMERCIAL',
-}
-
-export enum SaleStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
-}
-
-export class SaleItemDto {
-  @ApiProperty({ description: 'The ID of the product being sold' })
-  @IsNumber()
-  @IsNotEmpty()
-  productId: number;
-
-  @ApiProperty({ description: 'The quantity of the product being sold' })
-  @IsNumber()
-  @Min(1)
-  @IsNotEmpty()
-  quantity: number;
-
-  @ApiProperty({ description: 'The unit price of the product' })
-  @IsNumber()
-  @Min(0)
-  @IsNotEmpty()
-  unitPrice: number;
-}
+import { 
+  SaleType, 
+  SaleStatus, 
+  PaymentMethod,
+  SaleItemDto 
+} from '../../types/sale.types';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateSaleDto {
   @ApiProperty({ description: 'The type of sale', enum: SaleType })
@@ -67,22 +44,52 @@ export class CreateSaleDto {
   @IsNotEmpty()
   items: SaleItemDto[];
 
+  @ApiProperty({ description: 'Customer name' })
+  @IsString()
+  @IsNotEmpty()
+  customerName: string;
+
   @ApiProperty({ description: 'Optional notes about the sale' })
   @IsString()
   @IsOptional()
   notes?: string;
 }
 
-export class UpdateSaleDto {
-  @ApiProperty({ description: 'The status of the sale', enum: SaleStatus })
-  @IsEnum(SaleStatus)
+export class UpdateSaleDto extends PartialType(CreateSaleDto) {
   @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @IsOptional()
+  @IsEnum(SaleType)
+  type?: SaleType;
+
+  @IsOptional()
+  @IsEnum(SaleStatus)
   status?: SaleStatus;
 
-  @ApiProperty({ description: 'Optional notes about the sale' })
-  @IsString()
   @IsOptional()
+  @IsNumber()
+  totalAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  discount?: number;
+
+  @IsOptional()
+  @IsString()
   notes?: string;
+
+  @IsOptional()
+  @ApiProperty({ enum: PaymentMethod, required: false })
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SaleItemDto)
+  items?: SaleItemDto[];
 }
 
 export class SaleResponseDto {

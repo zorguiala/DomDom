@@ -160,10 +160,10 @@ export class InventoryAnalyticsService {
 
   private calculateDailyMovement(
     transactions: InventoryTransaction[],
-    initialBalance: number
+    openingBalance: number
   ): DailyMovement[] {
     const dailyMovements: DailyMovement[] = [];
-    let currentBalance = initialBalance;
+    let currentBalance = openingBalance;
 
     const transactionsByDate = transactions.reduce(
       (acc, tx) => {
@@ -195,6 +195,57 @@ export class InventoryAnalyticsService {
     });
 
     return dailyMovements;
+  }
+
+  async getInventoryStats() {
+    // Get total inventory items count
+    const totalProducts = await this.productRepository.count({ 
+      where: { isActive: true } 
+    });
+
+    // Get total inventory value
+    const inventoryValue = await this.productRepository
+      .createQueryBuilder('product')
+      .select('SUM(product.currentStock * COALESCE(product.lastPurchasePrice, 0))', 'totalValue')
+      .where('product.isActive = :isActive', { isActive: true })
+      .getRawOne();
+
+    // Get low stock products count
+    const lowStockProducts = await this.productRepository
+      .createQueryBuilder('product')
+      .where('product.isActive = :isActive', { isActive: true })
+      .andWhere('product.currentStock <= product.reorderLevel')
+      .andWhere('product.reorderLevel > 0')
+      .getCount();
+
+    // Get out-of-stock products count
+    const outOfStockProducts = await this.productRepository
+      .count({ 
+        where: { 
+          isActive: true,
+          currentStock: LessThanOrEqual(0)
+        } 
+      });
+
+    // Get recent transactions (last 7 days)
+    const lastWeekDate = new Date();
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    
+    const recentTransactions = await this.transactionRepository
+      .count({
+        where: {
+          createdAt: Between(lastWeekDate, new Date())
+        }
+      });
+
+    return {
+      totalProducts,
+      totalValue: inventoryValue?.totalValue || 0,
+      lowStockProducts,
+      outOfStockProducts,
+      recentTransactions,
+      lastUpdated: new Date()
+    };
   }
 
   private async calculateAverageInventory(

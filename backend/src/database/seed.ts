@@ -14,7 +14,7 @@ import { Document } from '../entities/document.entity';
 import { EmployeeAttendance } from '../entities/employee-attendance.entity';
 import { DocumentType, DocumentFormat } from '../entities/enums/document.enum';
 import { TransactionType } from '../entities/inventory-transaction.entity';
-import { SaleType, SaleStatus } from '../entities/sale.entity';
+import { SaleType, SaleStatus } from '../entities/enums/sale.enum'; // Update SaleType import
 import { ProductionOrderStatus } from '../entities/production-order.entity';
 import { EmployeeRole } from '../entities/employee.entity';
 import { Unit } from '../entities/enums/unit.enum';
@@ -325,15 +325,15 @@ async function seedSales() {
     throw new Error('Admin user not found');
   }
 
-  const sale = saleRepository.create({
-    type: SaleType.DIRECT,
-    status: SaleStatus.COMPLETED,
-    totalAmount: 1000,
-    discount: 0,
-    finalAmount: 1000,
-    createdBy: user,
-    notes: 'Sample sale',
-  });
+  // Use a new instance with string values matching what's in the database
+  const sale = new Sale();
+  sale.type = 'direct' as any; // Use database enum value directly
+  sale.status = 'completed' as any;
+  sale.totalAmount = 1000;
+  sale.discount = 0;
+  sale.finalAmount = 1000;
+  sale.createdBy = user;
+  sale.notes = 'Sample sale';
 
   await saleRepository.save(sale);
   console.log('Sales seeded successfully');

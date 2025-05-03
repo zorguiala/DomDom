@@ -1,17 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export enum SaleStatus {
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  PENDING = 'pending',
+export enum SaleType {
+  DIRECT = 'direct',
+  COMMERCIAL = 'commercial',
+  ONLINE = 'online',
 }
 
-export interface SaleItemDto {
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  total: number;
+export enum SaleStatus {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+}
+
+export enum PaymentMethod {
+  CASH = 'cash',
+  CREDIT = 'credit',
+  CARD = 'card',
+  BANK_TRANSFER = 'bank_transfer',
+  OTHER = 'other',
+}
+
+export class SaleItemDto {
+  @ApiProperty() productId!: string;
+  @ApiProperty() productName!: string;
+  @ApiProperty() quantity!: number;
+  @ApiProperty() unitPrice!: number;
+  @ApiProperty() total!: number;
 }
 
 export interface SaleDto {
