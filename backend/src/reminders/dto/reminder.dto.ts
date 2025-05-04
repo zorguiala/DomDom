@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsDateString,
-  IsOptional,
-  IsNumber,
-  IsEnum,
-  IsNotEmpty,
-} from 'class-validator';
+import { IsString, IsDateString, IsOptional, IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum ReminderType {

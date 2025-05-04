@@ -31,10 +31,10 @@ export class Product extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
-  
+
   @Column({ nullable: true, type: 'int' })
   leadTimeDays: number;
-  
+
   @Column({ default: false })
   isRawMaterial: boolean;
 

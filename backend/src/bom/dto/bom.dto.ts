@@ -38,7 +38,7 @@ export class CreateBOMDto {
   @ValidateNested({ each: true })
   @Type(() => BOMItemDto)
   items: BOMItemDto[];
-  
+
   @IsOptional()
   isActive?: boolean;
 }

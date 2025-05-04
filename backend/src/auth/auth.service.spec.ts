@@ -56,7 +56,7 @@ describe('AuthService', () => {
           password: 'password',
           firstName: 'Test',
           lastName: 'User',
-        }),
+        })
       ).rejects.toThrow(UnauthorizedException);
     });
 

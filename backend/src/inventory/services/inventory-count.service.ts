@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { InventoryCount, InventoryCountItem, InventoryCountStatus } from '../../entities/inventory-count.entity';
+import {
+  InventoryCount,
+  InventoryCountItem,
+  InventoryCountStatus,
+} from '../../entities/inventory-count.entity';
 import { Product } from '../../entities/product.entity';
 import { CreateInventoryCountDto, InventoryCountItemDto } from '../dto/create-inventory-count.dto';
 import { User } from '../../entities/user.entity';
@@ -41,18 +45,16 @@ export class InventoryCountService {
     // Process items
     if (createCountDto.items && createCountDto.items.length > 0) {
       // Get unique product IDs
-      const productIds = [...new Set(createCountDto.items.map(item => item.productId))];
-      
+      const productIds = [...new Set(createCountDto.items.map((item) => item.productId))];
+
       // Get current stock levels for all products
       const stockLevels = await this.stockService.getStockLevels(productIds);
-      
+
       // Map for quick lookup
-      const stockMap = new Map(
-        stockLevels.map(item => [item.productId, item.currentStock])
-      );
+      const stockMap = new Map(stockLevels.map((item) => [item.productId, item.currentStock]));
 
       // Create count items with calculated discrepancies
-      const countItems = createCountDto.items.map(item => {
+      const countItems = createCountDto.items.map((item) => {
         const expectedQty = stockMap.get(item.productId) || 0;
         const actualQty = item.actualQuantity;
         const discrepancy = actualQty - expectedQty;
@@ -85,7 +87,7 @@ export class InventoryCountService {
     return this.countRepository.find({
       where,
       relations: ['items', 'initiatedBy', 'completedBy'],
-      order: { countDate: 'DESC' }
+      order: { countDate: 'DESC' },
     });
   }
 
@@ -95,7 +97,7 @@ export class InventoryCountService {
   async findOne(id: string): Promise<InventoryCount> {
     const count = await this.countRepository.findOne({
       where: { id },
-      relations: ['items', 'initiatedBy', 'completedBy']
+      relations: ['items', 'initiatedBy', 'completedBy'],
     });
 
     if (!count) {
@@ -109,12 +111,12 @@ export class InventoryCountService {
    * Update inventory count status
    */
   async updateStatus(
-    id: string, 
-    status: InventoryCountStatus, 
+    id: string,
+    status: InventoryCountStatus,
     user: User
   ): Promise<InventoryCount> {
     const count = await this.findOne(id);
-    
+
     // Validate status transitions
     if (count.status === InventoryCountStatus.COMPLETED) {
       throw new BadRequestException('Cannot update a completed inventory count');
@@ -143,7 +145,7 @@ export class InventoryCountService {
    */
   async reconcileInventory(countId: string, user: User): Promise<void> {
     const count = await this.findOne(countId);
-    
+
     if (count.status !== InventoryCountStatus.COMPLETED) {
       throw new BadRequestException('Only completed inventory counts can be reconciled');
     }
@@ -155,29 +157,30 @@ export class InventoryCountService {
       }
 
       // Create adjustment transaction
-      const transactionType = item.discrepancy > 0 
-        ? TransactionType.IN 
-        : TransactionType.OUT;
-      
+      const transactionType = item.discrepancy > 0 ? TransactionType.IN : TransactionType.OUT;
+
       const quantity = Math.abs(Number(item.discrepancy));
-      
+
       // Get product cost for valuation
       const product = await this.productRepository.findOne({
-        where: { id: item.productId }
+        where: { id: item.productId },
       });
 
       if (!product) {
         continue; // Skip if product not found
       }
-      
-      await this.transactionService.create({
-        productId: item.productId,
-        type: transactionType,
-        quantity,
-        unitPrice: Number(product.costPrice),
-        reference: `Inventory Count #${count.id}`,
-        notes: `Inventory reconciliation adjustment: ${item.notes || ''}`
-      }, user);
+
+      await this.transactionService.create(
+        {
+          productId: item.productId,
+          type: transactionType,
+          quantity,
+          unitPrice: Number(product.costPrice),
+          reference: `Inventory Count #${count.id}`,
+          notes: `Inventory reconciliation adjustment: ${item.notes || ''}`,
+        },
+        user
+      );
 
       // Mark as reconciled
       item.isReconciled = true;
@@ -194,30 +197,28 @@ export class InventoryCountService {
   ): Promise<Partial<InventoryCountItemDto>[]> {
     // Build query
     const queryBuilder = this.productRepository.createQueryBuilder('product');
-    
+
     // Apply filters
     if (!includeInactive) {
       queryBuilder.where('product.isActive = :isActive', { isActive: true });
     }
-    
+
     if (categoryIds && categoryIds.length > 0) {
       queryBuilder.andWhere('product.categoryId IN (:...categoryIds)', { categoryIds });
     }
-    
+
     // Get products
     const products = await queryBuilder.getMany();
-    
+
     // Get current stock levels
-    const productIds = products.map(p => p.id);
+    const productIds = products.map((p) => p.id);
     const stockLevels = await this.stockService.getStockLevels(productIds);
-    
+
     // Convert to map for easier lookup
-    const stockMap = new Map(
-      stockLevels.map(item => [item.productId, item.currentStock])
-    );
-    
+    const stockMap = new Map(stockLevels.map((item) => [item.productId, item.currentStock]));
+
     // Build template items
-    return products.map(product => ({
+    return products.map((product) => ({
       productId: product.id,
       productName: product.name,
       expectedQuantity: stockMap.get(product.id) || 0,

@@ -29,4 +29,4 @@ export class Attendance extends BaseEntity {
 
   @Column({ type: 'boolean', default: false })
   isApproved: boolean;
-} 
+}

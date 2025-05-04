@@ -462,7 +462,7 @@ export class SeedData1713890568275 implements MigrationInterface {
         endTime: new Date(cookieProductionDate.setHours(14, 0, 0)),
         notes: 'Regular production run',
         qualityChecked: true,
-        qualityNotes: 'All products meet quality standards'
+        qualityNotes: 'All products meet quality standards',
       },
       {
         employee: savedEmployees[1], // Jane Smith (Production Manager)
@@ -473,7 +473,7 @@ export class SeedData1713890568275 implements MigrationInterface {
         endTime: new Date(cupcakeProductionDate.setHours(15, 30, 0)),
         notes: 'Special order batch',
         qualityChecked: true,
-        qualityNotes: 'All products meet quality standards'
+        qualityNotes: 'All products meet quality standards',
       },
     ];
 
@@ -497,7 +497,7 @@ export class SeedData1713890568275 implements MigrationInterface {
         notes: 'Regular weekly order',
         invoiceNumber: 'INV-001',
         createdBy: regularUser,
-        completedAt: new Date(cookieSaleDate)
+        completedAt: new Date(cookieSaleDate),
       },
       {
         type: SaleType.DIRECT,
@@ -509,7 +509,7 @@ export class SeedData1713890568275 implements MigrationInterface {
         notes: 'First-time customer',
         invoiceNumber: 'INV-002',
         createdBy: regularUser,
-        completedAt: new Date(cupcakeSaleDate)
+        completedAt: new Date(cupcakeSaleDate),
       },
     ];
 

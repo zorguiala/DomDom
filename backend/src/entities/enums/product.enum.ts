@@ -4,4 +4,4 @@ export enum ProductType {
   SEMI_FINISHED = 'semi_finished',
   PACKAGING = 'packaging',
   CONSUMABLE = 'consumable',
-} 
+}

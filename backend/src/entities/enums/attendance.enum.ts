@@ -4,4 +4,4 @@ export enum AttendanceStatus {
   LATE = 'late',
   HALF_DAY = 'half_day',
   ON_LEAVE = 'on_leave',
-} 
+}

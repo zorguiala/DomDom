@@ -30,7 +30,10 @@ export class AuthService {
   async validateUser(username: string, password: string): Promise<User | null> {
     console.log(`[AuthService] Starting validation for user: ${username}`);
     const user = await this.userRepository.findOne({ where: { email: username } });
-    console.log(`[AuthService] Found user:`, user ? { id: user.id, email: user.email, isActive: user.isActive } : 'null');
+    console.log(
+      `[AuthService] Found user:`,
+      user ? { id: user.id, email: user.email, isActive: user.isActive } : 'null'
+    );
 
     if (!user) {
       console.log(`[AuthService] User not found: ${username}`);
@@ -124,7 +127,6 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const isPasswordValid = await compare(currentPassword, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
@@ -134,7 +136,7 @@ export class AuthService {
     this.validatePassword(newPassword);
 
     // Update password and expiration date
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+
     user.password = await hash(newPassword, 10);
     user.passwordExpirationDate = new Date();
     user.passwordExpirationDate.setMonth(user.passwordExpirationDate.getMonth() + 6);

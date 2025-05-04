@@ -30,8 +30,8 @@ export class InventoryWastageService {
    */
   async create(createWastageDto: CreateWastageRecordDto, user: User): Promise<InventoryWastage> {
     // Verify product exists
-    const product = await this.productRepository.findOne({ 
-      where: { id: createWastageDto.productId }
+    const product = await this.productRepository.findOne({
+      where: { id: createWastageDto.productId },
     });
 
     if (!product) {
@@ -41,11 +41,11 @@ export class InventoryWastageService {
     // If batch is specified, verify it exists
     let batch: InventoryBatch | null = null;
     if (createWastageDto.batchId) {
-      batch = await this.batchRepository.findOne({ 
-        where: { 
+      batch = await this.batchRepository.findOne({
+        where: {
           id: createWastageDto.batchId,
-          isActive: true
-        }
+          isActive: true,
+        },
       });
 
       if (!batch) {
@@ -54,7 +54,9 @@ export class InventoryWastageService {
 
       // Ensure batch has enough quantity
       if (Number(batch.quantity) < createWastageDto.quantity) {
-        throw new BadRequestException(`Batch does not have enough quantity. Available: ${batch.quantity}`);
+        throw new BadRequestException(
+          `Batch does not have enough quantity. Available: ${batch.quantity}`
+        );
       }
     }
 
@@ -67,14 +69,19 @@ export class InventoryWastageService {
     const savedWastage = await this.wastageRepository.save(wastage);
 
     // Deduct from inventory
-    await this.transactionService.create({
-      productId: createWastageDto.productId,
-      type: TransactionType.OUT,
-      quantity: createWastageDto.quantity,
-      unitPrice: 0, // Wastage has no sale value
-      reference: `Wastage: ${WastageReason[createWastageDto.reason]}`,
-      notes: createWastageDto.notes || `Product wastage due to ${WastageReason[createWastageDto.reason]}`
-    }, user);
+    await this.transactionService.create(
+      {
+        productId: createWastageDto.productId,
+        type: TransactionType.OUT,
+        quantity: createWastageDto.quantity,
+        unitPrice: 0, // Wastage has no sale value
+        reference: `Wastage: ${WastageReason[createWastageDto.reason]}`,
+        notes:
+          createWastageDto.notes ||
+          `Product wastage due to ${WastageReason[createWastageDto.reason]}`,
+      },
+      user
+    );
 
     // If batch specified, update batch quantity
     if (batch) {
@@ -89,21 +96,21 @@ export class InventoryWastageService {
    * Find all wastage records, optionally filtered by date range and product
    */
   async findAll(
-    startDate?: Date, 
-    endDate?: Date, 
+    startDate?: Date,
+    endDate?: Date,
     productId?: string,
     reason?: WastageReason
   ): Promise<InventoryWastage[]> {
     const where: any = {};
-    
+
     if (startDate && endDate) {
       where.date = Between(startDate, endDate);
     }
-    
+
     if (productId) {
       where.productId = productId;
     }
-    
+
     if (reason) {
       where.reason = reason;
     }
@@ -111,7 +118,7 @@ export class InventoryWastageService {
     return this.wastageRepository.find({
       where,
       relations: ['product', 'batch', 'reportedBy'],
-      order: { date: 'DESC' }
+      order: { date: 'DESC' },
     });
   }
 
@@ -121,7 +128,7 @@ export class InventoryWastageService {
   async findOne(id: string): Promise<InventoryWastage> {
     const wastage = await this.wastageRepository.findOne({
       where: { id },
-      relations: ['product', 'batch', 'reportedBy']
+      relations: ['product', 'batch', 'reportedBy'],
     });
 
     if (!wastage) {
@@ -135,7 +142,7 @@ export class InventoryWastageService {
    * Get wastage summary by reason for a specified period
    */
   async getWastageSummaryByReason(
-    startDate: Date, 
+    startDate: Date,
     endDate: Date
   ): Promise<{ reason: string; quantity: number; count: number }[]> {
     const result = await this.wastageRepository
@@ -147,10 +154,10 @@ export class InventoryWastageService {
       .groupBy('wastage.reason')
       .getRawMany();
 
-    return result.map(item => ({
+    return result.map((item) => ({
       reason: item.reason,
       quantity: Number(item.quantity),
-      count: Number(item.count)
+      count: Number(item.count),
     }));
   }
 
@@ -158,7 +165,7 @@ export class InventoryWastageService {
    * Get wastage by product for a specified period
    */
   async getWastageByProduct(
-    startDate: Date, 
+    startDate: Date,
     endDate: Date
   ): Promise<{ productId: string; productName: string; quantity: number; value: number }[]> {
     const result = await this.wastageRepository
@@ -173,11 +180,11 @@ export class InventoryWastageService {
       .addGroupBy('product.name')
       .getRawMany();
 
-    return result.map(item => ({
+    return result.map((item) => ({
       productId: item.productId,
       productName: item.productName,
       quantity: Number(item.quantity),
-      value: Number(item.value)
+      value: Number(item.value),
     }));
   }
 
@@ -187,7 +194,7 @@ export class InventoryWastageService {
   async getWastageAnalytics(startDate: Date, endDate: Date) {
     // Get total records count
     const totalRecords = await this.wastageRepository.count({
-      where: { date: Between(startDate, endDate) }
+      where: { date: Between(startDate, endDate) },
     });
 
     // Get total quantity and value
@@ -209,7 +216,7 @@ export class InventoryWastageService {
     const monthlyData = await this.wastageRepository
       .createQueryBuilder('wastage')
       .leftJoin('wastage.product', 'product')
-      .select('TO_CHAR(wastage.date, \'YYYY-MM\')', 'month')
+      .select("TO_CHAR(wastage.date, 'YYYY-MM')", 'month')
       .addSelect('COUNT(wastage.id)', 'count')
       .addSelect('SUM(wastage.quantity)', 'quantity')
       .addSelect('SUM(wastage.quantity * COALESCE(product.costPrice, 0))', 'value')
@@ -224,12 +231,12 @@ export class InventoryWastageService {
       totalValue: Number(totalsQuery?.totalValue || 0),
       byReason,
       byProduct,
-      monthlyData: monthlyData.map(item => ({
+      monthlyData: monthlyData.map((item) => ({
         month: item.month,
         count: Number(item.count),
         quantity: Number(item.quantity),
-        value: Number(item.value)
-      }))
+        value: Number(item.value),
+      })),
     };
   }
 }

@@ -86,7 +86,7 @@ export class InventoryStockService {
       status: this.getStockStatus(p.currentStock),
     }));
   }
-  
+
   /**
    * Get current stock levels for all products or specific products
    * @param productIds Optional array of product IDs to filter
@@ -94,11 +94,11 @@ export class InventoryStockService {
    */
   async getStockLevels(productIds?: string[]): Promise<StockLevel[]> {
     const queryBuilder = this.productRepository.createQueryBuilder('product');
-    
+
     if (productIds && productIds.length > 0) {
       queryBuilder.where('product.id IN (:...productIds)', { productIds });
     }
-    
+
     const products = await queryBuilder
       .select([
         'product.id as productId',
@@ -106,11 +106,11 @@ export class InventoryStockService {
         'product.currentStock as currentQuantity',
         'product.minimumStock as minimumQuantity',
         'product.unit as unit',
-        'product.costPrice as costPrice'
+        'product.costPrice as costPrice',
       ])
       .getRawMany();
-    
-    return products.map(p => {
+
+    return products.map((p) => {
       const currentQuantity = Number(p.currentQuantity);
       return {
         productId: p.productId,
@@ -121,7 +121,7 @@ export class InventoryStockService {
         minimumStock: Number(p.minimumQuantity), // Add alias for backward compatibility
         unit: p.unit,
         costPrice: Number(p.costPrice),
-        status: this.getStockStatus(currentQuantity)
+        status: this.getStockStatus(currentQuantity),
       };
     });
   }

@@ -1,13 +1,7 @@
 import { Controller, Post, Body, Get, Query, Param, UseGuards, Put, Delete } from '@nestjs/common';
 import { SalesService } from './sales.service';
-import {
-  CreateSaleDto,
-  UpdateSaleDto
-} from './dto/sale.dto';
-import {
-  SaleReportFilterDto,
-  SaleReportDto,
-} from '../types/sale.types';
+import { CreateSaleDto, UpdateSaleDto } from './dto/sale.dto';
+import { SaleReportFilterDto, SaleReportDto } from '../types/sale.types';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -82,14 +76,14 @@ export class SalesController {
     if (isNaN(dateObj.getTime())) {
       throw new Error('Invalid date format. Use YYYY-MM-DD');
     }
-    
+
     // Create start and end of the requested day
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
-    
+
     const endDate = new Date(date);
     endDate.setHours(23, 59, 59, 999);
-    
+
     return await this.salesService.getDailySales(startDate, endDate);
   }
 
@@ -104,7 +98,7 @@ export class SalesController {
   ) {
     let start: Date;
     let end: Date;
-    
+
     if (startDate) {
       start = new Date(startDate);
       if (isNaN(start.getTime())) {
@@ -115,7 +109,7 @@ export class SalesController {
       start = new Date();
       start.setDate(start.getDate() - 30);
     }
-    
+
     if (endDate) {
       end = new Date(endDate);
       if (isNaN(end.getTime())) {
@@ -125,7 +119,7 @@ export class SalesController {
       // Default to today
       end = new Date();
     }
-    
+
     return await this.salesService.getSalesOverview(start, end);
   }
 }

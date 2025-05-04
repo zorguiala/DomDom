@@ -8,5 +8,5 @@ export enum Unit {
   BOX = 'BOX',
   CARTON = 'CARTON',
   METER = 'METER',
-  SQUARE_METER = 'SQUARE_METER'
-} 
+  SQUARE_METER = 'SQUARE_METER',
+}

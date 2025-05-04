@@ -1,4 +1,15 @@
-import { IsString, IsNumber, IsOptional, IsUUID, IsDateString, IsNotEmpty, Min, IsArray, ValidateNested, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  IsDateString,
+  IsNotEmpty,
+  Min,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { InventoryCountStatus } from '../../entities/inventory-count.entity';
 
@@ -6,7 +17,7 @@ export class InventoryCountItemDto {
   @IsUUID()
   @IsNotEmpty()
   productId: string;
-  
+
   @IsString()
   @IsNotEmpty()
   productName: string;

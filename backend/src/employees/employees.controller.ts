@@ -62,10 +62,7 @@ export class EmployeesController {
     try {
       // If dates are provided, filter by date range
       if (startDate && endDate) {
-        return this.attendanceService.getAllAttendance(
-          new Date(startDate),
-          new Date(endDate)
-        );
+        return this.attendanceService.getAllAttendance(new Date(startDate), new Date(endDate));
       }
       // Otherwise return all records (with a reasonable limit)
       return this.attendanceService.getAllAttendance();
@@ -183,11 +180,11 @@ export class EmployeesController {
     @Query('endDate') endDate?: string
   ): Promise<EmployeeSchedule[]> {
     const where: any = { employee: { id: employeeId } };
-    
+
     if (startDate && endDate) {
       where.date = { $between: [new Date(startDate), new Date(endDate)] };
     }
-    
+
     return this.employeeService.getEmployeeSchedules(employeeId, startDate, endDate);
   }
 

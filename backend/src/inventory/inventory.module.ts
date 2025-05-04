@@ -27,9 +27,9 @@ import { ProductsModule } from '../products/products.module';
       InventoryBatch,
       InventoryWastage,
       InventoryCount,
-      InventoryCountItem
+      InventoryCountItem,
     ]),
-    ProductsModule
+    ProductsModule,
   ],
   providers: [
     InventoryTransactionService,
@@ -38,14 +38,14 @@ import { ProductsModule } from '../products/products.module';
     InventoryBatchService,
     InventoryWastageService,
     InventoryCountService,
-    InventoryForecastService
+    InventoryForecastService,
   ],
   controllers: [
     InventoryController,
     InventoryBatchController,
     InventoryWastageController,
     InventoryCountController,
-    InventoryForecastController
+    InventoryForecastController,
   ],
   exports: [
     InventoryTransactionService,
@@ -54,7 +54,7 @@ import { ProductsModule } from '../products/products.module';
     InventoryBatchService,
     InventoryWastageService,
     InventoryCountService,
-    InventoryForecastService
+    InventoryForecastService,
   ],
 })
 export class InventoryModule {}

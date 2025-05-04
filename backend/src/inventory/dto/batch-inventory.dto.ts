@@ -28,4 +28,4 @@ export class BatchInventoryDto {
   @IsArray()
   @IsNotEmpty()
   items: BatchInventoryItemDto[];
-} 
+}

@@ -73,11 +73,11 @@ export class AttendanceService {
         },
       });
     }
-    
+
     // If no dates provided, return records from the last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     return this.attendanceRepository.find({
       where: {
         clockIn: Between(startOfDay(thirtyDaysAgo), endOfDay(new Date())),

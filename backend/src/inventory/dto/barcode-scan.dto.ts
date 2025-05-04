@@ -23,4 +23,4 @@ export class BarcodeScanDto {
   @IsString()
   @IsOptional()
   notes?: string;
-} 
+}

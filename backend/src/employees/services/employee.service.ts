@@ -115,9 +115,12 @@ export class EmployeeService {
     return await this.employeeRepository.save(employee);
   }
 
-  async getProductivityMetrics(startDate?: string, endDate?: string): Promise<EmployeeProductivityMetrics[]> {
+  async getProductivityMetrics(
+    startDate?: string,
+    endDate?: string
+  ): Promise<EmployeeProductivityMetrics[]> {
     const employees = await this.employeeRepository.find({
-      where: { isActive: true }
+      where: { isActive: true },
     });
 
     // If dates provided, calculate metrics for that period for each employee
@@ -129,12 +132,12 @@ export class EmployeeService {
           new Date(startDate),
           new Date(endDate)
         );
-        
+
         result.push({
           id: employee.id,
           employeeId: employee.id,
           period: `${startDate}/${endDate}`,
-          ...metrics
+          ...metrics,
         });
       }
       return result;
@@ -221,20 +224,20 @@ export class EmployeeService {
     const employee = await this.findOne(employeeId);
 
     // Build query conditions
-    const where: FindOptionsWhere<EmployeeSchedule> = { 
-      employee: { id: employee.id } 
+    const where: FindOptionsWhere<EmployeeSchedule> = {
+      employee: { id: employee.id },
     };
-    
+
     // Add date range if provided
     if (startDate && endDate) {
       where.date = Between(new Date(startDate), new Date(endDate));
     }
-    
+
     return this.scheduleRepository.find({
       where,
       order: {
-        date: 'ASC'
-      }
+        date: 'ASC',
+      },
     });
   }
 

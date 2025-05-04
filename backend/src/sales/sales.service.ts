@@ -219,10 +219,10 @@ export class SalesService {
     const totalSales = sales.length;
     const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
     const totalItems = sales.reduce((sum, sale) => sum + sale.items.length, 0);
-    
+
     // Get sales by hour
     const salesByHour = Array(24).fill(0);
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       const hour = new Date(sale.createdAt).getHours();
       salesByHour[hour]++;
     });
@@ -235,7 +235,7 @@ export class SalesService {
       [PaymentMethod.OTHER]: 0,
     };
 
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       if (sale.paymentMethod) {
         salesByPaymentMethod[sale.paymentMethod]++;
       } else {
@@ -245,14 +245,14 @@ export class SalesService {
 
     // Get top selling products
     const productMap = new Map<string, { name: string; quantity: number; revenue: number }>();
-    
-    sales.forEach(sale => {
-      sale.items.forEach(item => {
+
+    sales.forEach((sale) => {
+      sale.items.forEach((item) => {
         const productId = item.product.id;
         const productName = item.product.name;
         const quantity = item.quantity || 0;
         const revenue = (item.unitPrice || 0) * quantity;
-        
+
         if (productMap.has(productId)) {
           const existing = productMap.get(productId)!;
           existing.quantity += quantity;
@@ -262,7 +262,7 @@ export class SalesService {
         }
       });
     });
-    
+
     const topProducts = Array.from(productMap.entries())
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => b.revenue - a.revenue)
@@ -276,11 +276,11 @@ export class SalesService {
       salesByHour,
       salesByPaymentMethod,
       topProducts,
-      recentSales: sales.slice(0, 10).map(sale => ({
+      recentSales: sales.slice(0, 10).map((sale) => ({
         id: sale.id,
         time: sale.createdAt,
         total: sale.totalAmount,
-        customerName: (sale as any).agent?.name || 'Walk-in Customer', 
+        customerName: (sale as any).agent?.name || 'Walk-in Customer',
         items: sale.items.length,
       })),
     };
@@ -296,52 +296,55 @@ export class SalesService {
     });
 
     // Calculate days in range for averages
-    const daysInRange = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
-    
+    const daysInRange = Math.max(
+      1,
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    );
+
     // Calculate total revenue
     const totalRevenue = sales.reduce((sum, sale) => sum + (sale.totalAmount || 0), 0);
-    
+
     // Calculate average daily revenue
     const averageDailyRevenue = totalRevenue / daysInRange;
-    
+
     // Calculate total sales count
     const totalSalesCount = sales.length;
-    
+
     // Calculate average order value
     const averageOrderValue = totalSalesCount > 0 ? totalRevenue / totalSalesCount : 0;
-    
+
     // Get sales trend data by day
     const salesByDay = new Map<string, { date: string; count: number; revenue: number }>();
-    
+
     // Initialize with all days in range
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       const dateStr = currentDate.toISOString().split('T')[0];
       salesByDay.set(dateStr, { date: dateStr, count: 0, revenue: 0 });
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     // Populate with actual sales data
-    sales.forEach(sale => {
+    sales.forEach((sale) => {
       const dateStr = new Date(sale.createdAt).toISOString().split('T')[0];
       const dayData = salesByDay.get(dateStr);
-      
+
       if (dayData) {
         dayData.count++;
         dayData.revenue += sale.totalAmount || 0;
       }
     });
-    
+
     // Get top selling products
     const productMap = new Map<string, { name: string; quantity: number; revenue: number }>();
-    
-    sales.forEach(sale => {
-      sale.items.forEach(item => {
+
+    sales.forEach((sale) => {
+      sale.items.forEach((item) => {
         const productId = item.product.id;
         const productName = item.product.name;
         const quantity = item.quantity || 0;
         const revenue = (item.unitPrice || 0) * quantity;
-        
+
         if (productMap.has(productId)) {
           const existing = productMap.get(productId)!;
           existing.quantity += quantity;
@@ -351,7 +354,7 @@ export class SalesService {
         }
       });
     });
-    
+
     const topProducts = Array.from(productMap.entries())
       .map(([id, data]) => ({ id, ...data }))
       .sort((a, b) => b.revenue - a.revenue)

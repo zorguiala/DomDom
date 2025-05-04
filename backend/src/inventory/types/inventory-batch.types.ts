@@ -64,7 +64,7 @@ export enum WastageReason {
   QUALITY_ISSUE = 'QUALITY_ISSUE',
   CONTAMINATION = 'CONTAMINATION',
   PROCESSING_LOSS = 'PROCESSING_LOSS',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 export interface InventoryCountRecord {
