@@ -1,111 +1,34 @@
 # 📋 DomDom Project Tasks
 
-This document tracks current tasks, priorities, and progress for the DomDom project.
+This document tracks current tasks, priorities, and progress for the DomDom project. Tasks are organized by module/feature to provide a comprehensive view of each business function's implementation status.
 
-## 🔄 Currently In Progress
+## 🔄 System-Wide Tasks
 
-### Important - Codebase Refactoring
+### Codebase Refactoring
 
 - [x] Read rules and coding style and plan refactoring approach
-- [ ] Frontend Component Refactoring:
-  - [ ] Resolve component duplication:
-    - [ ] Compare implementations and determine which to keep
-    - [ ] Consolidate to a single implementation in the appropriate location
-    - [ ] Update all imports to reference the correct component files
-  - [ ] Fix file naming conventions:
-    - [ ] Create a script to rename frontend component files from PascalCase to kebab-case
-    - [ ] Update all import statements across the project accordingly
-    - [ ] Test that the application builds successfully after renaming
-  - [ ] Reorganize file structure:
-    - [ ] Move layout components to components/layout directory
-    - [ ] Ensure all feature-specific components are in appropriate feature folders
-    - [ ] Group related components by functionality
-    - [ ] Update imports after reorganization
-  - [ ] Enhance component structure:
-    - [ ] Extract business logic from UI components into custom hooks
-    - [ ] Update components to use the extracted hooks
-    - [ ] Add proper type definitions and prop validations
-    - [ ] Ensure components follow the functional component pattern
-- [ ] Backend Code Refactoring:
+- [ ] Component Refactoring:
+  - [ ] Resolve component duplication across the system
+  - [ ] Fix file naming conventions (PascalCase to kebab-case)
+  - [ ] Reorganize file structure by feature modules
+  - [ ] Extract business logic from UI components into custom hooks
+- [ ] Code Quality Improvements:
   - [ ] Review and refactor files exceeding 500 lines
   - [ ] Ensure consistent module structure across features
   - [ ] Verify proper separation of concerns (thin controllers, business logic in services)
 
-### Production Management Frontend Implementation
+## 📦 Inventory Management Module
 
-- ✅ Create production types in `types/production.ts`
-- ✅ Implement production API service in `services/productionServices/productionApi.ts`
-- ✅ Implement useRecordProduction hook in `services/productionServices/use-record-production`
-- ✅ Update Production page with tabbed interface for different views
-- ✅ Create ProductionOrderList component
-- ✅ Create ProductionOrderForm component for creating/editing orders
-- ✅ Create ProductionOrderDetails component for viewing order details
-- ✅ Create RecordProductionForm for recording production outputs
-- ✅ Refactor production components to use hooks and strict types (see `frontend/src/components/production/` and `frontend/src/hooks/`)
-- ✅ Fix Ant Design Tabs deprecation and filter errors (see `frontend/src/pages/production.tsx`)
-- ✅ Ensure all production types are in `frontend/src/types/production.ts`
-- [ ] Add search and filtering functionality for production orders:
-  - [ ] Implement search by order number/name/product
-  - [ ] Add date range filtering
-  - [ ] Add status filtering (pending, in progress, completed)
-- [ ] Add production statistics and metrics to the dashboard:
-  - [ ] Create production overview component
-  - [ ] Implement daily/weekly/monthly production charts
-  - [ ] Add efficiency metrics display
-- [ ] Create production reports view:
-  - [ ] Design production summary report
-  - [ ] Implement date range selection for reports
-  - [ ] Add export to PDF/Excel functionality
+### Core Inventory Management - Status: ✅ COMPLETED
 
-### BOM Management Improvements
+- ✅ Implement basic inventory management
+  - ✅ Create inventory types and database models
+  - ✅ Implement inventory API services
+  - ✅ Create product management interface
+  - ✅ Implement inventory transactions recording
+  - ✅ Add basic stock level tracking
 
-- [ ] Enhance BOM component UI/UX
-- [ ] Add material requirements calculation view
-- [ ] Add cost calculation view
-- [ ] Implement BOM versioning support
-- [ ] Create BOM comparison feature
-
-### Purchase Management Implementation
-
-- [ ] Implement purchase order tracking (achats) from suppliers (fournisseurs)
-- [ ] Create supplier management UI and backend
-- [ ] Add purchase reporting and analytics
-
-### Employee Salary & Bonus Management
-
-- [ ] Implement comprehensive employee management system:
-  - [ ] Create employee profiles with roles and skill sets
-  - [ ] Track employee task assignments to different products each day
-  - [ ] Implement flexible employee scheduling system
-- [ ] Design salary management system:
-  - [ ] Create base salary configuration for different roles
-  - [ ] Implement timesheet tracking and validation
-  - [ ] Support salary adjustments and history tracking
-- [ ] Develop performance-based bonus system:
-  - [ ] Define performance metrics and KPIs for different roles
-  - [ ] Create automated bonus calculation based on productivity data
-  - [ ] Support management override for special bonuses
-  - [ ] Implement bonus history and tracking
-- [ ] Create salary and bonus reporting:
-  - [ ] Generate monthly payroll reports
-  - [ ] Create performance trends analysis
-  - [ ] Implement year-to-date compensation reports
-  - [ ] Create cost allocation reports for employee costs across products
-
-### Sales Management Enhancements
-
-- [ ] Implement door-to-door sales workflow with salespeople:
-  - [ ] Create mobile-friendly interface for door-to-door salespeople
-  - [ ] Implement end-of-day sales reconciliation for tracking what they sold
-  - [ ] Add offline mode capabilities for salespeople working in areas with poor connectivity
-  - [ ] Create sales team dashboard with team performance metrics
-- [ ] Add support for direct company/business orders:
-  - [ ] Create specialized order form for business clients
-  - [ ] Implement recurring order functionality
-  - [ ] Add business customer management
-  - [ ] Create business customer invoicing with payment tracking
-
-### Inventory & Stock Enhancements
+### Inventory Enhancements - Status: 🔄 PLANNED
 
 - [ ] Implement advanced inventory management:
   - [ ] Create intelligent low stock alert system based on historical daily usage
@@ -115,124 +38,180 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
   - [ ] Implement inventory count and reconciliation workflows
   - [ ] Track inventory wastage and spoilage for food products
 
-### BOM & Costing Enhancements
+## 🏭 Production Management Module
 
-- [ ] Improve Bill of Materials management:
-  - [ ] Create comprehensive BOM structure with raw materials and packaging (emballage)
-  - [ ] Support variant BOMs for different product sizes/configurations
-  - [ ] Implement BOM version control and history
-- [ ] Develop advanced product costing system:
-  - [ ] Calculate material costs based on current inventory valuation
-  - [ ] Include packaging/emballage costs in product calculations
-  - [ ] Create flexible employee cost allocation options:
-    - [ ] Support manual allocation for employees working on multiple products
-    - [ ] Implement time-tracking based allocation (optional)
-    - [ ] Allow for excluding employee costs from product costing
+### Core Production Management - Status: ✅ COMPLETED
+
+- ✅ Implement production management system
+  - ✅ Create production types and database models
+  - ✅ Implement production order API services
+  - ✅ Create production order management interface
+  - ✅ Implement production recording functionality
+  - ✅ Create production order details views
+
+### Production Management Enhancements - Status: 🔄 IN PROGRESS
+
+- [ ] Add advanced production management features
+  - [ ] Implement search and filtering for production orders
+  - [ ] Create production statistics and metrics dashboard
+  - [ ] Implement production reports with export options
+  - [ ] Add batch production tracking
+  - [ ] Implement quality control checkpoints
+  - [ ] Create notifications for completed production orders
+
+## 📑 Bill of Materials (BOM) Module
+
+### Core BOM Management - Status: ✅ COMPLETED
+
+- ✅ Implement basic BOM functionality
+  - ✅ Create BOM types and database models
+  - ✅ Implement BOM API services
+  - ✅ Create basic BOM management interface
+  - ✅ Implement material requirements functionality
+
+### BOM Enhancements - Status: 🔄 PLANNED
+
+- [ ] Enhance BOM management system
+  - [ ] Improve BOM component UI/UX
+  - [ ] Add comprehensive material requirements calculation
+  - [ ] Implement advanced cost calculation view
+  - [ ] Support packaging (emballage) as a BOM item
+  - [ ] Create BOM version control and history
+  - [ ] Implement BOM comparison features
+- [ ] Implement advanced product costing
+  - [ ] Calculate material costs based on inventory valuation
+  - [ ] Include packaging costs in product calculations
+  - [ ] Create flexible employee cost allocation options
   - [ ] Track overhead and fixed cost allocation
-  - [ ] Calculate final unit costs with configurable components
-- [ ] Create BOM analytics:
-  - [ ] Material usage efficiency reporting
-  - [ ] Cost breakdown analysis
-  - [ ] Cost trend tracking over time
+  - [ ] Generate cost breakdown analytics
 
-### Bills & Maintenance Tracking
+## 👨‍💼 Employee Management Module
 
-- [ ] Implement expense tracking system:
-  - [ ] Create monthly bill tracking for fixed expenses (electricity, loans, rent)
-  - [ ] Track variable expenses (gas for vans, general supplies)
+### Core Employee Management - Status: ✅ COMPLETED
+
+- ✅ Implement basic employee management
+  - ✅ Create employee database models and types
+  - ✅ Implement employee management API services
+  - ✅ Create employee profiles and management interface
+  - ✅ Implement basic attendance tracking
+  - ✅ Create simple employee scheduling system
+
+### Employee Management Enhancements - Status: 🔄 PLANNED
+
+- [ ] Enhance employee management system
+  - [ ] Add employee roles and skill sets
+  - [ ] Track daily employee assignments to different products
+  - [ ] Implement comprehensive scheduling system
+  - [ ] Create employee performance metrics
+- [ ] Implement salary and bonus management
+  - [ ] Create base salary configuration for roles
+  - [ ] Implement timesheet tracking and validation
+  - [ ] Develop performance-based bonus calculation
+  - [ ] Create payroll and performance reporting
+
+## 💰 Sales Management Module
+
+### Core Sales Management - Status: ✅ PARTIALLY COMPLETED
+
+- ✅ Implement basic sales recording
+  - ✅ Create sales database models and types
+  - ✅ Implement sales API services
+  - ✅ Create sales list and form components
+  - ✅ Implement CRUD operations for sales
+  - ✅ Add basic sales reporting endpoints
+
+### Sales Management Enhancements - Status: 🔄 PLANNED
+
+- [ ] Implement door-to-door sales workflow
+  - [ ] Create mobile-friendly interface for door-to-door salespeople
+  - [ ] Implement end-of-day sales reconciliation
+  - [ ] Add offline mode for areas with poor connectivity
+  - [ ] Create sales team dashboard with performance metrics
+- [ ] Implement business client order management
+  - [ ] Create specialized order form for business clients
+  - [ ] Implement recurring order functionality
+  - [ ] Add business customer management
+  - [ ] Create business customer invoicing with payment tracking
+- [ ] Implement invoice generation
+  - [ ] Create invoice template system
+  - [ ] Implement invoice generation UI and logic
+  - [ ] Add invoice export options (PDF/Excel)
+
+## 🛒 Purchase Management Module
+
+### Purchase Management - Status: 🔄 PLANNED
+
+- [ ] Implement purchase management system
+  - [ ] Create purchase database models and types
+  - [ ] Implement purchase API services
+  - [ ] Create supplier management interface
+  - [ ] Implement purchase order tracking
+  - [ ] Add supplier information management
+  - [ ] Create purchase reporting and analytics
+
+## 📄 Document Generation Module
+
+### Document Generation - Status: 🔄 PLANNED
+
+- [ ] Implement document generation system
+  - [ ] Create document template database models
+  - [ ] Implement document generation API services
+  - [ ] Create document template management interface
+  - [ ] Implement document generation UI
+  - [ ] Add document preview functionality
+  - [ ] Create document export options (PDF/Excel)
+  - [ ] Implement "bon de sortie" generation for delivery vans
+
+## 💸 Financial Management Module
+
+### Financial Management - Status: 🔄 PLANNED
+
+- [ ] Implement expense tracking system
+  - [ ] Create expense database models and types
+  - [ ] Implement expense tracking API services
+  - [ ] Create monthly bill tracking for fixed expenses
+  - [ ] Track variable expenses (fuel, supplies)
   - [ ] Implement expense categorization and reporting
   - [ ] Create expense dashboard with period comparison
-- [ ] Implement delivery van fleet management:
-  - [ ] Create vehicle profiles for each of the 2 delivery vans
+- [ ] Implement financial reporting system
+  - [ ] Create period-based revenue tracking
+  - [ ] Develop net profit calculation based on time periods
+  - [ ] Generate profit margin analysis by product
+  - [ ] Implement sales channel profitability comparison
+  - [ ] Create financial performance dashboard
+  - [ ] Add export options for all financial reports
+
+## 🚐 Vehicle Management Module
+
+### Vehicle Management - Status: 🔄 PLANNED
+
+- [ ] Implement delivery van fleet management
+  - [ ] Create vehicle database models and types
+  - [ ] Implement vehicle management API services
+  - [ ] Create vehicle profiles for the 2 delivery vans
   - [ ] Track mileage and fuel consumption
   - [ ] Schedule preventive maintenance based on mileage/time
   - [ ] Set up notifications for upcoming maintenance
   - [ ] Manage maintenance records and history
   - [ ] Track maintenance costs per vehicle
 
-### Reporting & Analytics
+## 📊 Reporting & Analytics Module
 
-- [ ] Implement comprehensive financial reporting system:
-  - [ ] Create period-based revenue tracking (daily, weekly, monthly, yearly)
-  - [ ] Implement expense categorization and reporting
-  - [ ] Develop net profit calculation based on configurable time periods
-  - [ ] Create profit margin analysis by product and product category
-  - [ ] Implement sales channel profitability comparison (direct vs. door-to-door)
-- [ ] Create business intelligence dashboards:
-  - [ ] Financial performance overview with KPIs
-  - [ ] Cost trend analysis with graphical visualization
-  - [ ] Product profitability comparison tools
-  - [ ] Cash flow forecasting based on orders and expenses
-- [ ] Implement export options for all reports (PDF, Excel, CSV)
-- [ ] Create automated reporting and scheduling features for key reports
+### Core Reporting - Status: ✅ PARTIALLY COMPLETED
 
-## 📅 Upcoming Tasks
+- ✅ Implement basic reporting
+  - ✅ Create basic dashboard with key metrics
+  - ✅ Implement simple inventory reports
+  - ✅ Add basic sales reporting
 
-### Sales Management Frontend Implementation
+### Reporting Enhancements - Status: 🔄 PLANNED
 
-- ✅ Create sales types in `types/sales.ts` (see `frontend/src/types/sales.ts`)
-- ✅ Implement sales API service (see `frontend/src/services/sales-service.ts`)
-- ✅ Create SalesOrderList component (see `frontend/src/components/sales/sales-list.tsx`)
-- ✅ Implement direct sales recording interface (see `frontend/src/components/sales/sales-form.tsx`)
-- ✅ Implement commercial sales recording interface (see `frontend/src/components/sales/sales-form.tsx`)
-- ✅ Implement full CRUD for sales (see `frontend/src/components/sales/` and `frontend/src/hooks/use-sales.ts`)
-- [ ] Create invoice generation UI
-- [ ] Add sales dashboard widgets
-
-### Sales Management Backend Implementation
-
-- ✅ Create sales types in `src/types/sale.types.ts`
-- ✅ Implement sales API service (see `backend/src/sales/sales.service.ts`)
-- ✅ Implement CRUD endpoints for sales (see `backend/src/sales/sales.controller.ts`)
-- ✅ Implement direct and commercial sales logic (see `backend/src/sales/sales.service.ts`)
-- ✅ Add sales reporting endpoint (see `backend/src/sales/sales.controller.ts`)
-- [ ] Create invoice generation logic
-- [ ] Add sales analytics endpoints/widgets
-
-### Employee Management Frontend Implementation
-
-- [x] Create employee management interface (employee-management.tsx, employee-management page, i18n keys)
-- [x] Implement attendance tracking UI (tabbed view, attendance table, i18n)
-- [x] Create employee productivity metrics view (tabbed view, productivity table, i18n)
-- [x] Implement employee scheduling features (tabbed view, scheduling table, i18n)
-
-### Document Generation Frontend Implementation
-
-- [ ] Create document template management interface
-- [ ] Implement document generation UI
-- [ ] Create document preview functionality
-- [ ] Add document export options (PDF/Excel)
-
-## ✅ Completed Tasks
-
-### Core System Setup
-
-- ✅ Initialize NestJS backend
-- ✅ Initialize React frontend with Vite
-- ✅ Set up database models and migrations
-- ✅ Implement authentication system
-- ✅ Create main navigation and layout
-
-### Inventory Management
-
-- ✅ Create inventory types
-- ✅ Implement inventory API service
-- ✅ Create product management interface
-- ✅ Implement inventory transactions recording
-- ✅ Add low stock alerts
-
-### BOM Management
-
-- ✅ Create BOM types
-- ✅ Implement BOM API service
-- ✅ Create basic BOM management interface
-
-## 🔍 Discovered During Work
-
-- [ ] Need to implement batch production tracking
-- [ ] Consider adding quality control checkpoints to production process
-- [ ] Improve error handling in production recording form
-- [ ] Add notifications for completed production orders
+- [ ] Implement comprehensive reporting system
+  - [ ] Create business intelligence dashboards
+  - [ ] Implement cost trend analysis with visualizations
+  - [ ] Generate product profitability comparison tools
+  - [ ] Create cash flow forecasting based on orders and expenses
+  - [ ] Implement report scheduling and automation
 
 ## 🐛 Bugs to Fix
 
