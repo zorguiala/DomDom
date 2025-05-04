@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Product } from './product.entity';
 import { User } from './user.entity';
@@ -10,11 +10,18 @@ export enum TransactionType {
   PRODUCTION_OUT = 'production_out',
   ADJUSTMENT = 'adjustment',
   SALE_OUT = 'SALE_OUT',
+  IN = 'in',
+  OUT = 'out',
+  WASTE = 'waste',
 }
 
 @Entity('inventory_transactions')
 export class InventoryTransaction extends BaseEntity {
+  @Column()
+  productId: string;
+  
   @ManyToOne(() => Product, (product) => product.inventoryTransactions)
+  @JoinColumn({ name: 'productId' })
   product: Product;
 
   @Column('enum', { enum: TransactionType })

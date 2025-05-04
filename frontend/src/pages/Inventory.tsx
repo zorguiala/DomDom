@@ -1,8 +1,6 @@
 import { useState } from "react";
 import {
   Typography,
-  Row,
-  Col,
   Input,
   Switch,
   Button,
@@ -13,20 +11,35 @@ import {
   Table,
   Drawer,
   Alert,
+  Tabs,
 } from "antd";
-import { PlusOutlined, HistoryOutlined, SwapOutlined } from "@ant-design/icons";
+import { 
+  PlusOutlined, 
+  HistoryOutlined, 
+  SwapOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
+  ExceptionOutlined,
+  PartitionOutlined
+} from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryApi } from "../services/inventoryService";
 import type { Product } from "../types/inventory";
 import { ProductForm } from "../components/inventory/product-form";
 import { StockTransactionForm } from "../components/inventory/stock-transaction-form";
+import BatchList from "../components/inventory/batch-tracking/batch-list";
+import CountList from "../components/inventory/inventory-count/count-list";
+import WastageList from "../components/inventory/wastage-management/wastage-list";
+import ForecastDashboard from "../components/inventory/inventory-forecast/forecast-dashboard";
 
 const { Search } = Input;
+const { TabPane } = Tabs;
 
 export default function Inventory() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("products");
   const [search, setSearch] = useState("");
   const [showRawMaterials, setShowRawMaterials] = useState<boolean | undefined>(
     undefined
@@ -53,7 +66,7 @@ export default function Inventory() {
   });
 
   // Low stock
-  const { data: lowStock, isLoading: loadingLowStock } = useQuery({
+  const { data: lowStock } = useQuery({
     queryKey: ["lowStock"],
     queryFn: () => inventoryApi.getLowStockProducts(),
   });
@@ -104,10 +117,11 @@ export default function Inventory() {
   });
 
   // Handlers
-  const handleAddProduct = () => {
-    setSelectedProduct(undefined);
-    setFormOpen(true);
-  };
+  // This handler will be implemented for the 'Add Product' button in a future update
+  // const handleAddProduct = () => {
+  //   setSelectedProduct(undefined);
+  //   setFormOpen(true);
+  // };
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setFormOpen(true);
@@ -190,153 +204,257 @@ export default function Inventory() {
   ];
 
   return (
-    <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Row justify="space-between" align="middle">
-        <Col>
-          <Typography.Title level={2}>{t("inventory.title")}</Typography.Title>
-        </Col>
-        <Col>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAddProduct}
-          >
-            {t("inventory.addProduct")}
-          </Button>
-        </Col>
-      </Row>
+    <div className="inventory-page">
+      <div className="header-section">
+        <Typography.Title level={2}>{t("inventory.title")}</Typography.Title>
+      </div>
 
-      {/* Filters */}
-      <Row gutter={[16, 16]} align="middle">
-        <Col xs={24} md={12} lg={8}>
-          <Search
-            placeholder={t("common.search")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            allowClear
-          />
-        </Col>
-        <Col xs={24} md={12} lg={8}>
-          <Switch
-            checked={showRawMaterials === true}
-            onChange={(checked) =>
-              setShowRawMaterials(checked ? true : undefined)
-            }
-            checkedChildren={t("inventory.showRawMaterials")}
-            unCheckedChildren={t("inventory.showProducts")}
-          />
-        </Col>
-      </Row>
-
-      {/* Low Stock Alert */}
-      {loadingLowStock ? (
-        <Spin />
-      ) : lowStock && lowStock.length > 0 ? (
-        <Alert
-          type="warning"
-          message={t("inventory.lowStockAlert")}
-          description={lowStock
-            .map((p: Product) => `${p.name} (${p.currentStock})`)
-            .join(", ")}
-          showIcon
-        />
-      ) : null}
-
-      {/* Products Table */}
-      <Table
-        columns={columns}
-        dataSource={products || []}
-        loading={isLoading}
-        rowKey="id"
-        pagination={{ pageSize: 10 }}
-      />
-
-      {/* Product Form Modal */}
-      <Modal
-        open={formOpen}
-        onCancel={() => setFormOpen(false)}
-        title={
-          selectedProduct
-            ? t("inventory.editProduct")
-            : t("inventory.addProduct")
-        }
-        footer={null}
-        width={600}
-        destroyOnClose
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={setActiveTab}
+        tabPosition="top"
+        style={{ marginBottom: 32 }}
       >
-        <ProductForm
-          initialData={selectedProduct}
-          onSubmit={(data) => {
-            if (selectedProduct) {
-              updateProduct.mutate({ id: selectedProduct.id, data });
-            } else {
-              createProduct.mutate({ ...data, createdAt: "", updatedAt: "" });
-            }
-          }}
+        <TabPane 
+          tab={
+            <span>
+              <PartitionOutlined />
+              {t("inventory.products")}
+            </span>
+          } 
+          key="products"
+        >
+          <div className="controls">
+            <Space style={{ marginBottom: 16 }}>
+              <Search
+                placeholder={t("inventory.searchProducts")}
+                onSearch={(value) => setSearch(value)}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ width: 250 }}
+              />
+              <Space>
+                <Switch
+                  checked={showRawMaterials === true}
+                  onChange={(checked) =>
+                    setShowRawMaterials(checked ? true : undefined)
+                  }
+                />
+                <span>{t("inventory.showRawMaterialsOnly")}</span>
+              </Space>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setSelectedProduct(undefined);
+                  setFormOpen(true);
+                }}
+              >
+                {t("inventory.addProduct")}
+              </Button>
+            </Space>
+          </div>
+
+          {isLoading ? (
+            <div className="loading-spinner">
+              <Spin size="large" />
+            </div>
+          ) : lowStock && lowStock.length > 0 ? (
+            <Alert
+              type="warning"
+              message={t("inventory.lowStockAlert")}
+              description={lowStock
+                .map((p: Product) => `${p.name} (${p.currentStock})`)
+                .join(", ")}
+              showIcon
+            />
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={products || []}
+              loading={isLoading}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}
+            />
+          )}
+        </TabPane>
+        
+        <TabPane 
+          tab={
+            <span>
+              <BarChartOutlined />
+              {t("inventory.batch.batchTracking")}
+            </span>
+          } 
+          key="batch-tracking"
+        >
+          <BatchList />
+        </TabPane>
+        
+        <TabPane 
+          tab={
+            <span>
+              <CalendarOutlined />
+              {t("inventory.inventoryCount.title")}
+            </span>
+          } 
+          key="inventory-count"
+        >
+          <CountList />
+        </TabPane>
+        
+        <TabPane 
+          tab={
+            <span>
+              <ExceptionOutlined />
+              {t("inventory.wastageManagement.title")}
+            </span>
+          } 
+          key="wastage-management"
+        >
+          <WastageList />
+        </TabPane>
+        
+        <TabPane 
+          tab={
+            <span>
+              <BarChartOutlined />
+              {t("inventory.inventoryForecast.title")}
+            </span>
+          } 
+          key="forecasting"
+        >
+          <ForecastDashboard />
+        </TabPane>
+      </Tabs>
+
+      {formOpen && (
+        <Modal
+          open={formOpen}
           onCancel={() => setFormOpen(false)}
-        />
-      </Modal>
+          title={
+            selectedProduct
+              ? t("inventory.editProduct")
+              : t("inventory.addProduct")
+          }
+          footer={null}
+          width={600}
+          destroyOnClose
+        >
+          <ProductForm
+            initialData={selectedProduct}
+            onSubmit={(data) => {
+              if (selectedProduct) {
+                updateProduct.mutate({ id: selectedProduct.id, data });
+              } else {
+                createProduct.mutate({ ...data, createdAt: "", updatedAt: "" });
+              }
+            }}
+            onCancel={() => setFormOpen(false)}
+          />
+        </Modal>
+      )}
 
-      {/* Stock Transaction Modal */}
-      <Modal
-        open={transactionOpen}
-        onCancel={() => setTransactionOpen(false)}
-        title={
-          transactionType === "in"
-            ? t("inventory.stockIn")
-            : t("inventory.stockOut")
-        }
-        footer={null}
-        width={400}
-        destroyOnClose
-      >
-        <StockTransactionForm
-          product={transactionProduct}
-          type={transactionType}
-          onSuccess={() => {
+      {transactionOpen && transactionProduct && (
+        <Modal
+          open={transactionOpen}
+          onCancel={() => {
             setTransactionOpen(false);
-            queryClient.invalidateQueries({ queryKey: ["products"] });
+            setTransactionProduct(undefined);
           }}
-          onCancel={() => setTransactionOpen(false)}
-        />
-      </Modal>
+          title={
+            transactionType === "in"
+              ? t("inventory.stockIn")
+              : t("inventory.stockOut")
+          }
+          footer={null}
+          width={400}
+          destroyOnClose
+        >
+          <StockTransactionForm
+            product={transactionProduct}
+            type={transactionType}
+            onSuccess={() => {
+              setTransactionOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["products"] });
+            }}
+            onCancel={() => setTransactionOpen(false)}
+          />
+        </Modal>
+      )}
 
-      {/* Transaction History Drawer */}
       <Drawer
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
         title={t("inventory.transactionHistory")}
-        width={600}
+        width={720}
+        open={historyOpen}
+        onClose={() => {
+          setHistoryOpen(false);
+          setHistoryProduct(undefined);
+        }}
+        extra={
+          <span>
+            {historyProduct?.name}{" "}
+            {historyProduct?.sku ? `(${historyProduct.sku})` : ""}
+          </span>
+        }
       >
-        <Table
-          columns={[
-            {
-              title: t("inventory.date"),
-              dataIndex: "createdAt",
-              key: "createdAt",
-            },
-            { title: t("inventory.type"), dataIndex: "type", key: "type" },
-            {
-              title: t("inventory.quantity"),
-              dataIndex: "quantity",
-              key: "quantity",
-            },
-            {
-              title: t("inventory.unitPrice"),
-              dataIndex: "unitPrice",
-              key: "unitPrice",
-            },
-            { title: t("inventory.notes"), dataIndex: "notes", key: "notes" },
-          ]}
-          dataSource={transactions || []}
-          loading={loadingTransactions}
-          rowKey="id"
-          pagination={{ pageSize: 10 }}
-        />
+        {historyProduct && (
+          <Table
+            columns={[
+              {
+                title: t("inventory.date"),
+                dataIndex: "createdAt",
+                key: "createdAt",
+              },
+              { title: t("inventory.type"), dataIndex: "type", key: "type" },
+              {
+                title: t("inventory.quantity"),
+                dataIndex: "quantity",
+                key: "quantity",
+              },
+              {
+                title: t("inventory.unitPrice"),
+                dataIndex: "unitPrice",
+                key: "unitPrice",
+              },
+              { title: t("inventory.notes"), dataIndex: "notes", key: "notes" },
+            ]}
+            dataSource={transactions || []}
+            loading={loadingTransactions}
+            rowKey="id"
+            pagination={{ pageSize: 10 }}
+          />
+        )}
       </Drawer>
-    </Space>
+
+      <style>{`
+        .inventory-page {
+          padding: 20px;
+        }
+        .header-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+        .controls {
+          display: flex;
+          gap: 10px;
+        }
+        .loading-spinner {
+          display: flex;
+          justify-content: center;
+          margin-top: 100px;
+        }
+        .product-list {
+          background: white;
+          padding: 20px;
+          border-radius: 5px;
+        }
+        .low-stock {
+          color: red;
+          font-weight: bold;
+        }
+      `}</style>
+    </div>
   );
 }
-
-// ProductForm and StockTransactionForm would be implemented in components/inventory/
-// For brevity, you can use AntD Form, Input, InputNumber, etc. and pass props as above.
