@@ -24,22 +24,15 @@ interface RequestWithUser extends Request {
 @Controller('inventory/batches')
 @UseGuards(JwtAuthGuard)
 export class InventoryBatchController {
-  constructor(
-    private readonly batchService: InventoryBatchService
-  ) {}
+  constructor(private readonly batchService: InventoryBatchService) {}
 
   @Post()
-  async create(
-    @Body() createBatchDto: CreateInventoryBatchDto,
-    @Request() req: RequestWithUser,
-  ) {
+  async create(@Body() createBatchDto: CreateInventoryBatchDto, @Request() req: RequestWithUser) {
     return this.batchService.create(createBatchDto, req.user);
   }
 
   @Get()
-  async findAll(
-    @Query('productId') productId?: string,
-  ) {
+  async findAll(@Query('productId') productId?: string) {
     return this.batchService.findAll(productId);
   }
 
@@ -49,9 +42,7 @@ export class InventoryBatchController {
   }
 
   @Get('expiring')
-  async getExpiringBatches(
-    @Query('daysThreshold', ParseIntPipe) daysThreshold = 30,
-  ) {
+  async getExpiringBatches(@Query('daysThreshold', ParseIntPipe) daysThreshold = 30) {
     return this.batchService.getExpiringBatches(daysThreshold);
   }
 
@@ -66,10 +57,7 @@ export class InventoryBatchController {
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateData: Partial<any>,
-  ) {
+  async update(@Param('id') id: string, @Body() updateData: Partial<any>) {
     return this.batchService.update(id, updateData);
   }
 

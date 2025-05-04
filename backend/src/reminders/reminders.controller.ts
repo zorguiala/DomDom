@@ -38,7 +38,11 @@ export class RemindersController {
   }
 
   @ApiOperation({ summary: 'Get all pending reminders' })
-  @ApiResponse({ status: 200, description: 'List of pending reminders', type: [ReminderResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of pending reminders',
+    type: [ReminderResponseDto],
+  })
   @Get('pending')
   async findAllPending(): Promise<ReminderResponseDto[]> {
     return await this.remindersService.findAllPending();
@@ -61,7 +65,11 @@ export class RemindersController {
   }
 
   @ApiOperation({ summary: 'Create a new reminder' })
-  @ApiResponse({ status: 201, description: 'The reminder has been created', type: ReminderResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'The reminder has been created',
+    type: ReminderResponseDto,
+  })
   @Post()
   async create(@Body() createReminderDto: CreateReminderDto): Promise<ReminderResponseDto> {
     return await this.remindersService.create(createReminderDto);
@@ -69,19 +77,27 @@ export class RemindersController {
 
   @ApiOperation({ summary: 'Update a reminder' })
   @ApiParam({ name: 'id', description: 'Reminder ID' })
-  @ApiResponse({ status: 200, description: 'The reminder has been updated', type: ReminderResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The reminder has been updated',
+    type: ReminderResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Reminder not found' })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateReminderDto: UpdateReminderDto,
+    @Body() updateReminderDto: UpdateReminderDto
   ): Promise<ReminderResponseDto> {
     return await this.remindersService.update(id, updateReminderDto);
   }
 
   @ApiOperation({ summary: 'Mark a reminder as completed' })
   @ApiParam({ name: 'id', description: 'Reminder ID' })
-  @ApiResponse({ status: 200, description: 'The reminder has been marked as completed', type: ReminderResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'The reminder has been marked as completed',
+    type: ReminderResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Reminder not found' })
   @Put(':id/complete')
   async markAsCompleted(@Param('id', ParseIntPipe) id: number): Promise<ReminderResponseDto> {

@@ -14,7 +14,9 @@ export class InventoryTransactionController {
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  async create(@Body() createInventoryTransactionDto: CreateInventoryTransactionDto): Promise<InventoryTransaction> {
+  async create(
+    @Body() createInventoryTransactionDto: CreateInventoryTransactionDto
+  ): Promise<InventoryTransaction> {
     return this.inventoryTransactionService.create(createInventoryTransactionDto);
   }
 
@@ -39,4 +41,4 @@ export class InventoryTransactionController {
   async findOne(@Param('id') id: string): Promise<InventoryTransaction> {
     return this.inventoryTransactionService.findOne(id);
   }
-} 
+}

@@ -5,4 +5,4 @@ export enum UserRole {
   SALES_REP = 'sales_rep',
   INVENTORY_MANAGER = 'inventory_manager',
   PRODUCTION_MANAGER = 'production_manager',
-} 
+}

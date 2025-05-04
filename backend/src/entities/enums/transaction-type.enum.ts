@@ -6,4 +6,4 @@ export enum TransactionType {
   PRODUCTION_OUT = 'production_out',
   RETURN = 'return',
   TRANSFER = 'transfer',
-} 
+}

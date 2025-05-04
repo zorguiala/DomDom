@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { SaleItem } from './sale-item.entity';
 import { User } from '../../users/entities/user.entity';
 import { SaleType, SaleStatus, PaymentMethod } from '../../types/sale.types';
@@ -18,11 +27,11 @@ export class Sale {
   @JoinColumn({ name: 'agentId' })
   agent: User;
 
-  @Column({ 
-    type: 'enum', 
-    enum: PaymentMethod, 
+  @Column({
+    type: 'enum',
+    enum: PaymentMethod,
     default: PaymentMethod.CASH,
-    nullable: true 
+    nullable: true,
   })
   paymentMethod: PaymentMethod;
 
@@ -32,7 +41,7 @@ export class Sale {
   @Column({
     type: 'enum',
     enum: SaleStatus,
-    default: SaleStatus.PENDING
+    default: SaleStatus.PENDING,
   })
   status: SaleStatus;
 
@@ -42,9 +51,9 @@ export class Sale {
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @OneToMany(() => SaleItem, saleItem => saleItem.sale, {
+  @OneToMany(() => SaleItem, (saleItem) => saleItem.sale, {
     cascade: true,
-    eager: true
+    eager: true,
   })
   items: SaleItem[];
 

@@ -15,20 +15,28 @@ export class InventoryTransactionService {
     private readonly productRepository: Repository<Product>
   ) {}
 
-  async create(createInventoryTransactionDto: CreateInventoryTransactionDto): Promise<InventoryTransaction> {
-    const product = await this.productRepository.findOne({ where: { id: createInventoryTransactionDto.productId } });
+  async create(
+    createInventoryTransactionDto: CreateInventoryTransactionDto
+  ): Promise<InventoryTransaction> {
+    const product = await this.productRepository.findOne({
+      where: { id: createInventoryTransactionDto.productId },
+    });
     if (!product) {
-      throw new NotFoundException(`Product with ID ${createInventoryTransactionDto.productId} not found`);
+      throw new NotFoundException(
+        `Product with ID ${createInventoryTransactionDto.productId} not found`
+      );
     }
 
     const transaction = this.inventoryTransactionRepository.create({
       ...createInventoryTransactionDto,
-      product
+      product,
     });
 
     // Update product stock
-    if (createInventoryTransactionDto.type === TransactionType.PURCHASE || 
-        createInventoryTransactionDto.type === TransactionType.PRODUCTION_IN) {
+    if (
+      createInventoryTransactionDto.type === TransactionType.PURCHASE ||
+      createInventoryTransactionDto.type === TransactionType.PRODUCTION_IN
+    ) {
       product.currentStock += createInventoryTransactionDto.quantity;
     } else {
       if (product.currentStock < createInventoryTransactionDto.quantity) {
@@ -47,7 +55,8 @@ export class InventoryTransactionService {
     type?: string,
     productId?: string
   ): Promise<InventoryTransaction[]> {
-    const query = this.inventoryTransactionRepository.createQueryBuilder('transaction')
+    const query = this.inventoryTransactionRepository
+      .createQueryBuilder('transaction')
       .leftJoinAndSelect('transaction.product', 'product');
 
     if (startDate) {
@@ -72,7 +81,7 @@ export class InventoryTransactionService {
   async findOne(id: string): Promise<InventoryTransaction> {
     const transaction = await this.inventoryTransactionRepository.findOne({
       where: { id },
-      relations: ['product']
+      relations: ['product'],
     });
 
     if (!transaction) {
@@ -81,4 +90,4 @@ export class InventoryTransactionService {
 
     return transaction;
   }
-} 
+}

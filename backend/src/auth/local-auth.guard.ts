@@ -11,9 +11,11 @@ export class LocalAuthGuard extends AuthGuard('local') {
   }
 
   handleRequest(err: any, user: any, info: any) {
-    console.log('LocalAuthGuard:',user);
+    console.log('LocalAuthGuard:', user);
     if (err || !user) {
-      this.logger.error(`LocalAuthGuard: Authentication failed - ${err?.message || info?.message || 'Unknown error'}`);
+      this.logger.error(
+        `LocalAuthGuard: Authentication failed - ${err?.message || info?.message || 'Unknown error'}`
+      );
       throw err || new Error(info?.message || 'Authentication failed');
     }
     this.logger.debug('LocalAuthGuard: Authentication successful');

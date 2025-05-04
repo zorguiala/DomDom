@@ -1,4 +1,13 @@
-import { IsString, IsNumber, IsOptional, IsUUID, IsDateString, IsNotEmpty, Min, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  IsDateString,
+  IsNotEmpty,
+  Min,
+  IsEnum,
+} from 'class-validator';
 import { WastageReason } from '../../entities/inventory-wastage.entity';
 
 export class CreateWastageRecordDto {

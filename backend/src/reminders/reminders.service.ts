@@ -13,12 +13,10 @@ import {
 export class RemindersService {
   constructor(
     @InjectRepository(Reminder)
-    private remindersRepository: Repository<Reminder>,
+    private remindersRepository: Repository<Reminder>
   ) {}
 
-  async create(
-    createReminderDto: CreateReminderDto,
-  ): Promise<ReminderResponseDto> {
+  async create(createReminderDto: CreateReminderDto): Promise<ReminderResponseDto> {
     const reminder = this.remindersRepository.create({
       ...createReminderDto,
       status: ReminderStatus.PENDING,
@@ -53,10 +51,7 @@ export class RemindersService {
     return this.mapToResponseDto(reminder);
   }
 
-  async update(
-    id: number,
-    updateReminderDto: UpdateReminderDto,
-  ): Promise<ReminderResponseDto> {
+  async update(id: number, updateReminderDto: UpdateReminderDto): Promise<ReminderResponseDto> {
     const reminder = await this.remindersRepository.findOne({ where: { id } });
 
     if (!reminder) {

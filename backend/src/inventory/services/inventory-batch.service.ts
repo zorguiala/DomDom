@@ -20,8 +20,8 @@ export class InventoryBatchService {
   ) {}
 
   async create(createBatchDto: CreateInventoryBatchDto, user: User): Promise<InventoryBatch> {
-    const product = await this.productRepository.findOne({ 
-      where: { id: createBatchDto.productId }
+    const product = await this.productRepository.findOne({
+      where: { id: createBatchDto.productId },
     });
 
     if (!product) {
@@ -33,32 +33,37 @@ export class InventoryBatchService {
       where: {
         productId: createBatchDto.productId,
         batchNumber: createBatchDto.batchNumber,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     if (existingBatch) {
-      throw new BadRequestException(`Batch number ${createBatchDto.batchNumber} already exists for this product`);
+      throw new BadRequestException(
+        `Batch number ${createBatchDto.batchNumber} already exists for this product`
+      );
     }
 
     // Create batch
     const batch = this.batchRepository.create({
       ...createBatchDto,
-      product
+      product,
     });
 
     const savedBatch = await this.batchRepository.save(batch);
 
     // Record inventory transaction
     if (createBatchDto.quantity > 0) {
-      await this.transactionService.create({
-        productId: createBatchDto.productId,
-        type: TransactionType.IN,
-        quantity: createBatchDto.quantity,
-        unitPrice: createBatchDto.unitCost,
-        reference: `Batch: ${createBatchDto.batchNumber}`,
-        notes: createBatchDto.notes || 'Batch received'
-      }, user);
+      await this.transactionService.create(
+        {
+          productId: createBatchDto.productId,
+          type: TransactionType.IN,
+          quantity: createBatchDto.quantity,
+          unitPrice: createBatchDto.unitCost,
+          reference: `Batch: ${createBatchDto.batchNumber}`,
+          notes: createBatchDto.notes || 'Batch received',
+        },
+        user
+      );
     }
 
     return savedBatch;
@@ -66,7 +71,7 @@ export class InventoryBatchService {
 
   async findAll(productId?: string): Promise<InventoryBatch[]> {
     const where: any = { isActive: true };
-    
+
     if (productId) {
       where.productId = productId;
     }
@@ -74,14 +79,14 @@ export class InventoryBatchService {
     return this.batchRepository.find({
       where,
       relations: ['product'],
-      order: { receivedDate: 'DESC' }
+      order: { receivedDate: 'DESC' },
     });
   }
 
   async findOne(id: string): Promise<InventoryBatch> {
     const batch = await this.batchRepository.findOne({
       where: { id, isActive: true },
-      relations: ['product']
+      relations: ['product'],
     });
 
     if (!batch) {
@@ -96,9 +101,9 @@ export class InventoryBatchService {
       where: {
         productId,
         batchNumber,
-        isActive: true
+        isActive: true,
       },
-      relations: ['product']
+      relations: ['product'],
     });
 
     if (!batch) {
@@ -110,14 +115,14 @@ export class InventoryBatchService {
 
   async update(id: string, updateData: Partial<InventoryBatch>): Promise<InventoryBatch> {
     const batch = await this.findOne(id);
-    
+
     // Prevent changing product or batch number
     delete updateData.productId;
     delete updateData.batchNumber;
     delete updateData.product;
 
     Object.assign(batch, updateData);
-    
+
     return this.batchRepository.save(batch);
   }
 
@@ -136,9 +141,9 @@ export class InventoryBatchService {
       where: {
         expiryDate: Between(today, thresholdDate),
         quantity: MoreThan(0),
-        isActive: true
+        isActive: true,
       },
-      relations: ['product']
+      relations: ['product'],
     });
   }
 
@@ -149,25 +154,25 @@ export class InventoryBatchService {
       where: {
         expiryDate: LessThan(today),
         quantity: MoreThan(0),
-        isActive: true
+        isActive: true,
       },
-      relations: ['product']
+      relations: ['product'],
     });
   }
 
   async getBatchInventoryStatus(): Promise<BatchInventoryStatus[]> {
     const batches = await this.batchRepository.find({
       where: { isActive: true, quantity: MoreThan(0) },
-      relations: ['product']
+      relations: ['product'],
     });
 
     const today = new Date();
-    
-    return batches.map(batch => {
+
+    return batches.map((batch) => {
       // Calculate days until expiry
       let daysUntilExpiry: number | undefined;
       let isExpired = false;
-      
+
       if (batch.expiryDate) {
         const expiryTime = batch.expiryDate.getTime();
         const todayTime = today.getTime();
@@ -177,7 +182,7 @@ export class InventoryBatchService {
 
       // Determine if stock is low (30% of initial quantity or less)
       const initialQuantity = Number(batch.quantity) || 0;
-      const isLow = initialQuantity > 0 && Number(batch.quantity) <= (initialQuantity * 0.3);
+      const isLow = initialQuantity > 0 && Number(batch.quantity) <= initialQuantity * 0.3;
 
       return {
         batchId: batch.id,
@@ -193,7 +198,7 @@ export class InventoryBatchService {
         receivedDate: batch.receivedDate,
         daysUntilExpiry,
         isExpired,
-        isLow
+        isLow,
       };
     });
   }

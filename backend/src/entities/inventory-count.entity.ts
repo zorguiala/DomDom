@@ -1,12 +1,12 @@
-import { 
-  Entity, 
-  Column, 
-  PrimaryGeneratedColumn, 
-  CreateDateColumn, 
-  UpdateDateColumn, 
-  ManyToOne, 
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
   JoinColumn,
-  OneToMany
+  OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -14,7 +14,7 @@ export enum InventoryCountStatus {
   DRAFT = 'DRAFT',
   IN_PROGRESS = 'IN_PROGRESS',
   COMPLETED = 'COMPLETED',
-  CANCELED = 'CANCELED'
+  CANCELED = 'CANCELED',
 }
 
 @Entity('inventory_counts')
@@ -28,7 +28,7 @@ export class InventoryCount {
   @Column({
     type: 'enum',
     enum: InventoryCountStatus,
-    default: InventoryCountStatus.DRAFT
+    default: InventoryCountStatus.DRAFT,
   })
   status: InventoryCountStatus;
 
@@ -49,7 +49,7 @@ export class InventoryCount {
   @Column({ type: 'varchar', length: 500, nullable: true })
   notes: string;
 
-  @OneToMany(() => InventoryCountItem, item => item.inventoryCount, { cascade: true })
+  @OneToMany(() => InventoryCountItem, (item) => item.inventoryCount, { cascade: true })
   items: InventoryCountItem[];
 
   @CreateDateColumn()
@@ -67,7 +67,7 @@ export class InventoryCountItem {
   @Column({ type: 'uuid' })
   inventoryCountId: string;
 
-  @ManyToOne(() => InventoryCount, count => count.items, { onDelete: 'CASCADE' })
+  @ManyToOne(() => InventoryCount, (count) => count.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'inventoryCountId' })
   inventoryCount: InventoryCount;
 

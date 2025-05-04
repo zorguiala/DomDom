@@ -12,12 +12,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { 
-  SaleType, 
-  SaleStatus, 
-  PaymentMethod,
-  SaleItemDto 
-} from '../../types/sale.types';
+import { SaleType, SaleStatus, PaymentMethod, SaleItemDto } from '../../types/sale.types';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateSaleDto {

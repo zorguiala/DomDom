@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  UseGuards,
-  Query,
-  ParseArrayPipe,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, UseGuards, Query, ParseArrayPipe, Param } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { InventoryForecastService } from './services/inventory-forecast.service';
 
@@ -16,9 +9,7 @@ import { InventoryForecastService } from './services/inventory-forecast.service'
 @Controller('inventory/forecast')
 @UseGuards(JwtAuthGuard)
 export class InventoryForecastController {
-  constructor(
-    private readonly forecastService: InventoryForecastService
-  ) {}
+  constructor(private readonly forecastService: InventoryForecastService) {}
 
   /**
    * Get forecasts for all products or specific products
@@ -26,7 +17,7 @@ export class InventoryForecastController {
    */
   @Get()
   async getForecasts(
-    @Query('productIds', new ParseArrayPipe({ optional: true })) productIds?: string[],
+    @Query('productIds', new ParseArrayPipe({ optional: true })) productIds?: string[]
   ) {
     return this.forecastService.getInventoryForecasts(productIds);
   }
@@ -80,10 +71,7 @@ export class InventoryForecastController {
    * @param period Period in days to analyze (default: 90 days)
    */
   @Get('usage-trend/:productId')
-  async getUsageTrend(
-    @Param('productId') productId: string,
-    @Query('period') period: number = 90,
-  ) {
+  async getUsageTrend(@Param('productId') productId: string, @Query('period') period: number = 90) {
     return this.forecastService.getUsageTrend(productId, period);
   }
 }

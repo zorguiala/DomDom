@@ -8,10 +8,7 @@ import { BOMController } from './bom.controller';
 import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([BOM, BOMItem, Product]),
-    InventoryModule,
-  ],
+  imports: [TypeOrmModule.forFeature([BOM, BOMItem, Product]), InventoryModule],
   providers: [BOMService],
   controllers: [BOMController],
   exports: [BOMService],

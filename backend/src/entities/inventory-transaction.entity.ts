@@ -19,7 +19,7 @@ export enum TransactionType {
 export class InventoryTransaction extends BaseEntity {
   @Column()
   productId: string;
-  
+
   @ManyToOne(() => Product, (product) => product.inventoryTransactions)
   @JoinColumn({ name: 'productId' })
   product: Product;

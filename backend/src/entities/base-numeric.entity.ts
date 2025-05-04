@@ -1,8 +1,4 @@
-import {
-  CreateDateColumn,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
 export abstract class BaseNumericEntity {
@@ -17,4 +13,4 @@ export abstract class BaseNumericEntity {
   @ApiProperty({ description: 'The date and time when the record was last updated' })
   @UpdateDateColumn()
   updatedAt: Date;
-} 
+}

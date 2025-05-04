@@ -9,7 +9,9 @@ import { EmployeeSchedule } from '../entities/employee-schedule.entity';
 import { ProductionRecord } from '../entities/production-record.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Employee, EmployeeAttendance, EmployeeSchedule, ProductionRecord])],
+  imports: [
+    TypeOrmModule.forFeature([Employee, EmployeeAttendance, EmployeeSchedule, ProductionRecord]),
+  ],
   controllers: [EmployeesController],
   providers: [EmployeeService, AttendanceService],
   exports: [EmployeeService, AttendanceService],

@@ -9,7 +9,7 @@ import {
   Query,
   Patch,
   ParseArrayPipe,
-  BadRequestException
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { InventoryCountService } from './services/inventory-count.service';
@@ -28,18 +28,13 @@ interface RequestWithUser extends Request {
 @Controller('inventory/counts')
 @UseGuards(JwtAuthGuard)
 export class InventoryCountController {
-  constructor(
-    private readonly countService: InventoryCountService
-  ) {}
+  constructor(private readonly countService: InventoryCountService) {}
 
   /**
    * Create a new inventory count session
    */
   @Post()
-  async create(
-    @Body() createCountDto: CreateInventoryCountDto,
-    @Request() req: RequestWithUser,
-  ) {
+  async create(@Body() createCountDto: CreateInventoryCountDto, @Request() req: RequestWithUser) {
     return this.countService.create(createCountDto, req.user);
   }
 
@@ -47,9 +42,7 @@ export class InventoryCountController {
    * Get all inventory counts with optional status filter
    */
   @Get()
-  async findAll(
-    @Query('status') status?: InventoryCountStatus,
-  ) {
+  async findAll(@Query('status') status?: InventoryCountStatus) {
     return this.countService.findAll(status);
   }
 
@@ -59,7 +52,7 @@ export class InventoryCountController {
   @Get('template')
   async generateTemplate(
     @Query('categoryIds', new ParseArrayPipe({ optional: true })) categoryIds?: string[],
-    @Query('includeInactive') includeInactive?: string,
+    @Query('includeInactive') includeInactive?: string
   ) {
     const includeInactiveFlag = includeInactive === 'true';
     return this.countService.generateCountTemplate(categoryIds, includeInactiveFlag);
@@ -80,7 +73,7 @@ export class InventoryCountController {
   async updateStatus(
     @Param('id') id: string,
     @Body('status') status: InventoryCountStatus,
-    @Request() req: RequestWithUser,
+    @Request() req: RequestWithUser
   ) {
     if (!status || !Object.values(InventoryCountStatus).includes(status)) {
       throw new BadRequestException('Invalid status');
@@ -94,10 +87,7 @@ export class InventoryCountController {
    * This will create adjustment transactions to match actual quantities
    */
   @Post(':id/reconcile')
-  async reconcileInventory(
-    @Param('id') id: string,
-    @Request() req: RequestWithUser,
-  ) {
+  async reconcileInventory(@Param('id') id: string, @Request() req: RequestWithUser) {
     await this.countService.reconcileInventory(id, req.user);
     return { success: true, message: 'Inventory successfully reconciled' };
   }

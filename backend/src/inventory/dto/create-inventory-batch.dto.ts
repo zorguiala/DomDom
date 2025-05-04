@@ -1,4 +1,12 @@
-import { IsString, IsNumber, IsOptional, IsUUID, IsDateString, IsNotEmpty, Min } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  IsDateString,
+  IsNotEmpty,
+  Min,
+} from 'class-validator';
 
 export class CreateInventoryBatchDto {
   @IsUUID()

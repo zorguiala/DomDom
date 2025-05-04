@@ -13,4 +13,4 @@ export enum DocumentFormat {
   EXCEL = 'excel',
   WORD = 'word',
   HTML = 'html',
-} 
+}

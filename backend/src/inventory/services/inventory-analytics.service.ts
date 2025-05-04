@@ -199,8 +199,8 @@ export class InventoryAnalyticsService {
 
   async getInventoryStats() {
     // Get total inventory items count
-    const totalProducts = await this.productRepository.count({ 
-      where: { isActive: true } 
+    const totalProducts = await this.productRepository.count({
+      where: { isActive: true },
     });
 
     // Get total inventory value
@@ -219,24 +219,22 @@ export class InventoryAnalyticsService {
       .getCount();
 
     // Get out-of-stock products count
-    const outOfStockProducts = await this.productRepository
-      .count({ 
-        where: { 
-          isActive: true,
-          currentStock: LessThanOrEqual(0)
-        } 
-      });
+    const outOfStockProducts = await this.productRepository.count({
+      where: {
+        isActive: true,
+        currentStock: LessThanOrEqual(0),
+      },
+    });
 
     // Get recent transactions (last 7 days)
     const lastWeekDate = new Date();
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-    
-    const recentTransactions = await this.transactionRepository
-      .count({
-        where: {
-          createdAt: Between(lastWeekDate, new Date())
-        }
-      });
+
+    const recentTransactions = await this.transactionRepository.count({
+      where: {
+        createdAt: Between(lastWeekDate, new Date()),
+      },
+    });
 
     return {
       totalProducts,
@@ -244,7 +242,7 @@ export class InventoryAnalyticsService {
       lowStockProducts,
       outOfStockProducts,
       recentTransactions,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
   }
 

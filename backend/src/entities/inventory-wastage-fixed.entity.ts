@@ -1,12 +1,12 @@
-import { 
-  Entity, 
-  Column, 
-  PrimaryGeneratedColumn, 
-  CreateDateColumn, 
-  UpdateDateColumn, 
-  ManyToOne, 
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
   JoinColumn,
-  Index
+  Index,
 } from 'typeorm';
 import { Product } from './product.entity';
 import { InventoryBatch } from './inventory-batch.entity';
@@ -18,7 +18,7 @@ export enum WastageReason {
   QUALITY_ISSUE = 'QUALITY_ISSUE',
   CONTAMINATION = 'CONTAMINATION',
   PROCESSING_LOSS = 'PROCESSING_LOSS',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 @Entity('inventory_wastage')
@@ -47,7 +47,7 @@ export class InventoryWastage {
   @Column({
     type: 'enum',
     enum: WastageReason,
-    default: WastageReason.OTHER
+    default: WastageReason.OTHER,
   })
   reason: WastageReason;
 
