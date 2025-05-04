@@ -5,6 +5,9 @@ import { Product } from '../entities/product.entity';
 import { BOM } from '../entities/bom.entity';
 import { BOMItem } from '../entities/bom-item.entity';
 import { InventoryTransaction } from '../entities/inventory-transaction.entity';
+import { InventoryBatch } from '../entities/inventory-batch.entity';
+import { InventoryWastage } from '../entities/inventory-wastage.entity';
+import { InventoryCount, InventoryCountItem } from '../entities/inventory-count.entity';
 import { Employee } from '../entities/employee.entity';
 import { EmployeeAttendance } from '../entities/employee-attendance.entity';
 import { ProductionRecord } from '../entities/production-record.entity';
@@ -32,6 +35,10 @@ export const databaseConfig: TypeOrmModuleOptions = {
     BOM,
     BOMItem,
     InventoryTransaction,
+    InventoryBatch,
+    InventoryWastage,
+    InventoryCount,
+    InventoryCountItem,
     Employee,
     EmployeeAttendance,
     ProductionRecord,

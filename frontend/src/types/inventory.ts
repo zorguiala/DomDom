@@ -5,11 +5,13 @@ export interface Product {
   barcode?: string;
   description?: string;
   price: number;
+  costPrice?: number;
   currentStock: number;
   minimumStock: number;
   unit: string;
   isRawMaterial: boolean;
   isActive: boolean;
+  leadTimeDays?: number;
   createdAt: string;
   updatedAt: string;
 }

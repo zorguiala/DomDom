@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../../entities/product.entity';
-import { LowStockAlert } from '../types/inventory.types';
+import { LowStockAlert, StockLevel } from '../types/inventory.types';
 
 @Injectable()
 export class InventoryStockService {
@@ -85,5 +85,44 @@ export class InventoryStockService {
       currentStock: p.currentStock,
       status: this.getStockStatus(p.currentStock),
     }));
+  }
+  
+  /**
+   * Get current stock levels for all products or specific products
+   * @param productIds Optional array of product IDs to filter
+   * @returns Array of stock level objects with product details
+   */
+  async getStockLevels(productIds?: string[]): Promise<StockLevel[]> {
+    const queryBuilder = this.productRepository.createQueryBuilder('product');
+    
+    if (productIds && productIds.length > 0) {
+      queryBuilder.where('product.id IN (:...productIds)', { productIds });
+    }
+    
+    const products = await queryBuilder
+      .select([
+        'product.id as productId',
+        'product.name as productName',
+        'product.currentStock as currentQuantity',
+        'product.minimumStock as minimumQuantity',
+        'product.unit as unit',
+        'product.costPrice as costPrice'
+      ])
+      .getRawMany();
+    
+    return products.map(p => {
+      const currentQuantity = Number(p.currentQuantity);
+      return {
+        productId: p.productId,
+        productName: p.productName,
+        currentQuantity: currentQuantity,
+        currentStock: currentQuantity, // Add alias for backward compatibility
+        minimumQuantity: Number(p.minimumQuantity),
+        minimumStock: Number(p.minimumQuantity), // Add alias for backward compatibility
+        unit: p.unit,
+        costPrice: Number(p.costPrice),
+        status: this.getStockStatus(currentQuantity)
+      };
+    });
   }
 }

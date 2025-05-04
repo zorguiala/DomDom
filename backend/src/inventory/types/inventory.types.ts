@@ -1,6 +1,25 @@
 import { Product } from '../../entities/product.entity';
 import { InventoryTransaction } from '../../entities/inventory-transaction.entity';
 
+export interface StockLevel {
+  productId: string;
+  productName: string;
+  currentQuantity: number;
+  currentStock: number; // Alias for currentQuantity for backward compatibility
+  minimumQuantity: number;
+  minimumStock?: number; // Alias for minimumQuantity for backward compatibility
+  unit: string;
+  costPrice: number;
+  status: 'LOW' | 'NORMAL' | 'HIGH';
+}
+
+export interface LowStockAlert {
+  isLow: boolean;
+  currentStock: number;
+  minimumStock: number;
+  product: Product;
+}
+
 export interface StockReportItem {
   productId: string;
   productName: string;

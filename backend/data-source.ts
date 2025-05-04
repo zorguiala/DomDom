@@ -5,6 +5,9 @@ import { Product } from './src/entities/product.entity';
 import { BOM } from './src/entities/bom.entity';
 import { BOMItem } from './src/entities/bom-item.entity';
 import { InventoryTransaction } from './src/entities/inventory-transaction.entity';
+import { InventoryBatch } from './src/entities/inventory-batch.entity';
+import { InventoryWastage } from './src/entities/inventory-wastage.entity';
+import { InventoryCount, InventoryCountItem } from './src/entities/inventory-count.entity';
 import { Employee } from './src/entities/employee.entity';
 import { EmployeeAttendance } from './src/entities/employee-attendance.entity';
 import { EmployeeSchedule } from './src/entities/employee-schedule.entity';
@@ -29,6 +32,10 @@ export default new DataSource({
   entities: [
     User,
     Product,
+    InventoryBatch,
+    InventoryWastage,
+    InventoryCount,
+    InventoryCountItem,
     BOM,
     BOMItem,
     InventoryTransaction,

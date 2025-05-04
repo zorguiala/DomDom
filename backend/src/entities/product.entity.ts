@@ -21,6 +21,9 @@ export class Product extends BaseEntity {
   price: number;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  costPrice: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
   currentStock: number;
 
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
@@ -28,12 +31,15 @@ export class Product extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+  
+  @Column({ nullable: true, type: 'int' })
+  leadTimeDays: number;
+  
+  @Column({ default: false })
+  isRawMaterial: boolean;
 
   @Column()
   unit: string;
-
-  @Column({ default: false })
-  isRawMaterial: boolean;
 
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   lastPurchasePrice: number;
