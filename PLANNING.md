@@ -6,13 +6,15 @@ This document outlines the architecture, design patterns, and development roadma
 
 DomDom aims to provide an integrated management system for food production businesses, including:
 
-1. Streamline inventory management with real-time tracking
-2. Simplify production planning and BOM management
-3. Automate sales recording and invoice generation
-4. Track employee productivity and attendance
-5. Generate custom documents for operations
-6. Provide analytics and reporting for business insights
-7. Support both web and optional desktop deployment
+1. Streamline inventory management with real-time tracking and low stock alerts
+2. Simplify production planning and BOM management with accurate cost calculation
+3. Automate sales recording (both door-to-door and direct orders) and invoice generation
+4. Track employee productivity, attendance, salaries, and performance-based bonuses
+5. Generate custom documents for operations (invoices, bon de sortie)
+6. Track vehicle maintenance and provide timely reminders
+7. Monitor monthly expenses (electricity, loans, fuel) and calculate net profit
+8. Provide analytics and reporting for business insights
+9. Support both web and optional desktop deployment
 
 ## 📐 Architecture
 
@@ -195,9 +197,11 @@ src/
 
 ### Phase 3: Advanced Features (Upcoming)
 
-- Sales management
-- Employee tracking
-- Document generation
+- Sales management (including direct orders and door-to-door sales tracking)
+- Employee tracking (with salary management and performance-based bonuses)
+- Vehicle maintenance tracking and scheduling
+- Financial tracking (monthly bills, expenses, profit calculation)
+- Document generation (invoices, bon de sortie)
 - Advanced reporting
 
 ### Phase 4: Enhancements

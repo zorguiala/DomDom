@@ -38,15 +38,16 @@ DomDom is an integrated operational management system for food production and ma
 - Raw materials, work-in-process, and finished goods tracking
 - Inventory transactions history
 - Stock adjustments and transfers
-- Low stock alerts
+- Low stock alerts based on daily usage/consumption rates
 - Barcode scanning support
 
 ### BOM (Bill of Materials) Management
 
 - Recipe/formula creation and management
 - Raw material requirements calculation
-- Production costs calculation
+- Production costs calculation (including packaging/emballage)
 - BOM versioning
+- Optional employee cost allocation in product costing
 
 ### Production Management
 
@@ -60,16 +61,22 @@ DomDom is an integrated operational management system for food production and ma
 ### Sales Management
 
 - Direct sales recording
-- Commercial agent sales tracking
+- Commercial agent (door-to-door) sales tracking with end-of-day reconciliation for salespeople
+- Company/business order management and tracking
 - Inventory updates tied to sales
 - Sales analysis and reporting
+- Customer relationship management
 
 ### Employee Management
 
-- Attendance tracking
-- Production output tracking
-- Employee performance metrics
-- Productivity reporting
+- Attendance tracking (clock in/out)
+- Production output tracking by employee
+- Daily task assignment to different products
+- Employee performance metrics and KPIs
+- Productivity reporting and analysis
+- Salary management system
+- Performance-based bonus calculation
+- Employee cost allocation for product costing (optional)
 
 ### Document Generation
 
@@ -85,12 +92,25 @@ DomDom is an integrated operational management system for food production and ma
 - Production efficiency
 - Sales overview
 - Employee productivity
+- Net profit calculation and reporting (period-based)
 
 ### Reminders & Maintenance Tracking
 
-- Bill payment reminders
-- Equipment maintenance scheduling
+- Bill payment reminders (electricity, rent, loans, gas, etc.)
+- Equipment and vehicle/van maintenance scheduling
 - Notification system
+
+### Purchase Management
+
+- Purchase order tracking (achats) from suppliers (fournisseurs)
+- Supplier management
+- Purchase analytics and reporting
+
+### Employee Salary & Bonus Management
+
+- Salary management
+- Bonus calculation based on performance
+- Salary and bonus reporting
 
 ## Project Structure
 

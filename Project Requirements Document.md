@@ -31,20 +31,31 @@ To build an integrated system that manages inventory/stock, bills of manufacture
 - **Inventory Management Module:**
   - Real-time tracking and updating of inventory levels (raw materials, work in process, finished goods).
   - Support for manual updates and barcode scanning.
+  - Low stock alerts based on daily usage/consumption rates.
+- **Purchase Management Module:**
+  - Track purchases (achats) from suppliers (fournisseurs).
+  - Manage supplier information and purchase orders.
+  - Track payment status and history with suppliers.
 - **BOM & Production Management:**
-  - Create, manage, and update production recipes (BOMs).
+  - Create, manage, and update production recipes (BOMs), including packaging (emballage) as a BOM item.
   - Link raw material consumption to production orders.
+  - Calculate cost per unit, with optional allocation of employee costs (note: employee cost allocation is complex if employees work on multiple products; system should allow for manual or automated allocation).
 - **Sales & Invoice Generation Module:**
-  - Record sales orders.
+  - Record sales orders, including direct sales, company orders, and door-to-door sales (with end-of-day reconciliation for agents).
   - Automatically generate and export invoices (PDF/Excel).
+  - Automatic inventory update following sales transactions.
 - **Employee Management Module:**
   - Track employee attendance (clock in/out).
   - Record production outputs for performance reporting.
+  - Track salaries and calculate bonuses based on performance metrics.
 - **Document Generation:**
-  - Use predefined templates (e.g., "bon de sortie") with automated data fill from inventory and production.
+  - Use predefined templates (e.g., "bon de sortie", invoices) with automated data fill from inventory and production.
 - **Dashboard & Reporting:**
   - Display key operational metrics and trends.
-  - Generate customizable reports on inventory, production, and sales.
+  - Generate customizable reports on inventory, production, sales, and net profit (period-based).
+- **Bill & Maintenance Reminders:**
+  - Management and tracking of recurring monthly bills (e.g., electricity, rent, loans, gas for vans, vehicle expenses).
+  - A notification system to alert when maintenance is due for assets, such as vehicles/vans in a fleet.
 - **Optional Electron Packaging (Windows Desktop App):**
   - The web interface can be packaged as a Windows desktop application using Electron.
   - Maintain a single codebase with minor desktop-specific adjustments (e.g., file system integration, native notifications).

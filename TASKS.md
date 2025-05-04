@@ -65,6 +65,107 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - [ ] Implement BOM versioning support
 - [ ] Create BOM comparison feature
 
+### Purchase Management Implementation
+
+- [ ] Implement purchase order tracking (achats) from suppliers (fournisseurs)
+- [ ] Create supplier management UI and backend
+- [ ] Add purchase reporting and analytics
+
+### Employee Salary & Bonus Management
+
+- [ ] Implement comprehensive employee management system:
+  - [ ] Create employee profiles with roles and skill sets
+  - [ ] Track employee task assignments to different products each day
+  - [ ] Implement flexible employee scheduling system
+- [ ] Design salary management system:
+  - [ ] Create base salary configuration for different roles
+  - [ ] Implement timesheet tracking and validation
+  - [ ] Support salary adjustments and history tracking
+- [ ] Develop performance-based bonus system:
+  - [ ] Define performance metrics and KPIs for different roles
+  - [ ] Create automated bonus calculation based on productivity data
+  - [ ] Support management override for special bonuses
+  - [ ] Implement bonus history and tracking
+- [ ] Create salary and bonus reporting:
+  - [ ] Generate monthly payroll reports
+  - [ ] Create performance trends analysis
+  - [ ] Implement year-to-date compensation reports
+  - [ ] Create cost allocation reports for employee costs across products
+
+### Sales Management Enhancements
+
+- [ ] Implement door-to-door sales workflow with salespeople:
+  - [ ] Create mobile-friendly interface for door-to-door salespeople
+  - [ ] Implement end-of-day sales reconciliation for tracking what they sold
+  - [ ] Add offline mode capabilities for salespeople working in areas with poor connectivity
+  - [ ] Create sales team dashboard with team performance metrics
+- [ ] Add support for direct company/business orders:
+  - [ ] Create specialized order form for business clients
+  - [ ] Implement recurring order functionality
+  - [ ] Add business customer management
+  - [ ] Create business customer invoicing with payment tracking
+
+### Inventory & Stock Enhancements
+
+- [ ] Implement advanced inventory management:
+  - [ ] Create intelligent low stock alert system based on historical daily usage
+  - [ ] Implement predictive stock forecasting based on production schedules
+  - [ ] Add batch tracking for raw materials
+  - [ ] Create inventory valuation reports
+  - [ ] Implement inventory count and reconciliation workflows
+  - [ ] Track inventory wastage and spoilage for food products
+
+### BOM & Costing Enhancements
+
+- [ ] Improve Bill of Materials management:
+  - [ ] Create comprehensive BOM structure with raw materials and packaging (emballage)
+  - [ ] Support variant BOMs for different product sizes/configurations
+  - [ ] Implement BOM version control and history
+- [ ] Develop advanced product costing system:
+  - [ ] Calculate material costs based on current inventory valuation
+  - [ ] Include packaging/emballage costs in product calculations
+  - [ ] Create flexible employee cost allocation options:
+    - [ ] Support manual allocation for employees working on multiple products
+    - [ ] Implement time-tracking based allocation (optional)
+    - [ ] Allow for excluding employee costs from product costing
+  - [ ] Track overhead and fixed cost allocation
+  - [ ] Calculate final unit costs with configurable components
+- [ ] Create BOM analytics:
+  - [ ] Material usage efficiency reporting
+  - [ ] Cost breakdown analysis
+  - [ ] Cost trend tracking over time
+
+### Bills & Maintenance Tracking
+
+- [ ] Implement expense tracking system:
+  - [ ] Create monthly bill tracking for fixed expenses (electricity, loans, rent)
+  - [ ] Track variable expenses (gas for vans, general supplies)
+  - [ ] Implement expense categorization and reporting
+  - [ ] Create expense dashboard with period comparison
+- [ ] Implement delivery van fleet management:
+  - [ ] Create vehicle profiles for each of the 2 delivery vans
+  - [ ] Track mileage and fuel consumption
+  - [ ] Schedule preventive maintenance based on mileage/time
+  - [ ] Set up notifications for upcoming maintenance
+  - [ ] Manage maintenance records and history
+  - [ ] Track maintenance costs per vehicle
+
+### Reporting & Analytics
+
+- [ ] Implement comprehensive financial reporting system:
+  - [ ] Create period-based revenue tracking (daily, weekly, monthly, yearly)
+  - [ ] Implement expense categorization and reporting
+  - [ ] Develop net profit calculation based on configurable time periods
+  - [ ] Create profit margin analysis by product and product category
+  - [ ] Implement sales channel profitability comparison (direct vs. door-to-door)
+- [ ] Create business intelligence dashboards:
+  - [ ] Financial performance overview with KPIs
+  - [ ] Cost trend analysis with graphical visualization
+  - [ ] Product profitability comparison tools
+  - [ ] Cash flow forecasting based on orders and expenses
+- [ ] Implement export options for all reports (PDF, Excel, CSV)
+- [ ] Create automated reporting and scheduling features for key reports
+
 ## 📅 Upcoming Tasks
 
 ### Sales Management Frontend Implementation
