@@ -14,6 +14,15 @@ DomDom is a comprehensive operational management system specifically designed fo
 - **Vehicle Maintenance**: Scheduling and reminders for delivery van maintenance
 - **Financial Tracking**: Monthly expenses, revenue tracking, and net profit calculation
 - **Document Generation**: Invoices, delivery notes (bon de sortie), and custom reports
+- [x] Production Management
+  - [x] Core production order and recording
+  - [x] Advanced filtering/search (employee, BOM, date, status)
+  - [x] Batch production tracking
+  - [x] Quality control checkpoints
+  - [x] Notifications for completed orders
+  - [x] Statistics dashboard
+  - [x] Reports with export (PDF/Excel)
+  - [x] Improved documentation and API docs
 
 ## Getting Started
 

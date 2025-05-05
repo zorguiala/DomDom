@@ -66,7 +66,7 @@ export class EmployeesController {
       }
       // Otherwise return all records (with a reasonable limit)
       return this.attendanceService.getAllAttendance();
-    } catch (error) {
+    } catch {
       // Fallback to today's attendance if there's an error
       const todayAttendance = await this.attendanceService.getTodayAttendance();
       return todayAttendance.records || [];

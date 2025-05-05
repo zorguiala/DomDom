@@ -1,0 +1,6 @@
+# Ignore binary file
+src/documents/documents.module.ts
+
+# Also ignore dist and node_modules
+dist
+node_modules 

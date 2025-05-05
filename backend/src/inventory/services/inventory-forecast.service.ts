@@ -1,6 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository, LessThan, MoreThan } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { Product } from '../../entities/product.entity';
 import { InventoryTransaction, TransactionType } from '../../entities/inventory-transaction.entity';
 import { InventoryStockService } from './inventory-stock.service';

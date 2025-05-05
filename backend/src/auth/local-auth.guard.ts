@@ -19,6 +19,7 @@ export class LocalAuthGuard extends AuthGuard('local') {
       throw err || new Error(info?.message || 'Authentication failed');
     }
     this.logger.debug('LocalAuthGuard: Authentication successful');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return user;
   }
 }

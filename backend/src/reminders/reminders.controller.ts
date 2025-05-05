@@ -33,7 +33,10 @@ export class RemindersController {
   @ApiQuery({ name: 'type', required: false, description: 'Filter reminders by type' })
   @ApiResponse({ status: 200, description: 'List of reminders', type: [ReminderResponseDto] })
   @Get()
-  async findAll(@Query('type') type?: string): Promise<ReminderResponseDto[]> {
+  async findAll(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    @Query('type') _type?: string
+  ): Promise<ReminderResponseDto[]> {
     return await this.remindersService.findAll();
   }
 

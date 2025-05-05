@@ -8,18 +8,12 @@ import {
   UseGuards,
   Request,
   Query,
-  BadRequestException,
   Patch,
   ParseIntPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { InventoryBatchService } from './services/inventory-batch.service';
 import { CreateInventoryBatchDto } from './dto/create-inventory-batch.dto';
-import { User } from '../entities/user.entity';
-
-interface RequestWithUser extends Request {
-  user: User;
-}
 
 @Controller('inventory/batches')
 @UseGuards(JwtAuthGuard)
@@ -27,18 +21,13 @@ export class InventoryBatchController {
   constructor(private readonly batchService: InventoryBatchService) {}
 
   @Post()
-  async create(@Body() createBatchDto: CreateInventoryBatchDto, @Request() req: RequestWithUser) {
-    return this.batchService.create(createBatchDto, req.user);
+  async create(@Body() createBatchDto: CreateInventoryBatchDto) {
+    return await this.batchService.createBatch(createBatchDto);
   }
 
   @Get()
   async findAll(@Query('productId') productId?: string) {
     return this.batchService.findAll(productId);
-  }
-
-  @Get('status')
-  async getBatchInventoryStatus() {
-    return this.batchService.getBatchInventoryStatus();
   }
 
   @Get('expiring')
@@ -48,7 +37,7 @@ export class InventoryBatchController {
 
   @Get('expired')
   async getExpiredBatches() {
-    return this.batchService.getExpiredBatches();
+    return this.batchService.getExpiringBatches(0);
   }
 
   @Get(':id')

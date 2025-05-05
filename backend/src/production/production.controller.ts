@@ -11,9 +11,11 @@ import {
   Query,
   BadRequestException,
   ParseUUIDPipe,
+  Patch,
+  Res,
 } from '@nestjs/common';
 import { ProductionService } from './production.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CreateProductionOrderDto,
   UpdateProductionOrderDto,
@@ -23,8 +25,24 @@ import {
 } from './dto/production-order.dto';
 import { ProductionOrder, ProductionOrderStatus } from '../entities/production-order.entity';
 import { ProductionRecord } from '../entities/production-record.entity';
-import { ApiTags, ApiQuery, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiQuery, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { User } from '../entities/user.entity';
+import { ProductionOrderService } from './services/production-order.service';
+import { ProductionRecordService } from './services/production-record.service';
+import { NotificationService } from './services/notification.service';
+import { ProductionStatisticsService } from './services/production-statistics.service';
+import {
+  CreateProductionRecordDto,
+  GetProductionRecordsFilterDto,
+  UpdateProductionRecordDto,
+} from './dto/production.dto';
+import {
+  ProductionStatisticsDto,
+  ProductionStatisticsResult,
+  ExportReportDto,
+} from './dto/production-report.dto';
+import { GetNotificationsFilterDto, NotificationResponse } from './dto/notification.dto';
+import { Response } from 'express';
 
 // Import centralized types
 import {
@@ -37,7 +55,6 @@ import {
 } from '../types/production.types';
 
 import { ProductionOutputDto } from '../types/productionOutput.dto';
-import { GetProductionReportDto } from './dto/production-report.dto';
 import { ProductionReportDto } from '../types/productionReport.dto';
 
 // Define RequestWithUser interface to fix the 'any' type in request objects
@@ -49,7 +66,13 @@ interface RequestWithUser extends Request {
 @Controller('production')
 @UseGuards(JwtAuthGuard)
 export class ProductionController {
-  constructor(private readonly productionService: ProductionService) {}
+  constructor(
+    private readonly productionService: ProductionService,
+    private readonly productionOrderService: ProductionOrderService,
+    private readonly productionRecordService: ProductionRecordService,
+    private readonly notificationService: NotificationService,
+    private readonly productionStatisticsService: ProductionStatisticsService
+  ) {}
 
   @Get('orders')
   @ApiQuery({ name: 'status', required: false, enum: ProductionOrderStatus })
@@ -66,16 +89,21 @@ export class ProductionController {
   }
 
   @Post('orders')
+  @ApiOperation({ summary: 'Create a new production order' })
+  @ApiResponse({ status: 201, description: 'Production order created successfully' })
   async createProductionOrder(
-    @Request() req: RequestWithUser,
-    @Body() dto: CreateProductionOrderDto
+    @Body() createDto: CreateProductionOrderDto,
+    @Request() req: RequestWithUser
   ): Promise<ProductionOrder> {
-    return this.productionService.createProductionOrder(dto, req.user);
+    return this.productionOrderService.createProductionOrder(createDto, req.user);
   }
 
   @Get('orders/:id')
+  @ApiOperation({ summary: 'Get a production order by ID' })
+  @ApiResponse({ status: 200, description: 'Returns the production order' })
+  @ApiParam({ name: 'id', description: 'Production order ID' })
   async findOneOrder(@Param('id', ParseUUIDPipe) id: string): Promise<ProductionOrder> {
-    return this.productionService.findOne(id);
+    return this.productionOrderService.findOne(id);
   }
 
   @Put('orders/:id')
@@ -83,7 +111,7 @@ export class ProductionController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductionOrderDto
   ): Promise<ProductionOrder> {
-    return this.productionService.update(id, dto);
+    return this.productionOrderService.update(id, dto);
   }
 
   @Put('orders/:id/status')
@@ -91,7 +119,7 @@ export class ProductionController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProductionOrderStatusDto
   ): Promise<ProductionOrder> {
-    return this.productionService.updateStatus(id, dto);
+    return this.productionOrderService.updateStatus(id, dto);
   }
 
   @Post('orders/:id/output')
@@ -112,7 +140,7 @@ export class ProductionController {
 
   @Delete('orders/:id')
   async deleteOrder(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    return this.productionService.delete(id);
+    return this.productionOrderService.delete(id);
   }
 
   // Employee productivity endpoints
@@ -213,7 +241,172 @@ export class ProductionController {
   @ApiQuery({ name: 'bomId', required: false, type: String })
   @ApiQuery({ name: 'employeeId', required: false, type: String })
   @ApiResponse({ status: 200, description: 'Production report', type: ProductionReportDto })
-  async getProductionReport(@Query() query: GetProductionReportDto): Promise<ProductionReportDto> {
+  async getProductionReport(@Query() query: any): Promise<ProductionReportDto> {
     return this.productionService.getProductionReport(query);
+  }
+
+  // Batch tracking endpoints
+
+  @ApiOperation({ summary: 'Get batch status for a production order' })
+  @ApiResponse({ status: 200, description: 'Returns batch status information' })
+  @ApiParam({ name: 'id', description: 'Production order ID' })
+  @Get('orders/:id/batch-status')
+  async getBatchStatus(@Param('id') id: string): Promise<{
+    batchCount: number;
+    completedBatches: number;
+    inProgressBatches: number;
+    remainingBatches: number;
+    nextBatchNumber: string | null;
+    batches: { batchNumber: string; quantity: number; status: string; qualityChecked: boolean }[];
+  }> {
+    return this.productionOrderService.getBatchStatus(id);
+  }
+
+  @ApiOperation({ summary: 'Get production records grouped by batch' })
+  @ApiResponse({ status: 200, description: 'Returns records grouped by batch' })
+  @ApiParam({ name: 'id', description: 'Production order ID' })
+  @Get('orders/:id/records-by-batch')
+  async getRecordsByBatch(@Param('id') id: string): Promise<
+    {
+      batchNumber: string;
+      quantity: number;
+      qualityChecked: boolean;
+      records: ProductionRecord[];
+    }[]
+  > {
+    return this.productionRecordService.getRecordsByBatch(id);
+  }
+
+  // Production Record endpoints
+
+  @ApiOperation({ summary: 'Create a new production record' })
+  @ApiResponse({ status: 201, description: 'Production record created successfully' })
+  @Post('records')
+  async createProductionRecord(
+    @Body() createDto: CreateProductionRecordDto
+  ): Promise<ProductionRecord> {
+    return this.productionRecordService.createProductionRecord(createDto);
+  }
+
+  @ApiOperation({ summary: 'Get production records with filtering' })
+  @ApiResponse({ status: 200, description: 'Returns filtered production records' })
+  @Get('records')
+  async getProductionRecordsFiltered(
+    @Query() filterDto: GetProductionRecordsFilterDto
+  ): Promise<ProductionRecord[]> {
+    return this.productionRecordService.findAll(filterDto);
+  }
+
+  @ApiOperation({ summary: 'Get a production record by ID' })
+  @ApiResponse({ status: 200, description: 'Returns the production record' })
+  @ApiParam({ name: 'id', description: 'Production record ID' })
+  @Get('records/:id')
+  async getProductionRecordById(@Param('id') id: string): Promise<ProductionRecord> {
+    return this.productionRecordService.findOne(id);
+  }
+
+  @ApiOperation({ summary: 'Update a production record' })
+  @ApiResponse({ status: 200, description: 'Production record updated successfully' })
+  @ApiParam({ name: 'id', description: 'Production record ID' })
+  @Patch('records/:id')
+  async updateProductionRecord(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateProductionRecordDto
+  ): Promise<ProductionRecord> {
+    return this.productionRecordService.updateProductionRecord(id, updateDto);
+  }
+
+  @ApiOperation({ summary: 'Delete a production record' })
+  @ApiResponse({ status: 200, description: 'Production record deleted successfully' })
+  @ApiParam({ name: 'id', description: 'Production record ID' })
+  @Delete('records/:id')
+  async deleteProductionRecord(@Param('id') id: string): Promise<void> {
+    return this.productionRecordService.remove(id);
+  }
+
+  // Quality control endpoints
+
+  @ApiOperation({ summary: 'Get quality control statistics' })
+  @ApiResponse({ status: 200, description: 'Returns quality control statistics' })
+  @Get('quality-statistics')
+  async getQualityControlStats(@Query() filterDto: GetProductionRecordsFilterDto): Promise<{
+    totalRecords: number;
+    qualityCheckedRecords: number;
+    qualityCheckRate: number;
+    issuesFound: number;
+    issueRate: number;
+  }> {
+    return this.productionRecordService.getQualityControlStats(filterDto);
+  }
+
+  // Statistics and reporting endpoints
+
+  @ApiOperation({ summary: 'Get production statistics and metrics' })
+  @ApiResponse({ status: 200, description: 'Returns production statistics' })
+  @Post('statistics')
+  async getProductionStatisticsDto(
+    @Body() statsDto: ProductionStatisticsDto
+  ): Promise<ProductionStatisticsResult> {
+    return this.productionStatisticsService.getProductionStatistics(statsDto);
+  }
+
+  @ApiOperation({ summary: 'Export production report' })
+  @ApiResponse({ status: 200, description: 'Returns the exported report file' })
+  @Post('export')
+  async exportProductionReport(
+    @Body() exportDto: ExportReportDto,
+    @Res() res: Response
+  ): Promise<void> {
+    const buffer = await this.productionStatisticsService.exportProductionReport(exportDto);
+
+    // Set content type and file name based on format
+    const format = exportDto.format;
+    const filename = `production-report-${new Date().toISOString().split('T')[0]}.${format}`;
+
+    let contentType: string;
+    if (format === 'excel') {
+      contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    } else if (format === 'pdf') {
+      contentType = 'application/pdf';
+    } else if (format === 'csv') {
+      contentType = 'text/csv';
+    } else {
+      contentType = 'application/octet-stream';
+    }
+
+    res.set({
+      'Content-Type': contentType,
+      'Content-Disposition': `attachment; filename=${filename}`,
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
+
+  // Notification endpoints
+
+  @ApiOperation({ summary: 'Get production notifications' })
+  @ApiResponse({ status: 200, description: 'Returns notifications' })
+  @Get('notifications')
+  async getNotifications(
+    @Query() filterDto: GetNotificationsFilterDto
+  ): Promise<NotificationResponse[]> {
+    return this.notificationService.getNotifications(filterDto);
+  }
+
+  @ApiOperation({ summary: 'Mark notification as read' })
+  @ApiResponse({ status: 200, description: 'Notification marked as read' })
+  @ApiParam({ name: 'id', description: 'Notification ID' })
+  @Patch('notifications/:id/read')
+  async markNotificationAsRead(@Param('id') id: string): Promise<NotificationResponse> {
+    return this.notificationService.markAsRead(id);
+  }
+
+  @ApiOperation({ summary: 'Mark all notifications as read for a user' })
+  @ApiResponse({ status: 200, description: 'All notifications marked as read' })
+  @ApiParam({ name: 'userId', description: 'User ID' })
+  @Patch('notifications/mark-all-read/:userId')
+  async markAllNotificationsAsRead(@Param('userId') userId: string): Promise<void> {
+    return this.notificationService.markAllAsRead(userId);
   }
 }

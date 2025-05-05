@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey, Table } from 'typeorm';
+import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey } from 'typeorm';
 
 export class AddBomIdToProductionOrders1745409000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {

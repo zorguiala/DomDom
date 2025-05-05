@@ -13,7 +13,7 @@ import {
   Space,
   Modal,
 } from "antd";
-import { PlusOutlined, FilterOutlined } from "@ant-design/icons";
+import { PlusOutlined, OrderedListOutlined, CheckCircleOutlined, BellOutlined, BarChartOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProductionOrderList } from "../components/production/ProductionOrderList";
@@ -22,15 +22,34 @@ import { ProductionOrderDetails } from "../components/production/ProductionOrder
 import { RecordProductionForm } from "../components/production/RecordProductionForm";
 import { productionApi } from "../services/productionServices/productionApi";
 import { ProductionOrder, ProductionOrderStatus } from "../types/production";
+import QualityControlDashboard from '../components/production/QualityControlDashboard';
+import NotificationsPanel from '../components/production/NotificationsPanel';
+import StatisticsAndReports from '../components/production/StatisticsAndReports';
 
 const { Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 const { TabPane } = Tabs;
 
+// Temporary useAuth hook implementation until the actual hook is available
+const useAuth = () => {
+  // This would be replaced with actual authentication logic
+  return {
+    user: {
+      id: 'current-user-id',
+      name: 'Current User',
+      role: 'admin'
+    },
+    isAuthenticated: true,
+    logout: () => console.log('Logout'),
+    login: () => console.log('Login')
+  };
+};
+
 export default function Production() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   // State
   const [search, setSearch] = useState("");
@@ -310,7 +329,23 @@ export default function Production() {
       </div>
 
       <Card>
-        <Tabs defaultActiveKey="all" items={tabItems} />
+        <Tabs defaultActiveKey="orders">
+          <TabPane tab={<span><OrderedListOutlined /> {t('production.tabs.orders')}</span>} key="orders">
+            <Tabs defaultActiveKey="all" items={tabItems} />
+          </TabPane>
+          
+          <TabPane tab={<span><CheckCircleOutlined /> {t('production.tabs.qualityControl')}</span>} key="quality">
+            <QualityControlDashboard />
+          </TabPane>
+          
+          <TabPane tab={<span><BellOutlined /> {t('production.tabs.notifications')}</span>} key="notifications">
+            <NotificationsPanel userId={currentUser?.id} />
+          </TabPane>
+          
+          <TabPane tab={<span><BarChartOutlined /> {t('production.tabs.statistics')}</span>} key="statistics">
+            <StatisticsAndReports />
+          </TabPane>
+        </Tabs>
       </Card>
 
       {/* Production Order Form Modal */}

@@ -29,4 +29,7 @@ export class BOM extends BaseEntity {
 
   @ManyToOne(() => User)
   createdBy: User;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  productionTimeInHours: number;
 }

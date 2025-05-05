@@ -48,7 +48,8 @@ export class FixInventoryEntityTypes1746328887487 implements MigrationInterface 
         `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public async down(_queryRunner: QueryRunner): Promise<void> {
     // This is a data type correction, so we don't provide a rollback option
     // as it would potentially corrupt data or cause errors
   }
