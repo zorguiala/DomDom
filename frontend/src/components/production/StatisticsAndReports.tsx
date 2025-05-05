@@ -1,10 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Card, DatePicker, Button, Select, Spin, Tabs, Row, Col, Radio, Form, message, Divider, Typography } from 'antd';
 import { DownloadOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
-import { Line, Bar, Pie } from '@ant-design/charts';
 import ProductionService from '../../services/production.service';
 import { ProductionStatisticsDto, ExportReportDto } from '../../types/production';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
+
+// Define chart props interface
+interface ChartProps {
+  data: any[];
+  [key: string]: any;
+}
+
+// Check if charts are available, if not use placeholders
+let Line: React.FC<ChartProps>, Bar: React.FC<ChartProps>, Pie: React.FC<ChartProps>;
+try {
+  const charts = require('@ant-design/charts');
+  Line = charts.Line;
+  Bar = charts.Bar;
+  Pie = charts.Pie;
+} catch (error) {
+  // Create placeholder components if the charts package is not available
+  Line = ({ data }: ChartProps) => (
+    <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed #ccc' }}>
+      <p>Line Chart Placeholder</p>
+      <p>Install @ant-design/charts to see actual charts</p>
+    </div>
+  );
+  Bar = Line;
+  Pie = Line;
+}
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -23,6 +48,7 @@ interface PieChartData {
 }
 
 const StatisticsAndReports: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
   const [exporting, setExporting] = useState<boolean>(false);
   const [statistics, setStatistics] = useState<any>(null);
@@ -52,7 +78,7 @@ const StatisticsAndReports: React.FC = () => {
         timeSeriesData.push({
           date: point.date,
           value: point.value,
-          category: 'Production',
+          category: t('production.stats.production'),
         });
       });
       
@@ -61,7 +87,7 @@ const StatisticsAndReports: React.FC = () => {
           timeSeriesData.push({
             date: point.date,
             value: point.value,
-            category: 'Wastage',
+            category: t('production.stats.wastage'),
           });
         });
       }
@@ -71,7 +97,7 @@ const StatisticsAndReports: React.FC = () => {
           timeSeriesData.push({
             date: point.date,
             value: point.value,
-            category: 'Efficiency (%)',
+            category: t('production.stats.efficiency'),
           });
         });
       }
@@ -88,7 +114,7 @@ const StatisticsAndReports: React.FC = () => {
       
     } catch (error) {
       console.error('Error fetching statistics:', error);
-      message.error('Failed to load production statistics');
+      message.error(t('production.stats.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -117,7 +143,10 @@ const StatisticsAndReports: React.FC = () => {
       const exportDto: ExportReportDto = {
         ...filters,
         format,
-        title: `Production Report ${filters.startDate} to ${filters.endDate}`,
+        title: t('production.stats.reportTitle', { 
+          startDate: filters.startDate,
+          endDate: filters.endDate
+        }),
       };
       
       const blob = await ProductionService.exportProductionReport(exportDto);
@@ -132,10 +161,10 @@ const StatisticsAndReports: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      message.success(`Report exported successfully as ${format.toUpperCase()}`);
+      message.success(t('production.stats.exportSuccess', { format: format.toUpperCase() }));
     } catch (error) {
       console.error('Error exporting report:', error);
-      message.error('Failed to export report');
+      message.error(t('production.stats.exportError'));
     } finally {
       setExporting(false);
     }
@@ -158,7 +187,7 @@ const StatisticsAndReports: React.FC = () => {
   };
 
   const barConfig = {
-    data: productionData.filter(item => item.category === 'Production'),
+    data: productionData.filter(item => item.category === t('production.stats.production')),
     xField: 'date',
     yField: 'value',
     label: {
@@ -170,7 +199,7 @@ const StatisticsAndReports: React.FC = () => {
     },
     meta: {
       value: {
-        alias: 'Production Quantity',
+        alias: t('production.stats.productionQuantity'),
       },
     },
   };
@@ -193,45 +222,45 @@ const StatisticsAndReports: React.FC = () => {
 
   return (
     <div className="statistics-and-reports">
-      <Card title={<Title level={4}>Production Statistics & Reports</Title>}>
+      <Card title={<Title level={4}>{t('production.stats.title')}</Title>}>
         <Form
           layout="inline"
           style={{ marginBottom: 16 }}
           initialValues={filters}
           onValuesChange={handleFilterChange}
         >
-          <Form.Item label="Date Range" name="dateRange">
+          <Form.Item label={t('production.stats.dateRange')} name="dateRange">
             <RangePicker
               value={[dayjs(filters.startDate), dayjs(filters.endDate)]}
               onChange={handleDateRangeChange}
             />
           </Form.Item>
           
-          <Form.Item name="groupBy" label="Group By">
+          <Form.Item name="groupBy" label={t('production.stats.groupBy')}>
             <Select style={{ width: 120 }}>
-              <Option value="daily">Daily</Option>
-              <Option value="weekly">Weekly</Option>
-              <Option value="monthly">Monthly</Option>
+              <Option value="daily">{t('production.stats.daily')}</Option>
+              <Option value="weekly">{t('production.stats.weekly')}</Option>
+              <Option value="monthly">{t('production.stats.monthly')}</Option>
             </Select>
           </Form.Item>
           
-          <Form.Item name="bomId" label="Product">
+          <Form.Item name="bomId" label={t('production.stats.product')}>
             <Select
               style={{ width: 150 }}
-              placeholder="All Products"
+              placeholder={t('production.stats.allProducts')}
               allowClear
             >
               {/* This would be populated from a fetch call */}
-              <Option value="product-1">Bread</Option>
-              <Option value="product-2">Cake</Option>
-              <Option value="product-3">Pastry</Option>
+              <Option value="product-1">{t('production.stats.productBread')}</Option>
+              <Option value="product-2">{t('production.stats.productCake')}</Option>
+              <Option value="product-3">{t('production.stats.productPastry')}</Option>
             </Select>
           </Form.Item>
           
-          <Form.Item name="employeeId" label="Employee">
+          <Form.Item name="employeeId" label={t('production.stats.employee')}>
             <Select
               style={{ width: 150 }}
-              placeholder="All Employees"
+              placeholder={t('production.stats.allEmployees')}
               allowClear
             >
               {/* This would be populated from a fetch call */}
@@ -242,14 +271,14 @@ const StatisticsAndReports: React.FC = () => {
           
           <Form.Item name="includeWastage" valuePropName="checked">
             <Radio.Group>
-              <Radio.Button value={true}>Include Wastage</Radio.Button>
-              <Radio.Button value={false}>Production Only</Radio.Button>
+              <Radio.Button value={true}>{t('production.stats.includeWastage')}</Radio.Button>
+              <Radio.Button value={false}>{t('production.stats.productionOnly')}</Radio.Button>
             </Radio.Group>
           </Form.Item>
           
           <Form.Item>
             <Button type="primary" onClick={fetchStatistics} loading={loading}>
-              Update
+              {t('production.stats.update')}
             </Button>
           </Form.Item>
         </Form>
@@ -266,7 +295,7 @@ const StatisticsAndReports: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic
-                    title="Efficiency"
+                    title={t('production.stats.efficiency')}
                     value={statistics.metrics.efficiency}
                     suffix="%"
                     precision={1}
@@ -276,7 +305,7 @@ const StatisticsAndReports: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic
-                    title="Completed Orders"
+                    title={t('production.stats.completedOrders')}
                     value={statistics.metrics.totalCompleted}
                   />
                 </Card>
@@ -284,7 +313,7 @@ const StatisticsAndReports: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic
-                    title="Avg. Completion Time"
+                    title={t('production.stats.avgCompletionTime')}
                     value={statistics.metrics.averageCompletionTime}
                     suffix="hrs"
                     precision={1}
@@ -294,7 +323,7 @@ const StatisticsAndReports: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic
-                    title="Wastage"
+                    title={t('production.stats.wastage')}
                     value={statistics.metrics.wastagePercentage || 0}
                     suffix="%"
                     precision={1}
@@ -312,7 +341,7 @@ const StatisticsAndReports: React.FC = () => {
                 loading={exporting}
                 style={{ marginRight: 8 }}
               >
-                Export PDF
+                {t('production.stats.exportPdf')}
               </Button>
               <Button
                 icon={<DownloadOutlined />}
@@ -320,43 +349,43 @@ const StatisticsAndReports: React.FC = () => {
                 loading={exporting}
                 style={{ marginRight: 8 }}
               >
-                Export Excel
+                {t('production.stats.exportExcel')}
               </Button>
               <Button
                 icon={<DownloadOutlined />}
                 onClick={() => exportReport('csv')}
                 loading={exporting}
               >
-                Export CSV
+                {t('production.stats.exportCsv')}
               </Button>
             </div>
             
             <Tabs defaultActiveKey="1">
               <TabPane 
-                tab={<span><LineChartOutlined /> Time Series</span>}
+                tab={<span><LineChartOutlined /> {t('production.stats.timeSeries')}</span>}
                 key="1"
               >
-                <Title level={5}>Production Over Time</Title>
+                <Title level={5}>{t('production.stats.productionOverTime')}</Title>
                 <div style={{ height: 400 }}>
                   <Line {...lineConfig} />
                 </div>
               </TabPane>
               
               <TabPane 
-                tab={<span><BarChartOutlined /> Production Volume</span>}
+                tab={<span><BarChartOutlined /> {t('production.stats.productionVolume')}</span>}
                 key="2"
               >
-                <Title level={5}>Daily Production Volume</Title>
+                <Title level={5}>{t('production.stats.dailyProductionVolume')}</Title>
                 <div style={{ height: 400 }}>
                   <Bar {...barConfig} />
                 </div>
               </TabPane>
               
               <TabPane 
-                tab={<span><PieChartOutlined /> Distribution</span>}
+                tab={<span><PieChartOutlined /> {t('production.stats.distribution')}</span>}
                 key="3"
               >
-                <Title level={5}>Production by Product</Title>
+                <Title level={5}>{t('production.stats.productionByProduct')}</Title>
                 <div style={{ height: 400 }}>
                   <Pie {...pieConfig} />
                 </div>
@@ -365,7 +394,7 @@ const StatisticsAndReports: React.FC = () => {
           </>
         ) : (
           <div style={{ textAlign: 'center', padding: 24 }}>
-            <Text>No data available. Select a date range and click Update.</Text>
+            <Text>{t('production.stats.noData')}</Text>
           </div>
         )}
       </Card>
@@ -373,7 +402,7 @@ const StatisticsAndReports: React.FC = () => {
   );
 };
 
-// Placeholder component for Statistic
+// Statistic component implementation
 const Statistic = ({ title, value, suffix, precision, valueStyle }: any) => (
   <div>
     <div style={{ fontSize: '14px', color: 'rgba(0, 0, 0, 0.45)' }}>{title}</div>

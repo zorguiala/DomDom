@@ -14,23 +14,29 @@ import {
   Divider,
   Progress,
   message,
+  Tabs,
 } from "antd";
-import productionService, {
-  ProductionOrder,
-} from "../../services/production.service";
+import { useTranslation } from "react-i18next";
+import ProductionService from "../../services/production.service";
+import { ProductionOrder, ProductionOrderStatus } from "../../types/production";
 import BatchTrackingPanel from '../../components/production/BatchTrackingPanel';
+import QualityControlDashboard from '../../components/production/QualityControlDashboard';
+import NotificationsPanel from '../../components/production/NotificationsPanel';
 
 const { TextArea } = Input;
 const { Option } = Select;
+const { TabPane } = Tabs;
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   planned: "default",
   in_progress: "processing",
   completed: "success",
   cancelled: "error",
+  on_hold: "warning",
 };
 
 const ProductionOrderDetail: React.FC = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<ProductionOrder | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,10 +47,10 @@ const ProductionOrderDetail: React.FC = () => {
     if (!id) return;
     try {
       setLoading(true);
-      const data = await productionService.getOrder(id);
+      const data = await ProductionService.getProductionOrder(id);
       setOrder(data);
     } catch (error) {
-      message.error("Failed to fetch production order details");
+      message.error(t("production.fetchOrderError"));
     } finally {
       setLoading(false);
     }
@@ -54,27 +60,27 @@ const ProductionOrderDetail: React.FC = () => {
     fetchOrder();
   }, [id]);
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleStatusUpdate = async (newStatus: ProductionOrderStatus) => {
     if (!id) return;
     try {
-      await productionService.updateOrderStatus(id, newStatus);
-      message.success("Status updated successfully");
+      await ProductionService.updateProductionOrderStatus(id, { status: newStatus });
+      message.success(t("production.statusUpdateSuccess"));
       fetchOrder();
     } catch (error) {
-      message.error("Failed to update status");
+      message.error(t("production.statusUpdateError"));
     }
   };
 
   const handleRecordProduction = async (values: any) => {
     if (!id) return;
     try {
-      await productionService.recordProduction(id, values);
-      message.success("Production recorded successfully");
+      await ProductionService.recordProduction(id, values);
+      message.success(t("production.recordSuccess"));
       setIsRecordModalVisible(false);
       form.resetFields();
       fetchOrder();
     } catch (error) {
-      message.error("Failed to record production");
+      message.error(t("production.recordError"));
     }
   };
 
@@ -87,14 +93,14 @@ const ProductionOrderDetail: React.FC = () => {
   return (
     <div style={{ padding: "24px" }}>
       <Card loading={loading}>
-        <Descriptions title="Production Order Details" bordered>
-          <Descriptions.Item label="Order ID">{order.id}</Descriptions.Item>
-          <Descriptions.Item label="Status">
+        <Descriptions title={t("production.orderDetails")} bordered>
+          <Descriptions.Item label={t("production.orderId")}>{order.id}</Descriptions.Item>
+          <Descriptions.Item label={t("production.status")}>
             <Tag color={statusColors[order.status]}>
-              {order.status.toUpperCase()}
+              {t(`production.status.${order.status}`)}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Priority">
+          <Descriptions.Item label={t("production.priority")}>
             <Tag
               color={
                 order.priority === "high"
@@ -104,32 +110,34 @@ const ProductionOrderDetail: React.FC = () => {
                   : "blue"
               }
             >
-              {order.priority.toUpperCase()}
+              {t(`production.priority.${order.priority}`)}
             </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="BOM">{order.bom.name}</Descriptions.Item>
-          <Descriptions.Item label="Planned Start Date">
+          <Descriptions.Item label={t("production.bom")}>{order.bom.name}</Descriptions.Item>
+          <Descriptions.Item label={t("production.plannedStartDate")}>
             {new Date(order.plannedStartDate).toLocaleDateString()}
           </Descriptions.Item>
-          <Descriptions.Item label="Actual Start Date">
+          <Descriptions.Item label={t("production.actualStartDate")}>
             {order.actualStartDate
               ? new Date(order.actualStartDate).toLocaleDateString()
               : "-"}
           </Descriptions.Item>
-          <Descriptions.Item label="Target Quantity">
+          <Descriptions.Item label={t("production.targetQuantity")}>
             {order.quantity}
           </Descriptions.Item>
-          <Descriptions.Item label="Completed Quantity">
+          <Descriptions.Item label={t("production.completedQuantity")}>
             {order.completedQuantity}
           </Descriptions.Item>
-          <Descriptions.Item label="Assigned To">
-            {order.assignedTo?.name || "-"}
+          <Descriptions.Item label={t("production.assignedTo")}>
+            {order.assignedTo 
+              ? `${order.assignedTo.firstName || ''} ${order.assignedTo.lastName || ''}`.trim() 
+              : "-"}
           </Descriptions.Item>
         </Descriptions>
 
         <Divider />
 
-        <Card title="Production Progress">
+        <Card title={t("production.progress")}>
           <Progress
             percent={Math.round(progress)}
             status={progress >= 100 ? "success" : "active"}
@@ -139,76 +147,86 @@ const ProductionOrderDetail: React.FC = () => {
         <Divider />
 
         <Space>
-          {order.status === "planned" && (
+          {order.status === ProductionOrderStatus.PLANNED && (
             <Button
               type="primary"
-              onClick={() => handleStatusUpdate("in_progress")}
+              onClick={() => handleStatusUpdate(ProductionOrderStatus.IN_PROGRESS)}
             >
-              Start Production
+              {t("production.startProduction")}
             </Button>
           )}
-          {order.status === "in_progress" && (
+          {order.status === ProductionOrderStatus.IN_PROGRESS && (
             <>
               <Button
                 type="primary"
                 onClick={() => setIsRecordModalVisible(true)}
               >
-                Record Production
+                {t("production.recordProduction")}
               </Button>
-              <Button onClick={() => handleStatusUpdate("completed")}>
-                Complete Order
+              <Button onClick={() => handleStatusUpdate(ProductionOrderStatus.COMPLETED)}>
+                {t("production.completeOrder")}
               </Button>
             </>
           )}
-          {["planned", "in_progress"].includes(order.status) && (
-            <Button danger onClick={() => handleStatusUpdate("cancelled")}>
-              Cancel Order
+          {[ProductionOrderStatus.PLANNED, ProductionOrderStatus.IN_PROGRESS].includes(order.status) && (
+            <Button danger onClick={() => handleStatusUpdate(ProductionOrderStatus.CANCELLED)}>
+              {t("production.cancelOrder")}
             </Button>
           )}
         </Space>
       </Card>
 
-      {order.isBatchProduction && (
-        <div style={{ marginTop: 16 }}>
-          <BatchTrackingPanel 
-            productionOrderId={order.id} 
-            refreshData={fetchOrder}
-          />
-        </div>
-      )}
+      <Tabs defaultActiveKey="batch" style={{ marginTop: 16 }}>
+        {order.isBatchProduction && (
+          <TabPane tab={t("production.batch.tracking")} key="batch">
+            <BatchTrackingPanel 
+              productionOrderId={order.id} 
+              refreshData={fetchOrder}
+            />
+          </TabPane>
+        )}
+        
+        <TabPane tab={t("production.quality.control")} key="quality">
+          <QualityControlDashboard />
+        </TabPane>
+        
+        <TabPane tab={t("production.notifications")} key="notifications">
+          <NotificationsPanel />
+        </TabPane>
+      </Tabs>
 
       <Modal
-        title="Record Production"
-        visible={isRecordModalVisible}
+        title={t("production.recordProduction")}
+        open={isRecordModalVisible}
         onCancel={() => setIsRecordModalVisible(false)}
         footer={null}
       >
         <Form form={form} onFinish={handleRecordProduction} layout="vertical">
           <Form.Item
             name="quantity"
-            label="Quantity Produced"
-            rules={[{ required: true, message: "Please enter quantity" }]}
+            label={t("production.quantity")}
+            rules={[{ required: true, message: t("validation.required", { field: t("production.quantity") }) }]}
           >
             <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
 
           <Form.Item
             name="employeeId"
-            label="Employee"
-            rules={[{ required: true, message: "Please select an employee" }]}
+            label={t("production.employee")}
+            rules={[{ required: true, message: t("validation.required", { field: t("production.employee") }) }]}
           >
-            <Select placeholder="Select employee">
+            <Select placeholder={t("production.selectEmployee")}>
               {/* Add employee options here */}
             </Select>
           </Form.Item>
 
-          <Form.Item name="notes" label="Notes">
+          <Form.Item name="notes" label={t("production.notes")}>
             <TextArea rows={4} />
           </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
-              Record Production
+              {t("production.recordProduction")}
             </Button>
           </Form.Item>
         </Form>

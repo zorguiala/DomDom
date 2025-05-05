@@ -5,6 +5,7 @@ import ProductionService from '../../services/production.service';
 import { Notification, NotificationPriority, NotificationType, NotificationsFilterDto } from '../../types/production';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(relativeTime);
 
@@ -24,6 +25,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
   showFilters = true,
   collapsed = false,
 }) => {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [filters, setFilters] = useState<NotificationsFilterDto>({
@@ -45,7 +47,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
       setNotifications(data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      message.error('Failed to load notifications');
+      message.error(t('notifications.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -62,10 +64,10 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
             : n
         )
       );
-      message.success('Notification marked as read');
+      message.success(t('notifications.markedAsRead'));
     } catch (error) {
       console.error('Error marking notification as read:', error);
-      message.error('Failed to mark notification as read');
+      message.error(t('notifications.markReadError'));
     }
   };
 
@@ -78,10 +80,10 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
       setNotifications(prevNotifications => 
         prevNotifications.map(n => ({ ...n, isRead: true }))
       );
-      message.success('All notifications marked as read');
+      message.success(t('notifications.allMarkedAsRead'));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
-      message.error('Failed to mark all notifications as read');
+      message.error(t('notifications.markAllReadError'));
     }
   };
 
@@ -134,15 +136,15 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
     switch (priority) {
       case NotificationPriority.HIGH:
         color = 'red';
-        text = 'High';
+        text = t('notifications.priority.high');
         break;
       case NotificationPriority.MEDIUM:
         color = 'orange';
-        text = 'Medium';
+        text = t('notifications.priority.medium');
         break;
       case NotificationPriority.LOW:
         color = 'green';
-        text = 'Low';
+        text = t('notifications.priority.low');
         break;
     }
     
@@ -156,21 +158,21 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <BellOutlined style={{ marginRight: 8 }} />
-              <span>Notifications</span>
+              <span>{t('notifications.title')}</span>
               {unreadCount > 0 && (
                 <Badge count={unreadCount} style={{ marginLeft: 8 }} />
               )}
             </div>
             {unreadCount > 0 && (
               <Button type="link" onClick={markAllAsRead} size="small">
-                Mark all as read
+                {t('notifications.markAllAsRead')}
               </Button>
             )}
           </div>
         }
         extra={
           <Button type="primary" onClick={fetchNotifications} size="small">
-            Refresh
+            {t('common.refresh')}
           </Button>
         }
       >
@@ -178,41 +180,41 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
           <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
             <Select
               style={{ width: 150 }}
-              placeholder="Filter by type"
+              placeholder={t('notifications.filterByType')}
               allowClear
               onChange={(value) => setFilters({ ...filters, type: value })}
               value={filters.type}
             >
               {Object.values(NotificationType).map(type => (
                 <Option key={type} value={type}>
-                  {type.replace('_', ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
+                  {t(`notifications.type.${type.toLowerCase()}`)}
                 </Option>
               ))}
             </Select>
             
             <Select
               style={{ width: 150 }}
-              placeholder="Filter by priority"
+              placeholder={t('notifications.filterByPriority')}
               allowClear
               onChange={(value) => setFilters({ ...filters, priority: value })}
               value={filters.priority}
             >
               {Object.values(NotificationPriority).map(priority => (
                 <Option key={priority} value={priority}>
-                  {priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase()}
+                  {t(`notifications.priority.${priority.toLowerCase()}`)}
                 </Option>
               ))}
             </Select>
             
             <Select
               style={{ width: 150 }}
-              placeholder="Read status"
+              placeholder={t('notifications.readStatus')}
               allowClear
               onChange={(value) => setFilters({ ...filters, unreadOnly: value })}
               value={filters.unreadOnly}
             >
-              <Option value={true}>Unread only</Option>
-              <Option value={false}>All notifications</Option>
+              <Option value={true}>{t('notifications.unreadOnly')}</Option>
+              <Option value={false}>{t('notifications.allNotifications')}</Option>
             </Select>
           </div>
         )}
@@ -222,7 +224,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
             <Spin />
           </div>
         ) : notifications.length === 0 ? (
-          <Empty description="No notifications found" />
+          <Empty description={t('notifications.noNotifications')} />
         ) : (
           <List
             itemLayout="horizontal"
@@ -235,7 +237,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     onClick={() => markAsRead(notification)}
                     disabled={notification.isRead}
                   >
-                    {notification.isRead ? 'Read' : 'Mark as read'}
+                    {notification.isRead ? t('notifications.read') : t('notifications.markAsRead')}
                   </Button>
                 ]}
                 onClick={() => handleNotificationClick(notification)}
@@ -277,20 +279,20 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
         {collapsed && notifications.length > maxItems && (
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             <Button type="link" onClick={() => setDrawerVisible(true)}>
-              View all {notifications.length} notifications
+              {t('notifications.viewAll', { count: notifications.length })}
             </Button>
           </div>
         )}
       </Card>
 
       <Drawer
-        title="Notification Details"
+        title={t('notifications.details')}
         placement="right"
         onClose={() => {
           setDrawerVisible(false);
           setSelectedNotification(null);
         }}
-        visible={drawerVisible}
+        open={drawerVisible}
         width={500}
       >
         {selectedNotification ? (
@@ -307,10 +309,10 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                 <Text>{selectedNotification.message}</Text>
               </div>
               
-              <Card size="small" title="Related Information">
-                <p><strong>Type:</strong> {selectedNotification.type.replace('_', ' ').toLowerCase()}</p>
-                <p><strong>Entity ID:</strong> {selectedNotification.entityId}</p>
-                <p><strong>Status:</strong> {selectedNotification.isRead ? 'Read' : 'Unread'}</p>
+              <Card size="small" title={t('notifications.relatedInfo')}>
+                <p><strong>{t('notifications.type.label')}:</strong> {t(`notifications.type.${selectedNotification.type.toLowerCase()}`)}</p>
+                <p><strong>{t('notifications.entityId')}:</strong> {selectedNotification.entityId}</p>
+                <p><strong>{t('notifications.status')}:</strong> {selectedNotification.isRead ? t('notifications.statusRead') : t('notifications.statusUnread')}</p>
               </Card>
               
               <div style={{ marginTop: 16 }}>
@@ -318,7 +320,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                   type="primary" 
                   onClick={() => { /* Navigate to related entity */ }}
                 >
-                  View Related Item
+                  {t('notifications.viewRelatedItem')}
                 </Button>
                 
                 {!selectedNotification.isRead && (
@@ -326,7 +328,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     style={{ marginLeft: 8 }} 
                     onClick={() => markAsRead(selectedNotification)}
                   >
-                    Mark as Read
+                    {t('notifications.markAsRead')}
                   </Button>
                 )}
               </div>
@@ -344,7 +346,7 @@ const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
                     onClick={() => markAsRead(notification)}
                     disabled={notification.isRead}
                   >
-                    {notification.isRead ? 'Read' : 'Mark as read'}
+                    {notification.isRead ? t('notifications.read') : t('notifications.markAsRead')}
                   </Button>
                 ]}
                 onClick={() => setSelectedNotification(notification)}

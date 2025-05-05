@@ -4,12 +4,14 @@ import { CheckCircleOutlined, WarningOutlined, CloseCircleOutlined, ClockCircleO
 import ProductionService from '../../services/production.service';
 import { QualityControlStats, ProductionRecord, ProductionRecordsFilterDto } from '../../types/production';
 import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const QualityControlDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<QualityControlStats | null>(null);
   const [records, setRecords] = useState<ProductionRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -60,8 +62,8 @@ const QualityControlDashboard: React.FC = () => {
       await ProductionService.updateProductionRecord(record.id, {
         qualityChecked: true,
         qualityNotes: qualityPassed 
-          ? 'Quality check passed' 
-          : 'Quality check failed - issues found',
+          ? t('production.quality.passedNotes') 
+          : t('production.quality.failedNotes'),
       });
       
       // Refresh data
@@ -74,13 +76,13 @@ const QualityControlDashboard: React.FC = () => {
   const qualityStatusFilter = (
     <Select
       style={{ width: 200, marginRight: 16 }}
-      placeholder="Filter by quality status"
+      placeholder={t('production.quality.filterByStatus')}
       allowClear
       onChange={handleQualityStatusChange}
       value={filters.qualityChecked}
     >
-      <Option value={true}>Quality Checked</Option>
-      <Option value={false}>Not Checked</Option>
+      <Option value={true}>{t('production.quality.checked')}</Option>
+      <Option value={false}>{t('production.quality.notChecked')}</Option>
     </Select>
   );
 
@@ -96,18 +98,18 @@ const QualityControlDashboard: React.FC = () => {
   );
 
   if (loading && !stats) {
-    return <Spin tip="Loading quality control data..." />;
+    return <Spin tip={t('production.quality.loading')} />;
   }
 
   return (
     <div className="quality-control-dashboard">
-      <Card title={<Title level={4}>Quality Control Dashboard</Title>}>
+      <Card title={<Title level={4}>{t('production.quality.dashboard')}</Title>}>
         <div style={{ marginBottom: 16 }}>
-          <Text>Filter records: </Text>
+          <Text>{t('production.filterRecords')}: </Text>
           {dateRangeFilter}
           {qualityStatusFilter}
           <Button type="primary" onClick={fetchData}>
-            Refresh
+            {t('common.refresh')}
           </Button>
         </div>
 
@@ -117,7 +119,7 @@ const QualityControlDashboard: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic 
-                    title="Total Records" 
+                    title={t('production.quality.totalRecords')} 
                     value={stats.totalRecords} 
                   />
                 </Card>
@@ -125,7 +127,7 @@ const QualityControlDashboard: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic 
-                    title="Quality Checked" 
+                    title={t('production.quality.checkedRecords')} 
                     value={stats.qualityCheckedRecords} 
                     suffix={<small>({stats.qualityCheckRate.toFixed(1)}%)</small>}
                   />
@@ -134,7 +136,7 @@ const QualityControlDashboard: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic 
-                    title="Issues Found" 
+                    title={t('production.quality.issuesFound')} 
                     value={stats.issuesFound} 
                     suffix={<small>({stats.issueRate.toFixed(1)}%)</small>}
                     valueStyle={{ color: stats.issuesFound > 0 ? '#cf1322' : '#3f8600' }}
@@ -144,7 +146,7 @@ const QualityControlDashboard: React.FC = () => {
               <Col span={6}>
                 <Card size="small">
                   <Statistic 
-                    title="Passing Rate" 
+                    title={t('production.quality.passingRate')} 
                     value={100 - stats.issueRate} 
                     suffix="%" 
                     valueStyle={{ color: stats.issueRate > 10 ? '#cf1322' : '#3f8600' }}
@@ -154,7 +156,7 @@ const QualityControlDashboard: React.FC = () => {
             </Row>
 
             <div style={{ marginBottom: 16 }}>
-              <Text strong>Quality Check Progress</Text>
+              <Text strong>{t('production.quality.checkProgress')}</Text>
               <Progress 
                 percent={stats.qualityCheckRate} 
                 status={stats.qualityCheckRate < 70 ? "exception" : "active"} 
@@ -162,7 +164,7 @@ const QualityControlDashboard: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: 16 }}>
-              <Text strong>Quality Pass Rate</Text>
+              <Text strong>{t('production.quality.passRate')}</Text>
               <Progress 
                 percent={100 - stats.issueRate} 
                 status={stats.issueRate > 10 ? "exception" : "success"} 
@@ -170,7 +172,7 @@ const QualityControlDashboard: React.FC = () => {
             </div>
           </>
         ) : !loading && (
-          <Empty description="No quality control statistics available" />
+          <Empty description={t('production.quality.noStats')} />
         )}
 
         <Table
@@ -179,31 +181,31 @@ const QualityControlDashboard: React.FC = () => {
           pagination={{ pageSize: 10 }}
           columns={[
             {
-              title: 'Date',
+              title: t('common.date'),
               dataIndex: 'createdAt',
               key: 'createdAt',
               render: (date) => dayjs(date).format('YYYY-MM-DD HH:mm'),
               sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
             },
             {
-              title: 'BOM',
+              title: t('production.bom'),
               dataIndex: ['bom', 'name'],
               key: 'bom',
             },
             {
-              title: 'Batch Number',
+              title: t('production.batch.number'),
               dataIndex: 'batchNumber',
               key: 'batchNumber',
               render: (batchNumber) => batchNumber || '-',
             },
             {
-              title: 'Quantity',
+              title: t('production.quantity'),
               dataIndex: 'quantity',
               key: 'quantity',
               sorter: (a, b) => a.quantity - b.quantity,
             },
             {
-              title: 'Wastage',
+              title: t('production.wastage'),
               dataIndex: 'wastage',
               key: 'wastage',
               render: (wastage, record) => (
@@ -218,14 +220,14 @@ const QualityControlDashboard: React.FC = () => {
               ),
             },
             {
-              title: 'Quality Status',
+              title: t('production.quality.status'),
               dataIndex: 'qualityChecked',
               key: 'qualityStatus',
               render: (checked, record) => {
                 if (!checked) {
                   return (
                     <div>
-                      <Tag icon={<ClockCircleOutlined />} color="orange">PENDING</Tag>
+                      <Tag icon={<ClockCircleOutlined />} color="orange">{t('production.quality.pending')}</Tag>
                       <div style={{ marginTop: 5 }}>
                         <Button 
                           type="primary" 
@@ -233,14 +235,14 @@ const QualityControlDashboard: React.FC = () => {
                           onClick={() => handleRecordQualityCheck(record, true)}
                           style={{ marginRight: 5 }}
                         >
-                          Pass
+                          {t('production.quality.pass')}
                         </Button>
                         <Button 
                           danger 
                           size="small" 
                           onClick={() => handleRecordQualityCheck(record, false)}
                         >
-                          Fail
+                          {t('production.quality.fail')}
                         </Button>
                       </div>
                     </div>
@@ -251,19 +253,19 @@ const QualityControlDashboard: React.FC = () => {
                                  record.qualityNotes?.toLowerCase().includes('fail');
                                  
                 return hasIssues ? (
-                  <Tag icon={<CloseCircleOutlined />} color="red">FAILED</Tag>
+                  <Tag icon={<CloseCircleOutlined />} color="red">{t('production.quality.failed')}</Tag>
                 ) : (
-                  <Tag icon={<CheckCircleOutlined />} color="green">PASSED</Tag>
+                  <Tag icon={<CheckCircleOutlined />} color="green">{t('production.quality.passed')}</Tag>
                 );
               },
               filters: [
-                { text: 'Pending', value: false },
-                { text: 'Checked', value: true },
+                { text: t('production.quality.pending'), value: false },
+                { text: t('production.quality.checked'), value: true },
               ],
               onFilter: (value, record) => record.qualityChecked === value,
             },
             {
-              title: 'Quality Notes',
+              title: t('production.qualityNotes'),
               dataIndex: 'qualityNotes',
               key: 'qualityNotes',
               render: (notes) => notes || '-',
