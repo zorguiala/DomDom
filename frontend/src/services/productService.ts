@@ -19,7 +19,19 @@ export const productApi = {
   },
 
   createProduct: async (product: Omit<Product, "id">) => {
-    const response = await api.post("/products", product);
+    // Map currentStock to initialStock for backend compatibility
+    const payload: any = { ...product };
+    if (payload.currentStock !== undefined) {
+      payload.initialStock = payload.currentStock;
+    }
+    delete payload.currentStock;
+    delete payload.createdAt;
+    delete payload.updatedAt;
+    // Ensure price is present for backend (NOT NULL constraint)
+    if (payload.price === undefined || payload.price === null) {
+      throw new Error("Product price is required.");
+    }
+    const response = await api.post("/products", payload);
     return response.data;
   },
 

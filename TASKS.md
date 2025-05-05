@@ -37,7 +37,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
   - [x] Create inventory valuation reports
   - [x] Implement inventory count and reconciliation workflows
   - [x] Track inventory wastage and spoilage for food products
-  
+
 ### Inventory Enhancement Testing & Integration - Status: 🔄 IN PROGRESS
 
 - [ ] Complete backend and frontend integration:
@@ -68,6 +68,13 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
   - [ ] Add batch production tracking
   - [ ] Implement quality control checkpoints
   - [ ] Create notifications for completed production orders
+- [ ] Implement export of production reports to PDF/Excel (frontend)
+- [ ] Add quality control checkpoints to production recording workflow (backend & frontend)
+- [ ] Implement notifications for completed production orders (backend & frontend)
+- [ ] Add batch production tracking UI and reporting (frontend)
+- [ ] Add advanced filtering for production orders (by employee, BOM, date range) (frontend)
+- [ ] Add e2e and unit tests for production management features (backend & frontend)
+- [ ] Improve documentation for production API endpoints and frontend features
 
 ## 📑 Bill of Materials (BOM) Module
 

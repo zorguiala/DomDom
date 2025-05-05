@@ -6,14 +6,12 @@ export interface Product {
   description?: string;
   price: number;
   costPrice?: number;
-  currentStock: number;
+  initialStock: number;
   minimumStock: number;
   unit: string;
   isRawMaterial: boolean;
   isActive: boolean;
   leadTimeDays?: number;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface InventoryTransaction {
