@@ -64,6 +64,7 @@ export class ProductionService {
         `Error updating production order status: ${error instanceof Error ? error.message : String(error)}`
       );
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
       throw error instanceof Error ? error : new Error(String(error));
     }
   }
