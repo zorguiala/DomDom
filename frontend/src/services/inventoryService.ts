@@ -29,8 +29,15 @@ export const inventoryApi = {
   },
 
   deleteProduct: async (id: string) => {
-    const response = await api.delete(`/products/${id}`);
-    return response.data;
+    try {
+      console.log('Sending delete request for product ID:', id);
+      const response = await api.delete(`/products/${id}`);
+      console.log('Delete response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error in deleteProduct:', error);
+      throw error; // Re-throw to let the mutation error handler deal with it
+    }
   },
 
   findByBarcode: async (barcode: string) => {

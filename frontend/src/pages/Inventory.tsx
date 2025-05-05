@@ -13,14 +13,15 @@ import {
   Alert,
   Tabs,
 } from "antd";
-import { 
-  PlusOutlined, 
-  HistoryOutlined, 
+import axios from "axios";
+import {
+  PlusOutlined,
+  HistoryOutlined,
   SwapOutlined,
   BarChartOutlined,
   CalendarOutlined,
   ExceptionOutlined,
-  PartitionOutlined
+  PartitionOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +45,7 @@ export default function Inventory() {
   const [showRawMaterials, setShowRawMaterials] = useState<boolean | undefined>(
     undefined
   );
+  const [showInactive, setShowInactive] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
   const [transactionOpen, setTransactionOpen] = useState(false);
@@ -56,12 +58,12 @@ export default function Inventory() {
 
   // Product list
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products", search, showRawMaterials],
+    queryKey: ["products", search, showRawMaterials, showInactive],
     queryFn: () =>
       inventoryApi.getProducts({
         search,
         isRawMaterial: showRawMaterials,
-        isActive: true,
+        isActive: showInactive ? undefined : true, // If showInactive is true, don't filter by isActive
       }),
   });
 
@@ -129,7 +131,43 @@ export default function Inventory() {
   const handleDeleteProduct = (product: Product) => {
     Modal.confirm({
       title: t("inventory.deleteConfirmation"),
-      onOk: () => deleteProduct.mutate(product.id),
+      content: `${t("inventory.deleteProductConfirmMessage")} ${product.name}?`,
+      okText: t("common.delete"),
+      okType: "danger",
+      cancelText: t("common.cancel"),
+      onOk: async () => {
+        try {
+          // Use PUT to update isActive status instead of DELETE
+          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+          const token = localStorage.getItem("token");
+          
+          // Instead of DELETE, use PUT to explicitly set isActive to false
+          await axios.put(`${API_URL}/products/${product.id}`, 
+            { isActive: false },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+            }
+          );
+          
+          // Manually refresh the product list
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          
+          notification.success({
+            message: t("inventory.productDeleted"),
+            description: `${product.name} ${t("inventory.hasBeenDeleted")}`
+          });
+          
+        } catch (error) {
+          console.error("Error deleting product:", error);
+          notification.error({
+            message: t("common.error"),
+            description: t("inventory.errorDeletingProduct"),
+          });
+        }
+      },
     });
   };
   const handleStockTransaction = (product: Product, type: "in" | "out") => {
@@ -151,7 +189,7 @@ export default function Inventory() {
       render: (text: string, record: Product) => (
         <span
           className={
-            record.currentStock <= record.minimumStock ? "text-red-500" : ""
+            record.initialStock <= record.minimumStock ? "text-red-500" : ""
           }
         >
           {text}
@@ -209,19 +247,19 @@ export default function Inventory() {
         <Typography.Title level={2}>{t("inventory.title")}</Typography.Title>
       </div>
 
-      <Tabs 
-        activeKey={activeTab} 
+      <Tabs
+        activeKey={activeTab}
         onChange={setActiveTab}
         tabPosition="top"
         style={{ marginBottom: 32 }}
       >
-        <TabPane 
+        <TabPane
           tab={
             <span>
               <PartitionOutlined />
               {t("inventory.products")}
             </span>
-          } 
+          }
           key="products"
         >
           <div className="controls">
@@ -233,13 +271,21 @@ export default function Inventory() {
                 style={{ width: 250 }}
               />
               <Space>
+                <Button 
+                  onClick={() => setShowRawMaterials(prev => prev === undefined ? true : prev === true ? false : undefined)}
+                >
+                  {showRawMaterials === undefined 
+                    ? t("inventory.showAll") 
+                    : showRawMaterials 
+                      ? t("inventory.showRawMaterials") 
+                      : t("inventory.showProducts")}
+                </Button>
                 <Switch
-                  checked={showRawMaterials === true}
-                  onChange={(checked) =>
-                    setShowRawMaterials(checked ? true : undefined)
-                  }
+                  checked={showInactive}
+                  onChange={setShowInactive}
+                  checkedChildren={t("inventory.showInactive")}
+                  unCheckedChildren={t("inventory.hideInactive")}
                 />
-                <span>{t("inventory.showRawMaterialsOnly")}</span>
               </Space>
               <Button
                 type="primary"
@@ -263,7 +309,7 @@ export default function Inventory() {
               type="warning"
               message={t("inventory.lowStockAlert")}
               description={lowStock
-                .map((p: Product) => `${p.name} (${p.currentStock})`)
+                .map((p: Product) => `${p.name} (${p.initialStock})`)
                 .join(", ")}
               showIcon
             />
@@ -277,50 +323,50 @@ export default function Inventory() {
             />
           )}
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <BarChartOutlined />
               {t("inventory.batch.batchTracking")}
             </span>
-          } 
+          }
           key="batch-tracking"
         >
           <BatchList />
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <CalendarOutlined />
               {t("inventory.inventoryCount.title")}
             </span>
-          } 
+          }
           key="inventory-count"
         >
           <CountList />
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <ExceptionOutlined />
               {t("inventory.wastageManagement.title")}
             </span>
-          } 
+          }
           key="wastage-management"
         >
           <WastageList />
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <BarChartOutlined />
               {t("inventory.inventoryForecast.title")}
             </span>
-          } 
+          }
           key="forecasting"
         >
           <ForecastDashboard />
@@ -346,7 +392,7 @@ export default function Inventory() {
               if (selectedProduct) {
                 updateProduct.mutate({ id: selectedProduct.id, data });
               } else {
-                createProduct.mutate({ ...data, createdAt: "", updatedAt: "" });
+                createProduct.mutate({ ...data });
               }
             }}
             onCancel={() => setFormOpen(false)}

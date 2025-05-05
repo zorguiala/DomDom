@@ -14,6 +14,11 @@ export class BaseProductDto {
   @IsString()
   unit: string;
 
+  @ApiProperty({ description: 'Product price' })
+  @IsNumber()
+  @Min(0)
+  price: number;
+
   @ApiPropertyOptional({ description: 'Product description' })
   @IsString()
   @IsOptional()
