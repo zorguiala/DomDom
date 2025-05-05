@@ -10,6 +10,7 @@ export enum ProductionOrderStatus {
   IN_PROGRESS = 'in_progress',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+  ON_HOLD = 'on_hold',
 }
 
 export enum ProductionOrderPriority {
@@ -62,4 +63,17 @@ export class ProductionOrder extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   notes: string;
+  
+  // New batch tracking fields
+  @Column({ nullable: true })
+  batchPrefix: string;
+  
+  @Column({ default: false })
+  isBatchProduction: boolean;
+  
+  @Column({ nullable: true })
+  batchSize: number;
+  
+  @Column({ nullable: true })
+  batchCount: number;
 }

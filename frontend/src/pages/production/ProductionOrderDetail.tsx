@@ -18,6 +18,7 @@ import {
 import productionService, {
   ProductionOrder,
 } from "../../services/production.service";
+import BatchTrackingPanel from '../../components/production/BatchTrackingPanel';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -166,6 +167,15 @@ const ProductionOrderDetail: React.FC = () => {
           )}
         </Space>
       </Card>
+
+      {order.isBatchProduction && (
+        <div style={{ marginTop: 16 }}>
+          <BatchTrackingPanel 
+            productionOrderId={order.id} 
+            refreshData={fetchOrder}
+          />
+        </div>
+      )}
 
       <Modal
         title="Record Production"

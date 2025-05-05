@@ -2,17 +2,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, Between, Like, SelectQueryBuilder } from 'typeorm';
 import { ProductionOrder, ProductionOrderStatus } from '../../entities/production-order.entity';
 import { User } from '../../entities/user.entity';
 import { BOMService } from '../../bom/bom.service';
+import { BOM } from '../../entities/bom.entity';
+import { ProductionRecord } from '../../entities/production-record.entity';
 import {
   CreateProductionOrderDto,
   UpdateProductionOrderDto,
   UpdateProductionOrderStatusDto,
   GetProductionOrdersDto,
+  FilterProductionOrdersDto,
 } from '../dto/production-order.dto';
 import { RecordsByEmployee } from 'src/types/production.types';
+import { NotificationService } from './notification.service';
+import { format } from 'date-fns';
 
 /**
  * Service responsible for managing production orders
@@ -21,7 +26,14 @@ import { RecordsByEmployee } from 'src/types/production.types';
 export class ProductionOrderService {
   constructor(
     @InjectRepository(ProductionOrder)
-    private productionOrderRepository: Repository<ProductionOrder>,
+    private readonly productionOrderRepository: Repository<ProductionOrder>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(BOM)
+    private readonly bomRepository: Repository<BOM>,
+    @InjectRepository(ProductionRecord)
+    private readonly productionRecordRepository: Repository<ProductionRecord>,
+    private readonly notificationService: NotificationService,
     private bomService: BOMService,
     private dataSource: DataSource
   ) {}
@@ -36,6 +48,23 @@ export class ProductionOrderService {
     // Update the status
     order.status = dto.status;
     order.updatedAt = new Date();
+
+    // If changing to IN_PROGRESS and no actualStartDate is set, set it to now
+    if (dto.status === ProductionOrderStatus.IN_PROGRESS && !order.actualStartDate) {
+      order.actualStartDate = new Date();
+    }
+
+    // If changing to COMPLETED and no completedDate is set, set it to now
+    if (dto.status === ProductionOrderStatus.COMPLETED && !order.completedDate) {
+      order.completedDate = new Date();
+      
+      // Send notification when order is completed
+      try {
+        await this.notificationService.notifyProductionOrderCompleted(id);
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+      }
+    }
 
     // Save and return the updated order
     return this.productionOrderRepository.save(order);
@@ -83,68 +112,88 @@ export class ProductionOrderService {
   }
 
   /**
-   * Find all production orders, optionally filtering by status
+   * Find all production orders with filtering and pagination
    */
-  async findAll(status?: ProductionOrderStatus): Promise<ProductionOrder[]> {
-    const query = this.productionOrderRepository
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.bom', 'bom')
-      .leftJoinAndSelect('order.assignedTo', 'assignedTo')
-      .leftJoinAndSelect('order.createdBy', 'createdBy');
+  async findAll(filterDto: FilterProductionOrdersDto): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
+    const { 
+      status, 
+      priority, 
+      bomId, 
+      employeeId, 
+      startDate, 
+      endDate, 
+      search,
+      isBatchProductionOnly,
+      page = 1, 
+      limit = 10 
+    } = filterDto;
 
+    const queryBuilder = this.productionOrderRepository.createQueryBuilder('po')
+      .leftJoinAndSelect('po.bom', 'bom')
+      .leftJoinAndSelect('po.assignedTo', 'assignedTo')
+      .leftJoinAndSelect('po.createdBy', 'createdBy');
+
+    // Apply filters
     if (status) {
-      query.where('order.status = :status', { status });
+      queryBuilder.andWhere('po.status = :status', { status });
     }
 
-    return query.getMany();
+    if (priority) {
+      queryBuilder.andWhere('po.priority = :priority', { priority });
+    }
+
+    if (bomId) {
+      queryBuilder.andWhere('bom.id = :bomId', { bomId });
+    }
+
+    if (employeeId) {
+      queryBuilder.andWhere('assignedTo.id = :employeeId', { employeeId });
+    }
+
+    if (startDate && endDate) {
+      queryBuilder.andWhere('po.plannedStartDate BETWEEN :startDate AND :endDate', {
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+      });
+    } else if (startDate) {
+      queryBuilder.andWhere('po.plannedStartDate >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    } else if (endDate) {
+      queryBuilder.andWhere('po.plannedStartDate <= :endDate', {
+        endDate: new Date(endDate),
+      });
+    }
+
+    if (search) {
+      queryBuilder.andWhere('bom.name ILIKE :search', { search: `%${search}%` });
+    }
+    
+    if (isBatchProductionOnly) {
+      queryBuilder.andWhere('po.isBatchProduction = true');
+    }
+
+    // Count total before pagination
+    const total = await queryBuilder.getCount();
+
+    // Apply pagination
+    queryBuilder
+      .orderBy('po.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const productionOrders = await queryBuilder.getMany();
+
+    return {
+      data: productionOrders,
+      total,
+      page,
+      limit,
+    };
   }
 
   /**
-   * Advanced filtering, pagination, and sorting for production orders
-   */
-  async findAllWithFilters(
-    query: GetProductionOrdersDto
-  ): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
-    const qb = this.productionOrderRepository
-      .createQueryBuilder('order')
-      .leftJoinAndSelect('order.bom', 'bom')
-      .leftJoinAndSelect('order.assignedTo', 'assignedTo')
-      .leftJoinAndSelect('order.createdBy', 'createdBy');
-
-    if (query.status) {
-      qb.andWhere('order.status = :status', { status: query.status });
-    }
-    if (query.employeeId) {
-      qb.andWhere('assignedTo.id = :employeeId', { employeeId: query.employeeId });
-    }
-    if (query.bomId) {
-      qb.andWhere('bom.id = :bomId', { bomId: query.bomId });
-    }
-    if (query.startDate) {
-      qb.andWhere('order.plannedStartDate >= :startDate', { startDate: query.startDate });
-    }
-    if (query.endDate) {
-      qb.andWhere('order.plannedStartDate <= :endDate', { endDate: query.endDate });
-    }
-
-    // Sorting
-    if (query.sortBy) {
-      qb.orderBy(`order.${query.sortBy}`, query.sortOrder === 'DESC' ? 'DESC' : 'ASC');
-    } else {
-      qb.orderBy('order.createdAt', 'DESC');
-    }
-
-    // Pagination
-    const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? query.limit : 20;
-    qb.skip((page - 1) * limit).take(limit);
-
-    const [data, total] = await qb.getManyAndCount();
-    return { data, total, page, limit };
-  }
-
-  /**
-   * Find a production order by id including related entities
+   * Find a single production order by ID
    */
   async findOne(id: string): Promise<ProductionOrder> {
     const order = await this.productionOrderRepository.findOne({
@@ -193,7 +242,7 @@ export class ProductionOrderService {
 
     // Update the order
     if (dto.quantity) order.quantity = dto.quantity;
-    if (dto.plannedStartDate) order.plannedStartDate = dto.plannedStartDate;
+    if (dto.plannedStartDate) order.plannedStartDate = new Date(dto.plannedStartDate);
     if (dto.priority) order.priority = dto.priority;
     if (dto.assignedToId) order.assignedTo = { id: dto.assignedToId } as User;
     if (dto.notes) order.notes = dto.notes;
@@ -264,6 +313,90 @@ export class ProductionOrderService {
       totalCompletedQuantity,
       percentComplete,
       recordsByEmployee: Object.values(recordsByEmployee),
+    };
+  }
+
+  /**
+   * Generate a batch number for a production record
+   */
+  async generateBatchNumber(productionOrderId: string, batchIndex: number): Promise<string> {
+    const productionOrder = await this.findOne(productionOrderId);
+    
+    if (!productionOrder.isBatchProduction) {
+      throw new Error('This production order is not configured for batch production');
+    }
+    
+    const prefix = productionOrder.batchPrefix || productionOrder.bom.name.substring(0, 3).toUpperCase();
+    const datePart = format(new Date(), 'yyyyMMdd');
+    
+    return `${prefix}-${datePart}-${batchIndex + 1}`;
+  }
+  
+  /**
+   * Get a batch status summary
+   */
+  async getBatchStatus(productionOrderId: string): Promise<{ 
+    batchCount: number;
+    completedBatches: number;
+    inProgressBatches: number;
+    remainingBatches: number;
+    nextBatchNumber: string | null;
+    batches: { batchNumber: string; quantity: number; status: string; qualityChecked: boolean }[]
+  }> {
+    const productionOrder = await this.findOne(productionOrderId);
+    
+    if (!productionOrder.isBatchProduction) {
+      throw new Error('This production order is not configured for batch production');
+    }
+    
+    // Get all production records for this order
+    const records = await this.productionRecordRepository.find({
+      where: { productionOrder: { id: productionOrderId } },
+      order: { createdAt: 'ASC' },
+    });
+    
+    // Group records by batch number
+    const batchMap = new Map<string, { quantity: number; status: string; qualityChecked: boolean }>();
+    
+    for (const record of records) {
+      if (record.batchNumber) {
+        const existingBatch = batchMap.get(record.batchNumber);
+        
+        if (existingBatch) {
+          existingBatch.quantity += record.quantity;
+          existingBatch.qualityChecked = existingBatch.qualityChecked || record.qualityChecked;
+        } else {
+          batchMap.set(record.batchNumber, { 
+            quantity: record.quantity, 
+            status: 'completed',
+            qualityChecked: record.qualityChecked 
+          });
+        }
+      }
+    }
+    
+    const completedBatches = batchMap.size;
+    const totalBatches = productionOrder.batchCount || Math.ceil(productionOrder.quantity / (productionOrder.batchSize || 1));
+    const remainingBatches = Math.max(0, totalBatches - completedBatches);
+    
+    // Generate the next batch number if not all batches are completed
+    const nextBatchNumber = remainingBatches > 0
+      ? await this.generateBatchNumber(productionOrderId, completedBatches)
+      : null;
+    
+    // Convert map to array for response
+    const batches = Array.from(batchMap.entries()).map(([batchNumber, data]) => ({
+      batchNumber,
+      ...data,
+    }));
+    
+    return {
+      batchCount: totalBatches,
+      completedBatches,
+      inProgressBatches: 0, // We don't track in-progress batches yet
+      remainingBatches,
+      nextBatchNumber,
+      batches,
     };
   }
 }

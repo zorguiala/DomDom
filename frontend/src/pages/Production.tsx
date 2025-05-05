@@ -13,7 +13,7 @@ import {
   Space,
   Modal,
 } from "antd";
-import { PlusOutlined, FilterOutlined } from "@ant-design/icons";
+import { PlusOutlined, FilterOutlined, OrderedListOutlined, CheckCircleOutlined, BellOutlined, BarChartOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProductionOrderList } from "../components/production/ProductionOrderList";
@@ -22,6 +22,10 @@ import { ProductionOrderDetails } from "../components/production/ProductionOrder
 import { RecordProductionForm } from "../components/production/RecordProductionForm";
 import { productionApi } from "../services/productionServices/productionApi";
 import { ProductionOrder, ProductionOrderStatus } from "../types/production";
+import QualityControlDashboard from '../components/production/QualityControlDashboard';
+import NotificationsPanel from '../components/production/NotificationsPanel';
+import StatisticsAndReports from '../components/production/StatisticsAndReports';
+import { useAuth } from '../hooks/useAuth';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -31,6 +35,7 @@ const { TabPane } = Tabs;
 export default function Production() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   // State
   const [search, setSearch] = useState("");
@@ -310,7 +315,23 @@ export default function Production() {
       </div>
 
       <Card>
-        <Tabs defaultActiveKey="all" items={tabItems} />
+        <Tabs defaultActiveKey="orders">
+          <TabPane tab={<span><OrderedListOutlined /> Production Orders</span>} key="orders">
+            <Tabs defaultActiveKey="all" items={tabItems} />
+          </TabPane>
+          
+          <TabPane tab={<span><CheckCircleOutlined /> Quality Control</span>} key="quality">
+            <QualityControlDashboard />
+          </TabPane>
+          
+          <TabPane tab={<span><BellOutlined /> Notifications</span>} key="notifications">
+            <NotificationsPanel userId={currentUser?.id} />
+          </TabPane>
+          
+          <TabPane tab={<span><BarChartOutlined /> Statistics & Reports</span>} key="statistics">
+            <StatisticsAndReports />
+          </TabPane>
+        </Tabs>
       </Card>
 
       {/* Production Order Form Modal */}

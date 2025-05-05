@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Between } from 'typeorm';
 import { ProductionRecord } from '../../entities/production-record.entity';
@@ -8,8 +8,12 @@ import { RecordProductionOutputDto } from '../dto/production-order.dto';
 import { ProductionOrderService } from './production-order.service';
 import { MaterialConsumptionService } from './material-consumption.service';
 import { EfficiencyMetrics, ProductionOutput } from '../../types/production.types';
-import { GetProductionReportDto } from '../dto/production-report.dto';
 import { ProductionReportDto, ProductionReportItemDto } from '../../types/productionReport.dto';
+import { Employee } from '../../entities/employee.entity';
+import { BOM } from '../../entities/bom.entity';
+import { CreateProductionRecordDto, GetProductionRecordsFilterDto, UpdateProductionRecordDto } from '../dto/production.dto';
+import { NotificationService } from './notification.service';
+import { NotificationType } from '../dto/notification.dto';
 
 /**
  * Service responsible for managing production records
@@ -19,6 +23,13 @@ export class ProductionRecordService {
   constructor(
     @InjectRepository(ProductionRecord)
     private productionRecordRepository: Repository<ProductionRecord>,
+    @InjectRepository(Employee)
+    private employeeRepository: Repository<Employee>,
+    @InjectRepository(BOM)
+    private bomRepository: Repository<BOM>,
+    @InjectRepository(ProductionOrder)
+    private productionOrderRepository: Repository<ProductionOrder>,
+    private notificationService: NotificationService,
     private productionOrderService: ProductionOrderService,
     private materialConsumptionService: MaterialConsumptionService,
     private dataSource: DataSource
@@ -225,7 +236,7 @@ export class ProductionRecordService {
   /**
    * Generate a production report for a given date range, BOM, or employee
    */
-  async getProductionReport(query: GetProductionReportDto): Promise<ProductionReportDto> {
+  async getProductionReport(query: any): Promise<ProductionReportDto> {
     const qb = this.productionRecordRepository
       .createQueryBuilder('record')
       .leftJoinAndSelect('record.productionOrder', 'order')
@@ -258,5 +269,414 @@ export class ProductionRecordService {
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return { items, totalQuantity };
+  }
+
+  /**
+   * Create a new production record
+   */
+  async createProductionRecord(createDto: CreateProductionRecordDto): Promise<ProductionRecord> {
+    const {
+      employeeId,
+      bomId,
+      productionOrderId,
+      quantity,
+      wastage,
+      notes,
+      qualityChecked,
+      qualityNotes,
+      batchNumber,
+      batchExpiryDate,
+      batchLocation
+    } = createDto;
+
+    // Find related entities
+    const employee = await this.employeeRepository.findOne({ where: { id: employeeId } });
+    if (!employee) {
+      throw new NotFoundException(`Employee with ID ${employeeId} not found`);
+    }
+
+    const bom = await this.bomRepository.findOne({ where: { id: bomId } });
+    if (!bom) {
+      throw new NotFoundException(`BOM with ID ${bomId} not found`);
+    }
+
+    const productionOrder = await this.productionOrderRepository.findOne({
+      where: { id: productionOrderId },
+      relations: ['productionRecords'],
+    });
+    if (!productionOrder) {
+      throw new NotFoundException(`Production order with ID ${productionOrderId} not found`);
+    }
+
+    // Create the production record
+    const productionRecord = new ProductionRecord();
+    productionRecord.employee = employee;
+    productionRecord.bom = bom;
+    productionRecord.productionOrder = productionOrder;
+    productionRecord.quantity = quantity;
+    productionRecord.wastage = wastage || 0;
+    productionRecord.startTime = new Date();
+    productionRecord.notes = notes || '';
+    
+    // Quality control fields
+    productionRecord.qualityChecked = qualityChecked || false;
+    productionRecord.qualityNotes = qualityNotes || '';
+    
+    // Batch tracking fields
+    if (productionOrder.isBatchProduction) {
+      if (batchNumber) {
+        productionRecord.batchNumber = batchNumber;
+      } else {
+        // Generate batch number if not provided
+        const batchStatus = await this.productionOrderService.getBatchStatus(productionOrderId);
+        if (batchStatus.nextBatchNumber) {
+          productionRecord.batchNumber = batchStatus.nextBatchNumber;
+        } else {
+          productionRecord.batchNumber = '';
+        }
+      }
+      
+      if (batchExpiryDate) {
+        productionRecord.batchExpiryDate = new Date(batchExpiryDate);
+      }
+      
+      productionRecord.batchLocation = batchLocation || '';
+    }
+
+    const savedRecord = await this.productionRecordRepository.save(productionRecord);
+
+    // Update production order completed quantity and status
+    productionOrder.completedQuantity += quantity;
+    
+    // Update status to IN_PROGRESS if it's still in PLANNED status
+    if (productionOrder.status === ProductionOrderStatus.PLANNED) {
+      productionOrder.status = ProductionOrderStatus.IN_PROGRESS;
+      productionOrder.actualStartDate = new Date();
+    }
+
+    // Update status to COMPLETED if all quantity is produced
+    if (productionOrder.completedQuantity >= productionOrder.quantity) {
+      productionOrder.status = ProductionOrderStatus.COMPLETED;
+      productionOrder.completedDate = new Date();
+      
+      // Send notification when order is completed
+      try {
+        await this.notificationService.notifyProductionOrderCompleted(productionOrderId);
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+      }
+    }
+
+    await this.productionOrderRepository.save(productionOrder);
+    
+    // If this is a batch production and quality check is performed, notify
+    if (productionOrder.isBatchProduction && productionRecord.batchNumber) {
+      try {
+        await this.notificationService.notifyBatchCompleted(productionOrderId, productionRecord.batchNumber);
+      } catch (error) {
+        console.error('Failed to send batch notification:', error);
+      }
+      
+      // Send quality issue notification if issues found
+      if (qualityChecked && qualityNotes && qualityNotes.toLowerCase().includes('issue')) {
+        try {
+          await this.notificationService.notifyQualityIssue(productionOrderId, qualityNotes);
+        } catch (error) {
+          console.error('Failed to send quality issue notification:', error);
+        }
+      }
+    }
+
+    return savedRecord;
+  }
+
+  /**
+   * Update a production record
+   */
+  async updateProductionRecord(id: string, updateDto: UpdateProductionRecordDto): Promise<ProductionRecord> {
+    const productionRecord = await this.productionRecordRepository.findOne({
+      where: { id },
+      relations: ['productionOrder'],
+    });
+
+    if (!productionRecord) {
+      throw new NotFoundException(`Production record with ID ${id} not found`);
+    }
+
+    // Calculate the quantity difference to update production order's completedQuantity
+    const quantityDiff = updateDto.quantity !== undefined
+      ? updateDto.quantity - productionRecord.quantity
+      : 0;
+
+    // Update production record fields
+    if (updateDto.quantity !== undefined) {
+      productionRecord.quantity = updateDto.quantity;
+    }
+
+    if (updateDto.wastage !== undefined) {
+      productionRecord.wastage = updateDto.wastage;
+    }
+
+    if (updateDto.notes !== undefined) {
+      productionRecord.notes = updateDto.notes || '';
+    }
+    
+    // Quality control fields
+    if (updateDto.qualityChecked !== undefined) {
+      productionRecord.qualityChecked = updateDto.qualityChecked;
+    }
+    
+    if (updateDto.qualityNotes !== undefined) {
+      productionRecord.qualityNotes = updateDto.qualityNotes || '';
+      
+      // Send quality issue notification if issues found
+      if (productionRecord.qualityChecked && 
+          updateDto.qualityNotes && 
+          updateDto.qualityNotes.toLowerCase().includes('issue')) {
+        try {
+          await this.notificationService.notifyQualityIssue(
+            productionRecord.productionOrder.id, 
+            updateDto.qualityNotes
+          );
+        } catch (error) {
+          console.error('Failed to send quality issue notification:', error);
+        }
+      }
+    }
+    
+    // Batch tracking fields
+    if (updateDto.batchNumber !== undefined) {
+      productionRecord.batchNumber = updateDto.batchNumber || '';
+    }
+    
+    if (updateDto.batchExpiryDate) {
+      productionRecord.batchExpiryDate = new Date(updateDto.batchExpiryDate);
+    }
+    
+    if (updateDto.batchLocation !== undefined) {
+      productionRecord.batchLocation = updateDto.batchLocation || '';
+    }
+
+    // Set end time if not already set
+    if (!productionRecord.endTime) {
+      productionRecord.endTime = new Date();
+    }
+
+    const savedRecord = await this.productionRecordRepository.save(productionRecord);
+
+    // Update production order's completedQuantity if quantity changed
+    if (quantityDiff !== 0) {
+      const productionOrder = productionRecord.productionOrder;
+      productionOrder.completedQuantity += quantityDiff;
+
+      // Update status to COMPLETED if all quantity is produced
+      if (productionOrder.completedQuantity >= productionOrder.quantity &&
+          productionOrder.status !== ProductionOrderStatus.COMPLETED) {
+        productionOrder.status = ProductionOrderStatus.COMPLETED;
+        productionOrder.completedDate = new Date();
+        
+        // Send notification when order is completed
+        try {
+          await this.notificationService.notifyProductionOrderCompleted(productionOrder.id);
+        } catch (error) {
+          console.error('Failed to send notification:', error);
+        }
+      }
+
+      await this.productionOrderRepository.save(productionOrder);
+    }
+
+    return savedRecord;
+  }
+
+  /**
+   * Find all production records with filtering
+   */
+  async findAll(filterDto: GetProductionRecordsFilterDto): Promise<ProductionRecord[]> {
+    const { 
+      startDate, 
+      endDate, 
+      employeeId, 
+      bomId, 
+      productionOrderId,
+      qualityChecked,
+      batchNumber,
+      page,
+      limit
+    } = filterDto;
+
+    const query = this.productionRecordRepository.createQueryBuilder('record')
+      .leftJoinAndSelect('record.employee', 'employee')
+      .leftJoinAndSelect('record.bom', 'bom')
+      .leftJoinAndSelect('record.productionOrder', 'productionOrder')
+      .orderBy('record.createdAt', 'DESC');
+
+    if (startDate && endDate) {
+      query.andWhere('record.startTime BETWEEN :startDate AND :endDate', {
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+      });
+    } else if (startDate) {
+      query.andWhere('record.startTime >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    } else if (endDate) {
+      query.andWhere('record.startTime <= :endDate', {
+        endDate: new Date(endDate),
+      });
+    }
+
+    if (employeeId) {
+      query.andWhere('employee.id = :employeeId', { employeeId });
+    }
+
+    if (bomId) {
+      query.andWhere('bom.id = :bomId', { bomId });
+    }
+
+    if (productionOrderId) {
+      query.andWhere('productionOrder.id = :productionOrderId', { productionOrderId });
+    }
+    
+    if (qualityChecked !== undefined) {
+      query.andWhere('record.qualityChecked = :qualityChecked', { qualityChecked });
+    }
+    
+    if (batchNumber) {
+      query.andWhere('record.batchNumber LIKE :batchNumber', { batchNumber: `%${batchNumber}%` });
+    }
+    
+    // Apply pagination if provided
+    if (page && limit) {
+      query.skip((page - 1) * limit)
+        .take(limit);
+    }
+
+    return query.getMany();
+  }
+
+  /**
+   * Find a production record by ID
+   */
+  async findOne(id: string): Promise<ProductionRecord> {
+    const productionRecord = await this.productionRecordRepository.findOne({
+      where: { id },
+      relations: ['employee', 'bom', 'productionOrder'],
+    });
+
+    if (!productionRecord) {
+      throw new NotFoundException(`Production record with ID ${id} not found`);
+    }
+
+    return productionRecord;
+  }
+
+  /**
+   * Delete a production record
+   */
+  async remove(id: string): Promise<void> {
+    const productionRecord = await this.findOne(id);
+    const productionOrder = productionRecord.productionOrder;
+
+    // Update production order's completedQuantity
+    productionOrder.completedQuantity -= productionRecord.quantity;
+    
+    // Ensure completedQuantity doesn't go below 0
+    if (productionOrder.completedQuantity < 0) {
+      productionOrder.completedQuantity = 0;
+    }
+
+    // Update status to IN_PROGRESS if it was COMPLETED but now quantity is not met
+    if (productionOrder.status === ProductionOrderStatus.COMPLETED &&
+        productionOrder.completedQuantity < productionOrder.quantity) {
+      productionOrder.status = ProductionOrderStatus.IN_PROGRESS;
+      // Set completedDate to a future date (workaround for null/undefined not being assignable to Date)
+      productionOrder.completedDate = new Date('9999-12-31');
+    }
+
+    await this.productionOrderRepository.save(productionOrder);
+
+    const result = await this.productionRecordRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Production record with ID ${id} not found`);
+    }
+  }
+  
+  /**
+   * Get records grouped by batch
+   */
+  async getRecordsByBatch(productionOrderId: string): Promise<{ 
+    batchNumber: string; 
+    quantity: number;
+    qualityChecked: boolean;
+    records: ProductionRecord[]
+  }[]> {
+    const records = await this.productionRecordRepository.find({
+      where: { productionOrder: { id: productionOrderId } },
+      relations: ['employee'],
+      order: { createdAt: 'ASC' },
+    });
+    
+    // Group records by batch number
+    const batchMap = new Map<string, { 
+      quantity: number; 
+      qualityChecked: boolean; 
+      records: ProductionRecord[] 
+    }>();
+    
+    for (const record of records) {
+      if (record.batchNumber) {
+        const existingBatch = batchMap.get(record.batchNumber);
+        
+        if (existingBatch) {
+          existingBatch.quantity += record.quantity;
+          existingBatch.qualityChecked = existingBatch.qualityChecked || record.qualityChecked;
+          existingBatch.records.push(record);
+        } else {
+          batchMap.set(record.batchNumber, { 
+            quantity: record.quantity, 
+            qualityChecked: record.qualityChecked,
+            records: [record]
+          });
+        }
+      }
+    }
+    
+    // Convert map to array for response
+    return Array.from(batchMap.entries()).map(([batchNumber, data]) => ({
+      batchNumber,
+      ...data,
+    }));
+  }
+  
+  /**
+   * Get quality control statistics
+   */
+  async getQualityControlStats(filterDto: GetProductionRecordsFilterDto): Promise<{
+    totalRecords: number;
+    qualityCheckedRecords: number;
+    qualityCheckRate: number;
+    issuesFound: number;
+    issueRate: number;
+  }> {
+    const records = await this.findAll(filterDto);
+    
+    const totalRecords = records.length;
+    const qualityCheckedRecords = records.filter(record => record.qualityChecked).length;
+    
+    // Count records with quality issues
+    const issuesFound = records.filter(record => 
+      record.qualityChecked && 
+      record.qualityNotes && 
+      record.qualityNotes.toLowerCase().includes('issue')
+    ).length;
+    
+    return {
+      totalRecords,
+      qualityCheckedRecords,
+      qualityCheckRate: totalRecords > 0 ? (qualityCheckedRecords / totalRecords) * 100 : 0,
+      issuesFound,
+      issueRate: qualityCheckedRecords > 0 ? (issuesFound / qualityCheckedRecords) * 100 : 0,
+    };
   }
 }
