@@ -22,7 +22,10 @@ export class CreateProductionRecordDto {
   @IsNotEmpty()
   employeeId: string;
 
-  @ApiProperty({ description: 'Production order ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: 'Production order ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   @IsUUID()
   @IsNotEmpty()
   productionOrderId: string;
@@ -43,29 +46,33 @@ export class CreateProductionRecordDto {
   @IsString()
   @IsOptional()
   notes?: string;
-  
+
   // Quality control fields
   @ApiProperty({ description: 'Was quality control performed', example: true, required: false })
   @IsBoolean()
   @IsOptional()
   qualityChecked?: boolean;
-  
-  @ApiProperty({ description: 'Quality control notes', example: 'All quality standards met', required: false })
+
+  @ApiProperty({
+    description: 'Quality control notes',
+    example: 'All quality standards met',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   qualityNotes?: string;
-  
+
   // Batch tracking fields
   @ApiProperty({ description: 'Batch number', example: 'BREAD-20230501-1', required: false })
   @IsString()
   @IsOptional()
   batchNumber?: string;
-  
+
   @ApiProperty({ description: 'Batch expiry date', example: '2023-05-15', required: false })
   @IsString()
   @IsOptional()
   batchExpiryDate?: string;
-  
+
   @ApiProperty({ description: 'Batch storage location', example: 'Warehouse A', required: false })
   @IsString()
   @IsOptional()
@@ -166,29 +173,33 @@ export class UpdateProductionRecordDto {
   @IsString()
   @IsOptional()
   notes?: string;
-  
+
   // Quality control fields
   @ApiProperty({ description: 'Was quality control performed', example: true, required: false })
   @IsBoolean()
   @IsOptional()
   qualityChecked?: boolean;
-  
-  @ApiProperty({ description: 'Quality control notes', example: 'All quality standards met', required: false })
+
+  @ApiProperty({
+    description: 'Quality control notes',
+    example: 'All quality standards met',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   qualityNotes?: string;
-  
+
   // Batch tracking fields
   @ApiProperty({ description: 'Batch number', example: 'BREAD-20230501-1', required: false })
   @IsString()
   @IsOptional()
   batchNumber?: string;
-  
+
   @ApiProperty({ description: 'Batch expiry date', example: '2023-05-15', required: false })
   @IsString()
   @IsOptional()
   batchExpiryDate?: string;
-  
+
   @ApiProperty({ description: 'Batch storage location', example: 'Warehouse A', required: false })
   @IsString()
   @IsOptional()
@@ -200,44 +211,60 @@ export class GetProductionRecordsFilterDto {
   @IsString()
   @IsOptional()
   startDate?: string;
-  
+
   @ApiProperty({ description: 'End date', example: '2023-01-31', required: false })
   @IsString()
   @IsOptional()
   endDate?: string;
-  
-  @ApiProperty({ description: 'Employee ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+
+  @ApiProperty({
+    description: 'Employee ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   employeeId?: string;
-  
-  @ApiProperty({ description: 'BOM ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+
+  @ApiProperty({
+    description: 'BOM ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   bomId?: string;
-  
-  @ApiProperty({ description: 'Production order ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+
+  @ApiProperty({
+    description: 'Production order ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   productionOrderId?: string;
-  
+
   @ApiProperty({ description: 'Filter records with quality check', example: true, required: false })
   @IsBoolean()
   @IsOptional()
   qualityChecked?: boolean;
-  
-  @ApiProperty({ description: 'Filter records by batch number', example: 'BREAD-', required: false })
+
+  @ApiProperty({
+    description: 'Filter records by batch number',
+    example: 'BREAD-',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   batchNumber?: string;
-  
+
   @ApiProperty({ description: 'Page number', example: 1, required: false })
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
   @Min(1)
   page?: number = 1;
-  
+
   @ApiProperty({ description: 'Items per page', example: 10, required: false })
   @IsNumber()
   @IsOptional()

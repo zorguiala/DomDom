@@ -42,10 +42,10 @@ export class ProductionRecord extends BaseEntity {
   // New batch tracking fields
   @Column({ nullable: true })
   batchNumber: string;
-  
+
   @Column({ type: 'timestamp', nullable: true })
   batchExpiryDate: Date;
-  
+
   @Column({ nullable: true })
   batchLocation: string;
 }

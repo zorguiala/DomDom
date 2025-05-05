@@ -8,8 +8,9 @@ import {
   UpdateProductionOrderStatusDto,
   RecordProductionOutputDto,
   GetProductionOrdersDto,
+  FilterProductionOrdersDto,
 } from './dto/production-order.dto';
-import { GetProductionReportDto } from './dto/production-report.dto';
+import { ProductionStatisticsDto } from './dto/production-report.dto';
 import { ProductionReportDto } from '../types/productionReport.dto';
 import { ProductionOrderService } from './services/production-order.service';
 import { ProductionRecordService } from './services/production-record.service';
@@ -24,6 +25,7 @@ import {
   EmployeeProductionReport,
   RecordsByEmployee,
 } from '../types/production.types';
+import { format } from 'date-fns';
 
 @Injectable()
 export class ProductionService {
@@ -40,7 +42,10 @@ export class ProductionService {
   }
 
   async findAll(status?: ProductionOrderStatus): Promise<ProductionOrder[]> {
-    return this.productionOrderService.findAll(status);
+    // Create a FilterProductionOrdersDto object from status if provided
+    const filter = status ? { status } : {};
+    const result = await this.productionOrderService.findAll(filter);
+    return result.data;
   }
 
   async findOne(id: string): Promise<ProductionOrder> {
@@ -58,7 +63,8 @@ export class ProductionService {
       this.logger.error(
         `Error updating production order status: ${error instanceof Error ? error.message : String(error)}`
       );
-      throw new Error(error instanceof Error ? error.message : String(error));
+
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 
@@ -163,7 +169,13 @@ export class ProductionService {
   async findAllWithFilters(
     query: GetProductionOrdersDto
   ): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
-    return this.productionOrderService.findAllWithFilters(query);
+    // Convert dates to strings if they exist
+    const filter: FilterProductionOrdersDto = {
+      ...query,
+      startDate: query.startDate ? format(query.startDate, 'yyyy-MM-dd') : undefined,
+      endDate: query.endDate ? format(query.endDate, 'yyyy-MM-dd') : undefined,
+    };
+    return await this.productionOrderService.findAll(filter);
   }
 
   /**
@@ -176,7 +188,7 @@ export class ProductionService {
   /**
    * Generate a production report for a given date range, BOM, or employee
    */
-  async getProductionReport(query: GetProductionReportDto): Promise<ProductionReportDto> {
+  async getProductionReport(query: ProductionStatisticsDto): Promise<ProductionReportDto> {
     return this.productionRecordService.getProductionReport(query);
   }
 }

@@ -8,6 +8,7 @@ import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthService', () => {
   let service: AuthService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let userRepository: Repository<User>;
 
   const mockUserRepository = {
@@ -53,7 +54,7 @@ describe('AuthService', () => {
       await expect(
         service.register({
           email: 'test@test.com',
-          password: 'password',
+          password: 'Password123!',
           firstName: 'Test',
           lastName: 'User',
         })
@@ -74,7 +75,7 @@ describe('AuthService', () => {
 
       const result = await service.register({
         email: 'test@test.com',
-        password: 'password',
+        password: 'Password123!',
         firstName: 'Test',
         lastName: 'User',
       });

@@ -63,17 +63,17 @@ export class ProductionOrder extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   notes: string;
-  
+
   // New batch tracking fields
   @Column({ nullable: true })
   batchPrefix: string;
-  
+
   @Column({ default: false })
   isBatchProduction: boolean;
-  
+
   @Column({ nullable: true })
   batchSize: number;
-  
+
   @Column({ nullable: true })
   batchCount: number;
 }

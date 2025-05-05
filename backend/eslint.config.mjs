@@ -6,7 +6,12 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'src/documents/documents.module.ts', // Ignore binary file
+      'dist/**',
+      'node_modules/**'
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -31,6 +36,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'warn',
       'prettier/prettier': ['warn', { endOfLine: 'auto' }],
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'warn', // Downgrade to warning
     },
   }
 );

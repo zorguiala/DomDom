@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from '../../entities/notification.entity';
-import { 
-  CreateNotificationDto, 
-  GetNotificationsFilterDto, 
+import {
+  CreateNotificationDto,
+  GetNotificationsFilterDto,
   NotificationResponse,
   NotificationType,
-  NotificationPriority 
+  NotificationPriority,
 } from '../dto/notification.dto';
 import { User } from '../../entities/user.entity';
 import { ProductionOrder } from '../../entities/production-order.entity';
@@ -20,7 +20,7 @@ export class NotificationService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(ProductionOrder)
-    private productionOrderRepository: Repository<ProductionOrder>,
+    private productionOrderRepository: Repository<ProductionOrder>
   ) {}
 
   /**
@@ -34,19 +34,19 @@ export class NotificationService {
     notification.entityId = createDto.entityId;
     notification.priority = createDto.priority || NotificationPriority.MEDIUM;
     notification.isRead = createDto.isRead || false;
-    
+
     if (createDto.userId) {
       const user = await this.userRepository.findOne({ where: { id: createDto.userId } });
       if (user) {
         notification.user = user;
       }
     }
-    
+
     const savedNotification = await this.notificationRepository.save(notification);
-    
+
     return this.mapToResponse(savedNotification);
   }
-  
+
   /**
    * Create a notification for a completed production order
    */
@@ -55,11 +55,11 @@ export class NotificationService {
       where: { id: productionOrderId },
       relations: ['bom', 'assignedTo', 'createdBy'],
     });
-    
+
     if (!productionOrder) {
       throw new Error(`Production order with ID ${productionOrderId} not found`);
     }
-    
+
     const notificationDto: CreateNotificationDto = {
       type: NotificationType.PRODUCTION_COMPLETED,
       title: 'Production Order Completed',
@@ -68,23 +68,26 @@ export class NotificationService {
       userId: productionOrder.assignedTo?.id || productionOrder.createdBy?.id,
       priority: NotificationPriority.MEDIUM,
     };
-    
+
     return this.createNotification(notificationDto);
   }
-  
+
   /**
    * Create a notification for a batch completion
    */
-  async notifyBatchCompleted(productionOrderId: string, batchNumber: string): Promise<NotificationResponse> {
+  async notifyBatchCompleted(
+    productionOrderId: string,
+    batchNumber: string
+  ): Promise<NotificationResponse> {
     const productionOrder = await this.productionOrderRepository.findOne({
       where: { id: productionOrderId },
       relations: ['bom', 'assignedTo', 'createdBy'],
     });
-    
+
     if (!productionOrder) {
       throw new Error(`Production order with ID ${productionOrderId} not found`);
     }
-    
+
     const notificationDto: CreateNotificationDto = {
       type: NotificationType.BATCH_COMPLETED,
       title: 'Batch Production Completed',
@@ -93,23 +96,26 @@ export class NotificationService {
       userId: productionOrder.assignedTo?.id || productionOrder.createdBy?.id,
       priority: NotificationPriority.MEDIUM,
     };
-    
+
     return this.createNotification(notificationDto);
   }
-  
+
   /**
    * Create a notification for a quality issue in production
    */
-  async notifyQualityIssue(productionOrderId: string, issue: string): Promise<NotificationResponse> {
+  async notifyQualityIssue(
+    productionOrderId: string,
+    issue: string
+  ): Promise<NotificationResponse> {
     const productionOrder = await this.productionOrderRepository.findOne({
       where: { id: productionOrderId },
       relations: ['bom', 'assignedTo', 'createdBy'],
     });
-    
+
     if (!productionOrder) {
       throw new Error(`Production order with ID ${productionOrderId} not found`);
     }
-    
+
     const notificationDto: CreateNotificationDto = {
       type: NotificationType.QUALITY_ISSUE,
       title: 'Quality Issue Detected',
@@ -118,57 +124,58 @@ export class NotificationService {
       userId: productionOrder.assignedTo?.id || productionOrder.createdBy?.id,
       priority: NotificationPriority.HIGH,
     };
-    
+
     return this.createNotification(notificationDto);
   }
-  
+
   /**
    * Get notifications with filtering options
    */
   async getNotifications(filterDto: GetNotificationsFilterDto): Promise<NotificationResponse[]> {
     const { userId, unreadOnly, type, priority } = filterDto;
-    
-    const queryBuilder = this.notificationRepository.createQueryBuilder('notification')
+
+    const queryBuilder = this.notificationRepository
+      .createQueryBuilder('notification')
       .leftJoinAndSelect('notification.user', 'user')
       .orderBy('notification.createdAt', 'DESC');
-    
+
     if (userId) {
       queryBuilder.andWhere('user.id = :userId', { userId });
     }
-    
+
     if (unreadOnly) {
       queryBuilder.andWhere('notification.isRead = :isRead', { isRead: false });
     }
-    
+
     if (type) {
       queryBuilder.andWhere('notification.type = :type', { type });
     }
-    
+
     if (priority) {
       queryBuilder.andWhere('notification.priority = :priority', { priority });
     }
-    
+
     const notifications = await queryBuilder.getMany();
-    
-    return notifications.map(notification => this.mapToResponse(notification));
+
+    return notifications.map((notification) => this.mapToResponse(notification));
   }
-  
+
   /**
    * Mark a notification as read
    */
   async markAsRead(id: string): Promise<NotificationResponse> {
     const notification = await this.notificationRepository.findOne({ where: { id } });
-    
+
     if (!notification) {
       throw new Error(`Notification with ID ${id} not found`);
     }
-    
+
     notification.isRead = true;
     const updatedNotification = await this.notificationRepository.save(notification);
-    
+
     return this.mapToResponse(updatedNotification);
   }
-  
+
   /**
    * Mark all notifications as read for a specific user
    */
@@ -181,7 +188,7 @@ export class NotificationService {
       .andWhere('isRead = :isRead', { isRead: false })
       .execute();
   }
-  
+
   /**
    * Map notification entity to DTO response
    */
@@ -198,4 +205,4 @@ export class NotificationService {
       createdAt: notification.createdAt.toISOString(),
     };
   }
-} 
+}

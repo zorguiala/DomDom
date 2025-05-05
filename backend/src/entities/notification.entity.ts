@@ -34,4 +34,4 @@ export class Notification extends BaseEntity {
     default: NotificationPriority.MEDIUM,
   })
   priority: NotificationPriority;
-} 
+}

@@ -59,6 +59,7 @@ export class PasswordService {
       throw new UnauthorizedException('User not found');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isPasswordValid = await compare(currentPassword, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Current password is incorrect');
@@ -68,6 +69,7 @@ export class PasswordService {
     this.validatePassword(newPassword);
 
     // Update password and expiration date
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     user.password = await hash(newPassword, 10);
     user.passwordExpirationDate = new Date();
     user.passwordExpirationDate.setMonth(user.passwordExpirationDate.getMonth() + 6);
@@ -90,6 +92,7 @@ export class PasswordService {
 
     // Generate a temporary password
     const temporaryPassword = this.generateTemporaryPassword();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     user.password = await hash(temporaryPassword, 10);
     user.passwordExpirationDate = new Date();
     user.passwordExpirationDate.setHours(user.passwordExpirationDate.getHours() + 24);

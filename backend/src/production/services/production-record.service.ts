@@ -11,9 +11,12 @@ import { EfficiencyMetrics, ProductionOutput } from '../../types/production.type
 import { ProductionReportDto, ProductionReportItemDto } from '../../types/productionReport.dto';
 import { Employee } from '../../entities/employee.entity';
 import { BOM } from '../../entities/bom.entity';
-import { CreateProductionRecordDto, GetProductionRecordsFilterDto, UpdateProductionRecordDto } from '../dto/production.dto';
+import {
+  CreateProductionRecordDto,
+  GetProductionRecordsFilterDto,
+  UpdateProductionRecordDto,
+} from '../dto/production.dto';
 import { NotificationService } from './notification.service';
-import { NotificationType } from '../dto/notification.dto';
 
 /**
  * Service responsible for managing production records
@@ -286,7 +289,7 @@ export class ProductionRecordService {
       qualityNotes,
       batchNumber,
       batchExpiryDate,
-      batchLocation
+      batchLocation,
     } = createDto;
 
     // Find related entities
@@ -317,11 +320,11 @@ export class ProductionRecordService {
     productionRecord.wastage = wastage || 0;
     productionRecord.startTime = new Date();
     productionRecord.notes = notes || '';
-    
+
     // Quality control fields
     productionRecord.qualityChecked = qualityChecked || false;
     productionRecord.qualityNotes = qualityNotes || '';
-    
+
     // Batch tracking fields
     if (productionOrder.isBatchProduction) {
       if (batchNumber) {
@@ -335,11 +338,11 @@ export class ProductionRecordService {
           productionRecord.batchNumber = '';
         }
       }
-      
+
       if (batchExpiryDate) {
         productionRecord.batchExpiryDate = new Date(batchExpiryDate);
       }
-      
+
       productionRecord.batchLocation = batchLocation || '';
     }
 
@@ -347,7 +350,7 @@ export class ProductionRecordService {
 
     // Update production order completed quantity and status
     productionOrder.completedQuantity += quantity;
-    
+
     // Update status to IN_PROGRESS if it's still in PLANNED status
     if (productionOrder.status === ProductionOrderStatus.PLANNED) {
       productionOrder.status = ProductionOrderStatus.IN_PROGRESS;
@@ -358,7 +361,7 @@ export class ProductionRecordService {
     if (productionOrder.completedQuantity >= productionOrder.quantity) {
       productionOrder.status = ProductionOrderStatus.COMPLETED;
       productionOrder.completedDate = new Date();
-      
+
       // Send notification when order is completed
       try {
         await this.notificationService.notifyProductionOrderCompleted(productionOrderId);
@@ -368,15 +371,18 @@ export class ProductionRecordService {
     }
 
     await this.productionOrderRepository.save(productionOrder);
-    
+
     // If this is a batch production and quality check is performed, notify
     if (productionOrder.isBatchProduction && productionRecord.batchNumber) {
       try {
-        await this.notificationService.notifyBatchCompleted(productionOrderId, productionRecord.batchNumber);
+        await this.notificationService.notifyBatchCompleted(
+          productionOrderId,
+          productionRecord.batchNumber
+        );
       } catch (error) {
         console.error('Failed to send batch notification:', error);
       }
-      
+
       // Send quality issue notification if issues found
       if (qualityChecked && qualityNotes && qualityNotes.toLowerCase().includes('issue')) {
         try {
@@ -393,7 +399,10 @@ export class ProductionRecordService {
   /**
    * Update a production record
    */
-  async updateProductionRecord(id: string, updateDto: UpdateProductionRecordDto): Promise<ProductionRecord> {
+  async updateProductionRecord(
+    id: string,
+    updateDto: UpdateProductionRecordDto
+  ): Promise<ProductionRecord> {
     const productionRecord = await this.productionRecordRepository.findOne({
       where: { id },
       relations: ['productionOrder'],
@@ -404,9 +413,8 @@ export class ProductionRecordService {
     }
 
     // Calculate the quantity difference to update production order's completedQuantity
-    const quantityDiff = updateDto.quantity !== undefined
-      ? updateDto.quantity - productionRecord.quantity
-      : 0;
+    const quantityDiff =
+      updateDto.quantity !== undefined ? updateDto.quantity - productionRecord.quantity : 0;
 
     // Update production record fields
     if (updateDto.quantity !== undefined) {
@@ -420,22 +428,24 @@ export class ProductionRecordService {
     if (updateDto.notes !== undefined) {
       productionRecord.notes = updateDto.notes || '';
     }
-    
+
     // Quality control fields
     if (updateDto.qualityChecked !== undefined) {
       productionRecord.qualityChecked = updateDto.qualityChecked;
     }
-    
+
     if (updateDto.qualityNotes !== undefined) {
       productionRecord.qualityNotes = updateDto.qualityNotes || '';
-      
+
       // Send quality issue notification if issues found
-      if (productionRecord.qualityChecked && 
-          updateDto.qualityNotes && 
-          updateDto.qualityNotes.toLowerCase().includes('issue')) {
+      if (
+        productionRecord.qualityChecked &&
+        updateDto.qualityNotes &&
+        updateDto.qualityNotes.toLowerCase().includes('issue')
+      ) {
         try {
           await this.notificationService.notifyQualityIssue(
-            productionRecord.productionOrder.id, 
+            productionRecord.productionOrder.id,
             updateDto.qualityNotes
           );
         } catch (error) {
@@ -443,16 +453,16 @@ export class ProductionRecordService {
         }
       }
     }
-    
+
     // Batch tracking fields
     if (updateDto.batchNumber !== undefined) {
       productionRecord.batchNumber = updateDto.batchNumber || '';
     }
-    
+
     if (updateDto.batchExpiryDate) {
       productionRecord.batchExpiryDate = new Date(updateDto.batchExpiryDate);
     }
-    
+
     if (updateDto.batchLocation !== undefined) {
       productionRecord.batchLocation = updateDto.batchLocation || '';
     }
@@ -470,11 +480,13 @@ export class ProductionRecordService {
       productionOrder.completedQuantity += quantityDiff;
 
       // Update status to COMPLETED if all quantity is produced
-      if (productionOrder.completedQuantity >= productionOrder.quantity &&
-          productionOrder.status !== ProductionOrderStatus.COMPLETED) {
+      if (
+        productionOrder.completedQuantity >= productionOrder.quantity &&
+        productionOrder.status !== ProductionOrderStatus.COMPLETED
+      ) {
         productionOrder.status = ProductionOrderStatus.COMPLETED;
         productionOrder.completedDate = new Date();
-        
+
         // Send notification when order is completed
         try {
           await this.notificationService.notifyProductionOrderCompleted(productionOrder.id);
@@ -493,19 +505,20 @@ export class ProductionRecordService {
    * Find all production records with filtering
    */
   async findAll(filterDto: GetProductionRecordsFilterDto): Promise<ProductionRecord[]> {
-    const { 
-      startDate, 
-      endDate, 
-      employeeId, 
-      bomId, 
+    const {
+      startDate,
+      endDate,
+      employeeId,
+      bomId,
       productionOrderId,
       qualityChecked,
       batchNumber,
       page,
-      limit
+      limit,
     } = filterDto;
 
-    const query = this.productionRecordRepository.createQueryBuilder('record')
+    const query = this.productionRecordRepository
+      .createQueryBuilder('record')
       .leftJoinAndSelect('record.employee', 'employee')
       .leftJoinAndSelect('record.bom', 'bom')
       .leftJoinAndSelect('record.productionOrder', 'productionOrder')
@@ -537,19 +550,18 @@ export class ProductionRecordService {
     if (productionOrderId) {
       query.andWhere('productionOrder.id = :productionOrderId', { productionOrderId });
     }
-    
+
     if (qualityChecked !== undefined) {
       query.andWhere('record.qualityChecked = :qualityChecked', { qualityChecked });
     }
-    
+
     if (batchNumber) {
       query.andWhere('record.batchNumber LIKE :batchNumber', { batchNumber: `%${batchNumber}%` });
     }
-    
+
     // Apply pagination if provided
     if (page && limit) {
-      query.skip((page - 1) * limit)
-        .take(limit);
+      query.skip((page - 1) * limit).take(limit);
     }
 
     return query.getMany();
@@ -580,15 +592,17 @@ export class ProductionRecordService {
 
     // Update production order's completedQuantity
     productionOrder.completedQuantity -= productionRecord.quantity;
-    
+
     // Ensure completedQuantity doesn't go below 0
     if (productionOrder.completedQuantity < 0) {
       productionOrder.completedQuantity = 0;
     }
 
     // Update status to IN_PROGRESS if it was COMPLETED but now quantity is not met
-    if (productionOrder.status === ProductionOrderStatus.COMPLETED &&
-        productionOrder.completedQuantity < productionOrder.quantity) {
+    if (
+      productionOrder.status === ProductionOrderStatus.COMPLETED &&
+      productionOrder.completedQuantity < productionOrder.quantity
+    ) {
       productionOrder.status = ProductionOrderStatus.IN_PROGRESS;
       // Set completedDate to a future date (workaround for null/undefined not being assignable to Date)
       productionOrder.completedDate = new Date('9999-12-31');
@@ -601,54 +615,59 @@ export class ProductionRecordService {
       throw new NotFoundException(`Production record with ID ${id} not found`);
     }
   }
-  
+
   /**
    * Get records grouped by batch
    */
-  async getRecordsByBatch(productionOrderId: string): Promise<{ 
-    batchNumber: string; 
-    quantity: number;
-    qualityChecked: boolean;
-    records: ProductionRecord[]
-  }[]> {
+  async getRecordsByBatch(productionOrderId: string): Promise<
+    {
+      batchNumber: string;
+      quantity: number;
+      qualityChecked: boolean;
+      records: ProductionRecord[];
+    }[]
+  > {
     const records = await this.productionRecordRepository.find({
       where: { productionOrder: { id: productionOrderId } },
       relations: ['employee'],
       order: { createdAt: 'ASC' },
     });
-    
+
     // Group records by batch number
-    const batchMap = new Map<string, { 
-      quantity: number; 
-      qualityChecked: boolean; 
-      records: ProductionRecord[] 
-    }>();
-    
+    const batchMap = new Map<
+      string,
+      {
+        quantity: number;
+        qualityChecked: boolean;
+        records: ProductionRecord[];
+      }
+    >();
+
     for (const record of records) {
       if (record.batchNumber) {
         const existingBatch = batchMap.get(record.batchNumber);
-        
+
         if (existingBatch) {
           existingBatch.quantity += record.quantity;
           existingBatch.qualityChecked = existingBatch.qualityChecked || record.qualityChecked;
           existingBatch.records.push(record);
         } else {
-          batchMap.set(record.batchNumber, { 
-            quantity: record.quantity, 
+          batchMap.set(record.batchNumber, {
+            quantity: record.quantity,
             qualityChecked: record.qualityChecked,
-            records: [record]
+            records: [record],
           });
         }
       }
     }
-    
+
     // Convert map to array for response
     return Array.from(batchMap.entries()).map(([batchNumber, data]) => ({
       batchNumber,
       ...data,
     }));
   }
-  
+
   /**
    * Get quality control statistics
    */
@@ -660,17 +679,18 @@ export class ProductionRecordService {
     issueRate: number;
   }> {
     const records = await this.findAll(filterDto);
-    
+
     const totalRecords = records.length;
-    const qualityCheckedRecords = records.filter(record => record.qualityChecked).length;
-    
+    const qualityCheckedRecords = records.filter((record) => record.qualityChecked).length;
+
     // Count records with quality issues
-    const issuesFound = records.filter(record => 
-      record.qualityChecked && 
-      record.qualityNotes && 
-      record.qualityNotes.toLowerCase().includes('issue')
+    const issuesFound = records.filter(
+      (record) =>
+        record.qualityChecked &&
+        record.qualityNotes &&
+        record.qualityNotes.toLowerCase().includes('issue')
     ).length;
-    
+
     return {
       totalRecords,
       qualityCheckedRecords,

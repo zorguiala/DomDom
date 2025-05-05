@@ -13,7 +13,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Res,
-  Header,
 } from '@nestjs/common';
 import { ProductionService } from './production.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,13 +22,11 @@ import {
   UpdateProductionOrderStatusDto,
   RecordProductionOutputDto,
   GetProductionOrdersDto,
-  FilterProductionOrdersDto,
 } from './dto/production-order.dto';
 import { ProductionOrder, ProductionOrderStatus } from '../entities/production-order.entity';
 import { ProductionRecord } from '../entities/production-record.entity';
 import { ApiTags, ApiQuery, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { User } from '../entities/user.entity';
-import { GetUser } from '../common/decorators/get-user.decorator';
 import { ProductionOrderService } from './services/production-order.service';
 import { ProductionRecordService } from './services/production-record.service';
 import { NotificationService } from './services/notification.service';
@@ -44,10 +41,7 @@ import {
   ProductionStatisticsResult,
   ExportReportDto,
 } from './dto/production-report.dto';
-import {
-  GetNotificationsFilterDto,
-  NotificationResponse,
-} from './dto/notification.dto';
+import { GetNotificationsFilterDto, NotificationResponse } from './dto/notification.dto';
 import { Response } from 'express';
 
 // Import centralized types
@@ -77,7 +71,7 @@ export class ProductionController {
     private readonly productionOrderService: ProductionOrderService,
     private readonly productionRecordService: ProductionRecordService,
     private readonly notificationService: NotificationService,
-    private readonly productionStatisticsService: ProductionStatisticsService,
+    private readonly productionStatisticsService: ProductionStatisticsService
   ) {}
 
   @Get('orders')
@@ -99,7 +93,7 @@ export class ProductionController {
   @ApiResponse({ status: 201, description: 'Production order created successfully' })
   async createProductionOrder(
     @Body() createDto: CreateProductionOrderDto,
-    @Request() req: RequestWithUser,
+    @Request() req: RequestWithUser
   ): Promise<ProductionOrder> {
     return this.productionOrderService.createProductionOrder(createDto, req.user);
   }
@@ -272,14 +266,14 @@ export class ProductionController {
   @ApiResponse({ status: 200, description: 'Returns records grouped by batch' })
   @ApiParam({ name: 'id', description: 'Production order ID' })
   @Get('orders/:id/records-by-batch')
-  async getRecordsByBatch(
-    @Param('id') id: string,
-  ): Promise<{
-    batchNumber: string;
-    quantity: number;
-    qualityChecked: boolean;
-    records: ProductionRecord[];
-  }[]> {
+  async getRecordsByBatch(@Param('id') id: string): Promise<
+    {
+      batchNumber: string;
+      quantity: number;
+      qualityChecked: boolean;
+      records: ProductionRecord[];
+    }[]
+  > {
     return this.productionRecordService.getRecordsByBatch(id);
   }
 
@@ -289,7 +283,7 @@ export class ProductionController {
   @ApiResponse({ status: 201, description: 'Production record created successfully' })
   @Post('records')
   async createProductionRecord(
-    @Body() createDto: CreateProductionRecordDto,
+    @Body() createDto: CreateProductionRecordDto
   ): Promise<ProductionRecord> {
     return this.productionRecordService.createProductionRecord(createDto);
   }
@@ -298,7 +292,7 @@ export class ProductionController {
   @ApiResponse({ status: 200, description: 'Returns filtered production records' })
   @Get('records')
   async getProductionRecordsFiltered(
-    @Query() filterDto: GetProductionRecordsFilterDto,
+    @Query() filterDto: GetProductionRecordsFilterDto
   ): Promise<ProductionRecord[]> {
     return this.productionRecordService.findAll(filterDto);
   }
@@ -317,7 +311,7 @@ export class ProductionController {
   @Patch('records/:id')
   async updateProductionRecord(
     @Param('id') id: string,
-    @Body() updateDto: UpdateProductionRecordDto,
+    @Body() updateDto: UpdateProductionRecordDto
   ): Promise<ProductionRecord> {
     return this.productionRecordService.updateProductionRecord(id, updateDto);
   }
@@ -335,9 +329,7 @@ export class ProductionController {
   @ApiOperation({ summary: 'Get quality control statistics' })
   @ApiResponse({ status: 200, description: 'Returns quality control statistics' })
   @Get('quality-statistics')
-  async getQualityControlStats(
-    @Query() filterDto: GetProductionRecordsFilterDto,
-  ): Promise<{
+  async getQualityControlStats(@Query() filterDto: GetProductionRecordsFilterDto): Promise<{
     totalRecords: number;
     qualityCheckedRecords: number;
     qualityCheckRate: number;
@@ -353,7 +345,7 @@ export class ProductionController {
   @ApiResponse({ status: 200, description: 'Returns production statistics' })
   @Post('statistics')
   async getProductionStatisticsDto(
-    @Body() statsDto: ProductionStatisticsDto,
+    @Body() statsDto: ProductionStatisticsDto
   ): Promise<ProductionStatisticsResult> {
     return this.productionStatisticsService.getProductionStatistics(statsDto);
   }
@@ -363,14 +355,14 @@ export class ProductionController {
   @Post('export')
   async exportProductionReport(
     @Body() exportDto: ExportReportDto,
-    @Res() res: Response,
+    @Res() res: Response
   ): Promise<void> {
     const buffer = await this.productionStatisticsService.exportProductionReport(exportDto);
-    
+
     // Set content type and file name based on format
     const format = exportDto.format;
     const filename = `production-report-${new Date().toISOString().split('T')[0]}.${format}`;
-    
+
     let contentType: string;
     if (format === 'excel') {
       contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -381,13 +373,13 @@ export class ProductionController {
     } else {
       contentType = 'application/octet-stream';
     }
-    
+
     res.set({
       'Content-Type': contentType,
       'Content-Disposition': `attachment; filename=${filename}`,
       'Content-Length': buffer.length,
     });
-    
+
     res.end(buffer);
   }
 
@@ -397,7 +389,7 @@ export class ProductionController {
   @ApiResponse({ status: 200, description: 'Returns notifications' })
   @Get('notifications')
   async getNotifications(
-    @Query() filterDto: GetNotificationsFilterDto,
+    @Query() filterDto: GetNotificationsFilterDto
   ): Promise<NotificationResponse[]> {
     return this.notificationService.getNotifications(filterDto);
   }

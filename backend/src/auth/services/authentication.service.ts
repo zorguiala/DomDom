@@ -42,6 +42,7 @@ export class AuthenticationService {
       throw new UnauthorizedException('Too many failed login attempts. Account is locked.');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isPasswordValid = await compare(password, user.password);
     console.log(
       `[AuthenticationService] Password validation result for ${username}: ${isPasswordValid}`

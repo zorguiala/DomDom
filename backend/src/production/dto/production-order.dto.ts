@@ -7,7 +7,6 @@ import {
   IsUUID,
   IsEnum,
   IsDate,
-  IsDateString,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -34,38 +33,54 @@ export class CreateProductionOrderDto {
   @IsNotEmpty()
   plannedStartDate: string;
 
-  @ApiProperty({ description: 'Priority level', enum: ProductionOrderPriority, example: ProductionOrderPriority.MEDIUM })
+  @ApiProperty({
+    description: 'Priority level',
+    enum: ProductionOrderPriority,
+    example: ProductionOrderPriority.MEDIUM,
+  })
   @IsEnum(ProductionOrderPriority)
   @IsOptional()
   priority?: ProductionOrderPriority;
 
-  @ApiProperty({ description: 'Assigned user ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+  @ApiProperty({
+    description: 'Assigned user ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   assignedToId?: string;
 
-  @ApiProperty({ description: 'Notes', example: 'Special instructions for production', required: false })
+  @ApiProperty({
+    description: 'Notes',
+    example: 'Special instructions for production',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   notes?: string;
-  
+
   // New batch tracking fields
   @ApiProperty({ description: 'Is this a batch production', example: true, required: false })
   @IsBoolean()
   @IsOptional()
   isBatchProduction?: boolean;
-  
-  @ApiProperty({ description: 'Batch prefix for generating batch numbers', example: 'BREAD-', required: false })
+
+  @ApiProperty({
+    description: 'Batch prefix for generating batch numbers',
+    example: 'BREAD-',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   batchPrefix?: string;
-  
+
   @ApiProperty({ description: 'Size of each batch', example: 50, required: false })
   @IsNumber()
   @IsOptional()
   @Min(0)
   batchSize?: number;
-  
+
   @ApiProperty({ description: 'Number of batches', example: 2, required: false })
   @IsNumber()
   @IsOptional()
@@ -74,7 +89,11 @@ export class CreateProductionOrderDto {
 }
 
 export class UpdateProductionOrderDto {
-  @ApiProperty({ description: 'BOM ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+  @ApiProperty({
+    description: 'BOM ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   bomId?: string;
@@ -85,43 +104,64 @@ export class UpdateProductionOrderDto {
   @Min(0)
   quantity?: number;
 
-  @ApiProperty({ description: 'Planned start date', example: '2023-01-01T00:00:00Z', required: false })
+  @ApiProperty({
+    description: 'Planned start date',
+    example: '2023-01-01T00:00:00Z',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   plannedStartDate?: string;
 
-  @ApiProperty({ description: 'Priority level', enum: ProductionOrderPriority, example: ProductionOrderPriority.MEDIUM, required: false })
+  @ApiProperty({
+    description: 'Priority level',
+    enum: ProductionOrderPriority,
+    example: ProductionOrderPriority.MEDIUM,
+    required: false,
+  })
   @IsEnum(ProductionOrderPriority)
   @IsOptional()
   priority?: ProductionOrderPriority;
 
-  @ApiProperty({ description: 'Assigned user ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+  @ApiProperty({
+    description: 'Assigned user ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   assignedToId?: string;
 
-  @ApiProperty({ description: 'Notes', example: 'Special instructions for production', required: false })
+  @ApiProperty({
+    description: 'Notes',
+    example: 'Special instructions for production',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   notes?: string;
-  
+
   // New batch tracking fields
   @ApiProperty({ description: 'Is this a batch production', example: true, required: false })
   @IsBoolean()
   @IsOptional()
   isBatchProduction?: boolean;
-  
-  @ApiProperty({ description: 'Batch prefix for generating batch numbers', example: 'BREAD-', required: false })
+
+  @ApiProperty({
+    description: 'Batch prefix for generating batch numbers',
+    example: 'BREAD-',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   batchPrefix?: string;
-  
+
   @ApiProperty({ description: 'Size of each batch', example: 50, required: false })
   @IsNumber()
   @IsOptional()
   @Min(0)
   batchSize?: number;
-  
+
   @ApiProperty({ description: 'Number of batches', example: 2, required: false })
   @IsNumber()
   @IsOptional()
@@ -196,37 +236,57 @@ export class FilterProductionOrdersDto {
   @IsEnum(ProductionOrderStatus)
   @IsOptional()
   status?: ProductionOrderStatus;
-  
-  @ApiProperty({ description: 'Filter by priority', enum: ProductionOrderPriority, required: false })
+
+  @ApiProperty({
+    description: 'Filter by priority',
+    enum: ProductionOrderPriority,
+    required: false,
+  })
   @IsEnum(ProductionOrderPriority)
   @IsOptional()
   priority?: ProductionOrderPriority;
-  
-  @ApiProperty({ description: 'Filter by BOM ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+
+  @ApiProperty({
+    description: 'Filter by BOM ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   bomId?: string;
-  
-  @ApiProperty({ description: 'Filter by employee/user ID', example: '123e4567-e89b-12d3-a456-426614174000', required: false })
+
+  @ApiProperty({
+    description: 'Filter by employee/user ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+  })
   @IsUUID()
   @IsOptional()
   employeeId?: string;
-  
-  @ApiProperty({ description: 'Filter by date range - start', example: '2023-01-01', required: false })
+
+  @ApiProperty({
+    description: 'Filter by date range - start',
+    example: '2023-01-01',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   startDate?: string;
-  
-  @ApiProperty({ description: 'Filter by date range - end', example: '2023-01-31', required: false })
+
+  @ApiProperty({
+    description: 'Filter by date range - end',
+    example: '2023-01-31',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   endDate?: string;
-  
+
   @ApiProperty({ description: 'Search term for BOM name', example: 'bread', required: false })
   @IsString()
   @IsOptional()
   search?: string;
-  
+
   @ApiProperty({ description: 'Only show batch production orders', example: true, required: false })
   @IsBoolean()
   @IsOptional()
@@ -238,7 +298,7 @@ export class FilterProductionOrdersDto {
   @Type(() => Number)
   @Min(1)
   page?: number = 1;
-  
+
   @ApiProperty({ description: 'Items per page', example: 10, required: false })
   @IsNumber()
   @IsOptional()

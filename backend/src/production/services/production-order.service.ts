@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, Between, Like, SelectQueryBuilder } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { ProductionOrder, ProductionOrderStatus } from '../../entities/production-order.entity';
 import { User } from '../../entities/user.entity';
 import { BOMService } from '../../bom/bom.service';
@@ -12,7 +12,6 @@ import {
   CreateProductionOrderDto,
   UpdateProductionOrderDto,
   UpdateProductionOrderStatusDto,
-  GetProductionOrdersDto,
   FilterProductionOrdersDto,
 } from '../dto/production-order.dto';
 import { RecordsByEmployee } from 'src/types/production.types';
@@ -57,7 +56,7 @@ export class ProductionOrderService {
     // If changing to COMPLETED and no completedDate is set, set it to now
     if (dto.status === ProductionOrderStatus.COMPLETED && !order.completedDate) {
       order.completedDate = new Date();
-      
+
       // Send notification when order is completed
       try {
         await this.notificationService.notifyProductionOrderCompleted(id);
@@ -114,21 +113,24 @@ export class ProductionOrderService {
   /**
    * Find all production orders with filtering and pagination
    */
-  async findAll(filterDto: FilterProductionOrdersDto): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
-    const { 
-      status, 
-      priority, 
-      bomId, 
-      employeeId, 
-      startDate, 
-      endDate, 
+  async findAll(
+    filterDto: FilterProductionOrdersDto
+  ): Promise<{ data: ProductionOrder[]; total: number; page: number; limit: number }> {
+    const {
+      status,
+      priority,
+      bomId,
+      employeeId,
+      startDate,
+      endDate,
       search,
       isBatchProductionOnly,
-      page = 1, 
-      limit = 10 
+      page = 1,
+      limit = 10,
     } = filterDto;
 
-    const queryBuilder = this.productionOrderRepository.createQueryBuilder('po')
+    const queryBuilder = this.productionOrderRepository
+      .createQueryBuilder('po')
       .leftJoinAndSelect('po.bom', 'bom')
       .leftJoinAndSelect('po.assignedTo', 'assignedTo')
       .leftJoinAndSelect('po.createdBy', 'createdBy');
@@ -168,7 +170,7 @@ export class ProductionOrderService {
     if (search) {
       queryBuilder.andWhere('bom.name ILIKE :search', { search: `%${search}%` });
     }
-    
+
     if (isBatchProductionOnly) {
       queryBuilder.andWhere('po.isBatchProduction = true');
     }
@@ -321,75 +323,82 @@ export class ProductionOrderService {
    */
   async generateBatchNumber(productionOrderId: string, batchIndex: number): Promise<string> {
     const productionOrder = await this.findOne(productionOrderId);
-    
+
     if (!productionOrder.isBatchProduction) {
       throw new Error('This production order is not configured for batch production');
     }
-    
-    const prefix = productionOrder.batchPrefix || productionOrder.bom.name.substring(0, 3).toUpperCase();
+
+    const prefix =
+      productionOrder.batchPrefix || productionOrder.bom.name.substring(0, 3).toUpperCase();
     const datePart = format(new Date(), 'yyyyMMdd');
-    
+
     return `${prefix}-${datePart}-${batchIndex + 1}`;
   }
-  
+
   /**
    * Get a batch status summary
    */
-  async getBatchStatus(productionOrderId: string): Promise<{ 
+  async getBatchStatus(productionOrderId: string): Promise<{
     batchCount: number;
     completedBatches: number;
     inProgressBatches: number;
     remainingBatches: number;
     nextBatchNumber: string | null;
-    batches: { batchNumber: string; quantity: number; status: string; qualityChecked: boolean }[]
+    batches: { batchNumber: string; quantity: number; status: string; qualityChecked: boolean }[];
   }> {
     const productionOrder = await this.findOne(productionOrderId);
-    
+
     if (!productionOrder.isBatchProduction) {
       throw new Error('This production order is not configured for batch production');
     }
-    
+
     // Get all production records for this order
     const records = await this.productionRecordRepository.find({
       where: { productionOrder: { id: productionOrderId } },
       order: { createdAt: 'ASC' },
     });
-    
+
     // Group records by batch number
-    const batchMap = new Map<string, { quantity: number; status: string; qualityChecked: boolean }>();
-    
+    const batchMap = new Map<
+      string,
+      { quantity: number; status: string; qualityChecked: boolean }
+    >();
+
     for (const record of records) {
       if (record.batchNumber) {
         const existingBatch = batchMap.get(record.batchNumber);
-        
+
         if (existingBatch) {
           existingBatch.quantity += record.quantity;
           existingBatch.qualityChecked = existingBatch.qualityChecked || record.qualityChecked;
         } else {
-          batchMap.set(record.batchNumber, { 
-            quantity: record.quantity, 
+          batchMap.set(record.batchNumber, {
+            quantity: record.quantity,
             status: 'completed',
-            qualityChecked: record.qualityChecked 
+            qualityChecked: record.qualityChecked,
           });
         }
       }
     }
-    
+
     const completedBatches = batchMap.size;
-    const totalBatches = productionOrder.batchCount || Math.ceil(productionOrder.quantity / (productionOrder.batchSize || 1));
+    const totalBatches =
+      productionOrder.batchCount ||
+      Math.ceil(productionOrder.quantity / (productionOrder.batchSize || 1));
     const remainingBatches = Math.max(0, totalBatches - completedBatches);
-    
+
     // Generate the next batch number if not all batches are completed
-    const nextBatchNumber = remainingBatches > 0
-      ? await this.generateBatchNumber(productionOrderId, completedBatches)
-      : null;
-    
+    const nextBatchNumber =
+      remainingBatches > 0
+        ? await this.generateBatchNumber(productionOrderId, completedBatches)
+        : null;
+
     // Convert map to array for response
     const batches = Array.from(batchMap.entries()).map(([batchNumber, data]) => ({
       batchNumber,
       ...data,
     }));
-    
+
     return {
       batchCount: totalBatches,
       completedBatches,

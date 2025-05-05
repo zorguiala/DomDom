@@ -14,7 +14,6 @@ import { Document } from '../entities/document.entity';
 import { EmployeeAttendance } from '../entities/employee-attendance.entity';
 import { DocumentType, DocumentFormat } from '../entities/enums/document.enum';
 import { TransactionType } from '../entities/inventory-transaction.entity';
-import { SaleType, SaleStatus } from '../entities/enums/sale.enum'; // Update SaleType import
 import { ProductionOrderStatus } from '../entities/production-order.entity';
 import { EmployeeRole } from '../entities/employee.entity';
 import { Unit } from '../entities/enums/unit.enum';

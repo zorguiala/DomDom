@@ -35,11 +35,7 @@ import { ProductionStatisticsService } from './services/production-statistics.se
     BOMModule,
     InventoryModule,
   ],
-  controllers: [
-    ProductionController, 
-    AttendanceController,
-    NotificationController,
-  ],
+  controllers: [ProductionController, AttendanceController, NotificationController],
   providers: [
     ProductionService,
     AttendanceService,
