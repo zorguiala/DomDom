@@ -22,21 +22,21 @@ export function BOMCard({ bom, onView, onEdit, onDelete }: BOMCardProps) {
   return (
     <Card
       actions={[
-        <Tooltip title={t("common.view")}>
+        <Tooltip key="view" title={t("common.view")}>
           <Button
             type="text"
             icon={<EyeOutlined />}
             onClick={() => onView(bom)}
           />
         </Tooltip>,
-        <Tooltip title={t("common.edit")}>
+        <Tooltip key="edit" title={t("common.edit")}>
           <Button
             type="text"
             icon={<EditOutlined />}
             onClick={() => onEdit(bom)}
           />
         </Tooltip>,
-        <Tooltip title={t("common.delete")}>
+        <Tooltip key="delete" title={t("common.delete")}>
           <Button
             type="text"
             danger

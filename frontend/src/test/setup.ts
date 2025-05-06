@@ -2,9 +2,11 @@ import "@testing-library/jest-dom";
 import React from "react";
 
 // Add TextEncoder/TextDecoder polyfill
-const { TextEncoder, TextDecoder } = require("util");
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+// Use dynamic import with type assertion to avoid ESLint rule violations
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const util = require("util");
+global.TextEncoder = util.TextEncoder;
+global.TextDecoder = util.TextDecoder;
 
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {

@@ -201,7 +201,7 @@ const ForecastDashboard: React.FC = () => {
         </Space>
       ),
       sorter: (a: StockForecast, b: StockForecast) => a.daysUntilStockout - b.daysUntilStockout,
-      defaultSortOrder: 'ascend' as 'ascend'
+      defaultSortOrder: 'ascend' as const
     },
     {
       title: t('inventory.forecast.avgDailyUsage'),
@@ -268,7 +268,7 @@ const ForecastDashboard: React.FC = () => {
         return priorityValues[a.priority as keyof typeof priorityValues] - 
                priorityValues[b.priority as keyof typeof priorityValues];
       },
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     },
     {
       title: t('inventory.currentStock'),

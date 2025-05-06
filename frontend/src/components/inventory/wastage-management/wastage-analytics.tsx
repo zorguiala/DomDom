@@ -140,7 +140,7 @@ const WastageAnalytics: React.FC<WastageAnalyticsProps> = ({
       key: 'totalQuantity',
       sorter: (a: WastageReportItem, b: WastageReportItem) => 
         a.totalQuantity - b.totalQuantity,
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     },
     {
       title: t('inventory.wastage.totalCost'),
@@ -191,7 +191,7 @@ const WastageAnalytics: React.FC<WastageAnalyticsProps> = ({
       dataIndex: 'quantity',
       key: 'quantity',
       sorter: (a: any, b: any) => a.quantity - b.quantity,
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     },
     {
       title: t('inventory.wastage.totalValue'),
@@ -233,7 +233,7 @@ const WastageAnalytics: React.FC<WastageAnalyticsProps> = ({
       key: 'value',
       render: (value: number) => `$${value.toFixed(2)}`,
       sorter: (a: MonthlyWastageData, b: MonthlyWastageData) => a.value - b.value,
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     }
   ];
 
