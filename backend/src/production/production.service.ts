@@ -59,12 +59,14 @@ export class ProductionService {
   async updateStatus(id: string, dto: UpdateProductionOrderStatusDto): Promise<ProductionOrder> {
     try {
       return await this.productionOrderService.updateStatus(id, dto);
-    } catch (error) {
-      this.logger.error(
-        `Error updating production order status: ${error instanceof Error ? error.message : String(error)}`
-      );
-
-      throw error instanceof Error ? error : new Error(String(error));
+    } catch (err: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? (err as { message: string }).message
+          : String(err);
+      this.logger.error(`Error updating production order status: ${message}`);
+      throw new Error(message);
     }
   }
 
