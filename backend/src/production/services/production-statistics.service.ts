@@ -747,7 +747,6 @@ export class ProductionStatisticsService {
         // Finalize the PDF
         doc.end();
       } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
         reject(err instanceof Error ? err : new Error(String(err)));
       }
     });

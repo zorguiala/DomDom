@@ -7,8 +7,9 @@ import { Product } from '../../entities/product.entity';
 import { NotFoundException } from '@nestjs/common';
 import { CreateInventoryTransactionDto } from '../dto/create-inventory-transaction.dto';
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-type MockRepository<T extends ObjectLiteral = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+type MockRepository<T extends ObjectLiteral = any> = Partial<
+  Record<keyof Repository<T>, jest.Mock>
+>;
 
 const createMockRepository = <T extends ObjectLiteral>(): MockRepository<T> => ({
   findOne: jest.fn(),
@@ -233,7 +234,10 @@ describe('InventoryTransactionService', () => {
 
       // Assert
       expect(transactionRepository.createQueryBuilder).toHaveBeenCalledWith('transaction');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('transaction.product', 'product');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'transaction.product',
+        'product'
+      );
       expect(mockQueryBuilder.andWhere).not.toHaveBeenCalled();
       expect(mockQueryBuilder.getMany).toHaveBeenCalled();
       expect(result).toEqual(mockTransactions);
@@ -260,11 +264,21 @@ describe('InventoryTransactionService', () => {
 
       // Assert
       expect(transactionRepository.createQueryBuilder).toHaveBeenCalledWith('transaction');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('transaction.product', 'product');
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.createdAt >= :startDate', { startDate });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.createdAt <= :endDate', { endDate });
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'transaction.product',
+        'product'
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'transaction.createdAt >= :startDate',
+        { startDate }
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.createdAt <= :endDate', {
+        endDate,
+      });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.type = :type', { type });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.productId = :productId', { productId });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('transaction.productId = :productId', {
+        productId,
+      });
       expect(mockQueryBuilder.getMany).toHaveBeenCalled();
       expect(result).toEqual(mockTransactions);
     });
@@ -306,4 +320,4 @@ describe('InventoryTransactionService', () => {
       });
     });
   });
-}); 
+});
