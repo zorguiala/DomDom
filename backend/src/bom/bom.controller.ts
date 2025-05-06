@@ -47,7 +47,6 @@ export class BOMController {
 
   @Post()
   async create(@Request() req, @Body() createBomDto: CreateBOMDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.bomService.create(createBomDto, req.user);
   }
 

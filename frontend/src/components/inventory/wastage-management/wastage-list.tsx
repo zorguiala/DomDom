@@ -118,7 +118,7 @@ const WastageList: React.FC = () => {
       render: (date: string) => new Date(date).toLocaleDateString(),
       sorter: (a: WastageRecord, b: WastageRecord) => 
         new Date(a.date).getTime() - new Date(b.date).getTime(),
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     },
     {
       title: t('inventory.product'),

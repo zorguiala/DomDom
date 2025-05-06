@@ -13,6 +13,8 @@ import {
 import { QrcodeOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { Product } from "../../types/inventory";
+// Import BarcodeScanner
+import { BarcodeScanner } from "./BarcodeScanner";
 
 interface ProductFormProps {
   initialData?: Partial<Product>;
@@ -20,15 +22,8 @@ interface ProductFormProps {
   onCancel: () => void;
 }
 
-// Import BarcodeScanner conditionally to avoid circular dependencies
-let BarcodeScanner: any = null;
-try {
-  // Using dynamic import pattern to avoid circular dependencies
-  const BarcodeScannerModule = require("./BarcodeScanner");
-  BarcodeScanner = BarcodeScannerModule.BarcodeScanner;
-} catch (error) {
-  console.warn("BarcodeScanner component not available", error);
-}
+// Make BarcodeScanner nullable to handle possible import failures
+const BarcodeScannerComponent: typeof BarcodeScanner | null = BarcodeScanner;
 
 export function ProductForm({
   initialData,
@@ -98,7 +93,7 @@ export function ProductForm({
         <Form.Item name="barcode" label={t("inventory.barcode")}>
           <Input 
             suffix={
-              BarcodeScanner && (
+              BarcodeScannerComponent && (
                 <Button
                   type="text"
                   icon={<QrcodeOutlined />}
@@ -186,8 +181,8 @@ export function ProductForm({
         </Space>
       </Form>
 
-      {BarcodeScanner && (
-        <BarcodeScanner
+      {BarcodeScannerComponent && (
+        <BarcodeScannerComponent
           isScanning={isScanning}
           onDetected={handleBarcodeDetected}
           onClose={() => setIsScanning(false)}

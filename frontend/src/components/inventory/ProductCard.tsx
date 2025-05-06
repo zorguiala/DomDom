@@ -19,6 +19,7 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
     <Card
       actions={[
         <Button
+          key="edit"
           type="text"
           icon={<EditOutlined />}
           onClick={() => onEdit(product)}
@@ -26,6 +27,7 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           {t("common.edit")}
         </Button>,
         <Button
+          key="delete"
           type="text"
           icon={<DeleteOutlined />}
           danger

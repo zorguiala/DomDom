@@ -4,35 +4,120 @@ export class InventoryEntitiesUpdate1714791748125 implements MigrationInterface 
   name = 'InventoryEntitiesUpdate1714791748125';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Add leadTimeDays and costPrice columns to the product table
-    await queryRunner.query(`ALTER TABLE "product" ADD "leadTimeDays" integer NULL DEFAULT 0`);
-    await queryRunner.query(`ALTER TABLE "product" ADD "costPrice" numeric(10,2) NULL DEFAULT 0`);
+    // Add leadTimeDays column if it doesn't exist
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' AND column_name = 'leadTimeDays'
+        ) THEN
+          ALTER TABLE "products" ADD "leadTimeDays" integer NULL DEFAULT 0;
+        END IF;
+      END
+      $$;
+    `);
 
-    // Add explicit productId column to inventory_transaction table
-    await queryRunner.query(`ALTER TABLE "inventory_transaction" ADD "productId" uuid`);
+    // Add costPrice column if it doesn't exist
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' AND column_name = 'costPrice'
+        ) THEN
+          ALTER TABLE "products" ADD "costPrice" numeric(10,2) NULL DEFAULT 0;
+        END IF;
+      END
+      $$;
+    `);
 
-    // Update productId foreign key from product reference
-    await queryRunner.query(
-      `UPDATE "inventory_transaction" SET "productId" = "product"."id" FROM "product" WHERE "inventory_transaction"."productId" IS NULL AND "inventory_transaction"."productId" = "product"."id"`
-    );
+    // Check if productId column already exists in inventory_transactions
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'inventory_transactions' AND column_name = 'productId'
+        ) THEN
+          ALTER TABLE "inventory_transactions" ADD "productId" uuid;
+        END IF;
+      END
+      $$;
+    `);
 
-    // Add foreign key constraint
-    await queryRunner.query(
-      `ALTER TABLE "inventory_transaction" ADD CONSTRAINT "FK_inventory_transaction_product" FOREIGN KEY ("productId") REFERENCES "product"("id")`
-    );
+    // Check if foreign key constraint already exists before adding
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE constraint_name = 'FK_inventory_transactions_products' AND table_name = 'inventory_transactions'
+        ) THEN
+          ALTER TABLE "inventory_transactions" 
+          ADD CONSTRAINT "FK_inventory_transactions_products" 
+          FOREIGN KEY ("productId") REFERENCES "products"("id");
+        END IF;
+      END
+      $$;
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Remove foreign key constraint
-    await queryRunner.query(
-      `ALTER TABLE "inventory_transaction" DROP CONSTRAINT "FK_inventory_transaction_product"`
-    );
+    // Remove foreign key constraint if exists
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE constraint_name = 'FK_inventory_transactions_products' AND table_name = 'inventory_transactions'
+        ) THEN
+          ALTER TABLE "inventory_transactions" DROP CONSTRAINT "FK_inventory_transactions_products";
+        END IF;
+      END
+      $$;
+    `);
 
-    // Remove explicit productId column
-    await queryRunner.query(`ALTER TABLE "inventory_transaction" DROP COLUMN "productId"`);
+    // Remove explicit productId column if exists
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'inventory_transactions' AND column_name = 'productId'
+        ) THEN
+          ALTER TABLE "inventory_transactions" DROP COLUMN "productId";
+        END IF;
+      END
+      $$;
+    `);
 
-    // Remove leadTimeDays and costPrice columns from product table
-    await queryRunner.query(`ALTER TABLE "product" DROP COLUMN "costPrice"`);
-    await queryRunner.query(`ALTER TABLE "product" DROP COLUMN "leadTimeDays"`);
+    // Remove costPrice column if exists
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' AND column_name = 'costPrice'
+        ) THEN
+          ALTER TABLE "products" DROP COLUMN "costPrice";
+        END IF;
+      END
+      $$;
+    `);
+
+    // Remove leadTimeDays column if exists
+    await queryRunner.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'products' AND column_name = 'leadTimeDays'
+        ) THEN
+          ALTER TABLE "products" DROP COLUMN "leadTimeDays";
+        END IF;
+      END
+      $$;
+    `);
   }
 }

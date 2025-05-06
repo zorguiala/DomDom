@@ -747,7 +747,7 @@ export class ProductionStatisticsService {
         // Finalize the PDF
         doc.end();
       } catch (err) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        // Use type guard to ensure only Error objects are passed to reject
         reject(err instanceof Error ? err : new Error(String(err)));
       }
     });

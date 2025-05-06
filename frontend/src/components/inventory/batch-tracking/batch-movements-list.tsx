@@ -58,7 +58,7 @@ const BatchMovementsList: React.FC<BatchMovementsListProps> = ({
       render: (date: string) => new Date(date).toLocaleString(),
       sorter: (a: BatchMovement, b: BatchMovement) => 
         new Date(a.movementDate).getTime() - new Date(b.movementDate).getTime(),
-      defaultSortOrder: 'descend' as 'descend'
+      defaultSortOrder: 'descend' as const
     },
     {
       title: t('inventory.batch.movementType'),

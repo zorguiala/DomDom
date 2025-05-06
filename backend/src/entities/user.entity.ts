@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Entity, Column, BeforeInsert } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { hash } from 'bcrypt';

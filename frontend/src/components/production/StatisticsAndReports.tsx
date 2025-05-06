@@ -5,6 +5,8 @@ import ProductionService from '../../services/production.service';
 import { ProductionStatisticsDto, ExportReportDto } from '../../types/production';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+// Import the charts library directly
+import * as charts from '@ant-design/charts';
 
 // Define chart props interface
 interface ChartProps {
@@ -15,20 +17,38 @@ interface ChartProps {
 // Check if charts are available, if not use placeholders
 let Line: React.FC<ChartProps>, Bar: React.FC<ChartProps>, Pie: React.FC<ChartProps>;
 try {
-  const charts = require('@ant-design/charts');
   Line = charts.Line;
   Bar = charts.Bar;
   Pie = charts.Pie;
 } catch (error) {
   // Create placeholder components if the charts package is not available
-  Line = ({ data }: ChartProps) => (
+  const LinePlaceholder: React.FC<ChartProps> = ({ data }) => (
     <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed #ccc' }}>
       <p>Line Chart Placeholder</p>
       <p>Install @ant-design/charts to see actual charts</p>
     </div>
   );
-  Bar = Line;
-  Pie = Line;
+  LinePlaceholder.displayName = 'LinePlaceholder';
+  
+  const BarPlaceholder: React.FC<ChartProps> = ({ data }) => (
+    <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed #ccc' }}>
+      <p>Bar Chart Placeholder</p>
+      <p>Install @ant-design/charts to see actual charts</p>
+    </div>
+  );
+  BarPlaceholder.displayName = 'BarPlaceholder';
+  
+  const PiePlaceholder: React.FC<ChartProps> = ({ data }) => (
+    <div style={{ textAlign: 'center', padding: '20px', border: '1px dashed #ccc' }}>
+      <p>Pie Chart Placeholder</p>
+      <p>Install @ant-design/charts to see actual charts</p>
+    </div>
+  );
+  PiePlaceholder.displayName = 'PiePlaceholder';
+  
+  Line = LinePlaceholder;
+  Bar = BarPlaceholder;
+  Pie = PiePlaceholder;
 }
 
 const { RangePicker } = DatePicker;
