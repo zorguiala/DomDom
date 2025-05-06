@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { AppDataSource } from '../config/typeorm.config';
 import { User } from '../entities/user.entity';
 import { Employee } from '../entities/employee.entity';
@@ -441,5 +441,4 @@ async function seedAttendance() {
   console.log(`Created ${attendanceRecords.length} attendance records successfully`);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 seed();

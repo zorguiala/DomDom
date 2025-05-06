@@ -60,7 +60,6 @@ export class ProductionService {
     try {
       return await this.productionOrderService.updateStatus(id, dto);
     } catch (err: unknown) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       const message =
         err && typeof err === 'object' && 'message' in err
           ? (err as { message: string }).message

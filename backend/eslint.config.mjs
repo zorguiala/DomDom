@@ -10,7 +10,7 @@ export default tseslint.config(
       'eslint.config.mjs',
       'src/documents/documents.module.ts', // Ignore binary file
       'dist/**',
-      'node_modules/**'
+      'node_modules/**',
     ],
   },
   eslint.configs.recommended,
@@ -36,7 +36,8 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'warn',
       'prettier/prettier': ['warn', { endOfLine: 'auto' }],
       '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'warn', // Downgrade to warning
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
     },
   }
 );

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In } from 'typeorm';
@@ -749,6 +747,7 @@ export class ProductionStatisticsService {
         // Finalize the PDF
         doc.end();
       } catch (err) {
+        // Use type guard to ensure only Error objects are passed to reject
         reject(err instanceof Error ? err : new Error(String(err)));
       }
     });

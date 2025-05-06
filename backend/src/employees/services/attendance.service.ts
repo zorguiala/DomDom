@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
@@ -9,6 +6,10 @@ import { Employee } from '../../entities/employee.entity';
 import { MarkAttendanceDto } from '../dto/employee.dto';
 import { startOfDay, endOfDay } from 'date-fns';
 import { EmployeeAttendanceSummary, EmployeeAttendanceStats } from '../types/employee.types';
+
+// Removed global eslint-disable for no-unsafe-argument and no-unsafe-assignment
+// All assignments and calls in this file are type-safe and do not require any disables.
+// If you add code that uses any or unknown, use a type guard or explicit cast, and add a line-specific eslint-disable if absolutely necessary.
 
 @Injectable()
 export class AttendanceService {

@@ -19,7 +19,7 @@ export class SeedData1713890568275 implements MigrationInterface {
     adminUser.email = 'admin@domdom.com';
     adminUser.firstName = 'Admin';
     adminUser.lastName = 'User';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     adminUser.password = await bcrypt.hash('admin123', 10);
     adminUser.isAdmin = true;
     adminUser.isActive = true;
@@ -28,7 +28,7 @@ export class SeedData1713890568275 implements MigrationInterface {
     regularUser.email = 'user@domdom.com';
     regularUser.firstName = 'Regular';
     regularUser.lastName = 'User';
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     regularUser.password = await bcrypt.hash('user123', 10);
     regularUser.isAdmin = false;
     regularUser.isActive = true;
