@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 */node_modules/
+.trae
+.windsurfrules
+.github\copilot-instructions.md
 
 # Build outputs
 dist/

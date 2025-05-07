@@ -5,6 +5,7 @@ import { InventoryBatch } from '../../entities/inventory-batch.entity';
 import { CreateInventoryBatchDto } from '../dto/create-inventory-batch.dto';
 import { UpdateInventoryBatchDto } from '../dto/update-inventory-batch.dto';
 import { Product } from '../../entities/product.entity';
+import { validate as isUUID } from 'uuid';
 
 @Injectable()
 export class InventoryBatchService {
@@ -65,6 +66,10 @@ export class InventoryBatchService {
   }
 
   async findOne(id: string): Promise<InventoryBatch> {
+    if (!isUUID(id)) {
+      throw new Error(`Invalid UUID format for ID: ${id}`);
+    }
+
     const batch = await this.inventoryBatchRepository.findOne({
       where: { id },
       relations: ['product'],

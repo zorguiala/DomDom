@@ -13,6 +13,7 @@ import {
   Alert,
   Tabs,
 } from "antd";
+import type { TabsProps } from "antd";
 import axios from "axios";
 import {
   PlusOutlined,
@@ -35,11 +36,11 @@ import WastageList from "../components/inventory/wastage-management/wastage-list
 import ForecastDashboard from "../components/inventory/inventory-forecast/forecast-dashboard";
 
 const { Search } = Input;
-const { TabPane } = Tabs;
 
 export default function Inventory() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [modal, contextHolder] = Modal.useModal(); // Using Modal.useModal hook for better modal management
   const [activeTab, setActiveTab] = useState("products");
   const [search, setSearch] = useState("");
   const [showRawMaterials, setShowRawMaterials] = useState<boolean | undefined>(
@@ -128,48 +129,51 @@ export default function Inventory() {
     setSelectedProduct(product);
     setFormOpen(true);
   };
+
+  // Updated delete handler using the modal.confirm from useModal hook
   const handleDeleteProduct = (product: Product) => {
-    Modal.confirm({
+    modal.confirm({
       title: t("inventory.deleteConfirmation"),
       content: `${t("inventory.deleteProductConfirmMessage")} ${product.name}?`,
       okText: t("common.delete"),
       okType: "danger",
       cancelText: t("common.cancel"),
+      centered: true,
       onOk: async () => {
         try {
-          // Use PUT to update isActive status instead of DELETE
-          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+          const API_URL =
+            import.meta.env.VITE_API_URL || "http://localhost:3000/api";
           const token = localStorage.getItem("token");
-          
-          // Instead of DELETE, use PUT to explicitly set isActive to false
-          await axios.put(`${API_URL}/products/${product.id}`, 
+
+          await axios.put(
+            `${API_URL}/products/${product.id}`,
             { isActive: false },
             {
               headers: {
                 Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json",
               },
             }
           );
-          
-          // Manually refresh the product list
+
           queryClient.invalidateQueries({ queryKey: ["products"] });
-          
+
           notification.success({
             message: t("inventory.productDeleted"),
-            description: `${product.name} ${t("inventory.hasBeenDeleted")}`
+            description: `${product.name} ${t("inventory.hasBeenDeleted")}`,
           });
-          
         } catch (error) {
           console.error("Error deleting product:", error);
           notification.error({
             message: t("common.error"),
             description: t("inventory.errorDeletingProduct"),
           });
+          return Promise.reject(error);
         }
       },
     });
   };
+
   const handleStockTransaction = (product: Product, type: "in" | "out") => {
     setTransactionProduct(product);
     setTransactionType(type);
@@ -241,27 +245,18 @@ export default function Inventory() {
     },
   ];
 
-  return (
-    <div className="inventory-page">
-      <div className="header-section">
-        <Typography.Title level={2}>{t("inventory.title")}</Typography.Title>
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        tabPosition="top"
-        style={{ marginBottom: 32 }}
-      >
-        <TabPane
-          tab={
-            <span>
-              <PartitionOutlined />
-              {t("inventory.products")}
-            </span>
-          }
-          key="products"
-        >
+  // Define tab items for the Tabs component
+  const tabItems: TabsProps["items"] = [
+    {
+      key: "products",
+      label: (
+        <span>
+          <PartitionOutlined />
+          {t("inventory.products")}
+        </span>
+      ),
+      children: (
+        <div>
           <div className="controls">
             <Space style={{ marginBottom: 16 }}>
               <Search
@@ -271,14 +266,22 @@ export default function Inventory() {
                 style={{ width: 250 }}
               />
               <Space>
-                <Button 
-                  onClick={() => setShowRawMaterials(prev => prev === undefined ? true : prev === true ? false : undefined)}
+                <Button
+                  onClick={() =>
+                    setShowRawMaterials((prev) =>
+                      prev === undefined
+                        ? true
+                        : prev === true
+                        ? false
+                        : undefined
+                    )
+                  }
                 >
-                  {showRawMaterials === undefined 
-                    ? t("inventory.showAll") 
-                    : showRawMaterials 
-                      ? t("inventory.showRawMaterials") 
-                      : t("inventory.showProducts")}
+                  {showRawMaterials === undefined
+                    ? t("inventory.showAll")
+                    : showRawMaterials
+                    ? t("inventory.showRawMaterials")
+                    : t("inventory.showProducts")}
                 </Button>
                 <Switch
                   checked={showInactive}
@@ -322,56 +325,67 @@ export default function Inventory() {
               pagination={{ pageSize: 10 }}
             />
           )}
-        </TabPane>
+        </div>
+      ),
+    },
+    {
+      key: "batch-tracking",
+      label: (
+        <span>
+          <BarChartOutlined />
+          {t("inventory.batch.batchTracking")}
+        </span>
+      ),
+      children: <BatchList />,
+    },
+    {
+      key: "inventory-count",
+      label: (
+        <span>
+          <CalendarOutlined />
+          {t("inventory.inventoryCount.title")}
+        </span>
+      ),
+      children: <CountList />,
+    },
+    {
+      key: "wastage-management",
+      label: (
+        <span>
+          <ExceptionOutlined />
+          {t("inventory.wastageManagement.title")}
+        </span>
+      ),
+      children: <WastageList />,
+    },
+    {
+      key: "forecasting",
+      label: (
+        <span>
+          <BarChartOutlined />
+          {t("inventory.inventoryForecast.title")}
+        </span>
+      ),
+      children: <ForecastDashboard />,
+    },
+  ];
 
-        <TabPane
-          tab={
-            <span>
-              <BarChartOutlined />
-              {t("inventory.batch.batchTracking")}
-            </span>
-          }
-          key="batch-tracking"
-        >
-          <BatchList />
-        </TabPane>
+  return (
+    <div className="inventory-page">
+      {/* Include the contextHolder for the modal to work */}
+      {contextHolder}
 
-        <TabPane
-          tab={
-            <span>
-              <CalendarOutlined />
-              {t("inventory.inventoryCount.title")}
-            </span>
-          }
-          key="inventory-count"
-        >
-          <CountList />
-        </TabPane>
+      <div className="header-section">
+        <Typography.Title level={2}>{t("inventory.title")}</Typography.Title>
+      </div>
 
-        <TabPane
-          tab={
-            <span>
-              <ExceptionOutlined />
-              {t("inventory.wastageManagement.title")}
-            </span>
-          }
-          key="wastage-management"
-        >
-          <WastageList />
-        </TabPane>
-
-        <TabPane
-          tab={
-            <span>
-              <BarChartOutlined />
-              {t("inventory.inventoryForecast.title")}
-            </span>
-          }
-          key="forecasting"
-        >
-          <ForecastDashboard />
-        </TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        tabPosition="top"
+        style={{ marginBottom: 32 }}
+        items={tabItems}
+      />
 
       {formOpen && (
         <Modal
@@ -392,7 +406,7 @@ export default function Inventory() {
               if (selectedProduct) {
                 updateProduct.mutate({ id: selectedProduct.id, data });
               } else {
-                createProduct.mutate({ ...data });
+                createProduct.mutate(data as Omit<Product, "id">);
               }
             }}
             onCancel={() => setFormOpen(false)}

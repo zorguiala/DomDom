@@ -13,17 +13,12 @@ import {
 import { QrcodeOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { Product } from "../../types/inventory";
-// Import BarcodeScanner
-import { BarcodeScanner } from "./BarcodeScanner";
 
 interface ProductFormProps {
   initialData?: Partial<Product>;
   onSubmit: (data: Partial<Product>) => void;
   onCancel: () => void;
 }
-
-// Make BarcodeScanner nullable to handle possible import failures
-const BarcodeScannerComponent: typeof BarcodeScanner | null = BarcodeScanner;
 
 export function ProductForm({
   initialData,
@@ -46,19 +41,14 @@ export function ProductForm({
   const handleSubmit = (values: any) => {
     // Transform the data before submitting
     const transformedData = { ...values };
-    
+
     // If this is an update and initialStock is present, remove it
     // as it shouldn't be sent for updates
-    if (isEditing && 'initialStock' in transformedData) {
+    if (isEditing && "initialStock" in transformedData) {
       delete transformedData.initialStock;
     }
 
     onSubmit(transformedData);
-  };
-
-  const handleBarcodeDetected = (barcode: string) => {
-    form.setFieldValue("barcode", barcode);
-    setIsScanning(false);
   };
 
   return (
@@ -91,15 +81,13 @@ export function ProductForm({
           </Col>
         </Row>
         <Form.Item name="barcode" label={t("inventory.barcode")}>
-          <Input 
+          <Input
             suffix={
-              BarcodeScannerComponent && (
-                <Button
-                  type="text"
-                  icon={<QrcodeOutlined />}
-                  onClick={() => setIsScanning(true)}
-                />
-              )
+              <Button
+                type="text"
+                icon={<QrcodeOutlined />}
+                onClick={() => setIsScanning(true)}
+              />
             }
           />
         </Form.Item>
@@ -113,11 +101,7 @@ export function ProductForm({
               label={t("inventory.price")}
               rules={[{ required: true, message: t("common.required") }]}
             >
-              <InputNumber 
-                min={0} 
-                step={0.01} 
-                style={{ width: "100%" }} 
-              />
+              <InputNumber min={0} step={0.01} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={12}>
@@ -180,14 +164,6 @@ export function ProductForm({
           </Button>
         </Space>
       </Form>
-
-      {BarcodeScannerComponent && (
-        <BarcodeScannerComponent
-          isScanning={isScanning}
-          onDetected={handleBarcodeDetected}
-          onClose={() => setIsScanning(false)}
-        />
-      )}
     </>
   );
 }

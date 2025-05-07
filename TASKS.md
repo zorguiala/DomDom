@@ -28,7 +28,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
   - ✅ Implement inventory transactions recording
   - ✅ Add basic stock level tracking
 
-### Inventory Enhancements - Status: 🔄 IN PROGRESS
+### Inventory Enhancements - Status: 🚫 SUPERSEDED BY REFACTOR
 
 - [x] Implement advanced inventory management:
   - [x] Create intelligent low stock alert system based on historical daily usage
@@ -38,15 +38,57 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
   - [x] Implement inventory count and reconciliation workflows
   - [x] Track inventory wastage and spoilage for food products
 
-### Inventory Enhancement Testing & Integration - Status: ✅ COMPLETED
+### Inventory Module Refactor - Status: 📝 PLANNED
 
-- [x] Complete backend and frontend integration:
-  - [x] Fix remaining linting errors related to entity updates
-  - [x] Complete database migrations for new entity properties (leadTimeDays, costPrice, productId)
-  - [x] Implement unit tests for inventory services
-  - [x] Integrate frontend components with backend API endpoints
-  - [x] Refine UI based on user feedback
-  - [x] Add comprehensive error handling and loading states
+- [ ] **Stock Module Refactoring (Backend)**
+  - [ ] Rename and refactor inventory entities to stock entities (Product, StockTransaction, StockCount)
+  - [ ] Create simplified stock service for tracking raw materials and finished products
+  - [ ] Update database schemas and create necessary migrations
+  - [ ] Implement stock valuation logic (calculate total stock value based on cost prices)
+  - [ ] Create endpoints for tracking most profitable items based on margins
+  - [ ] Develop API for identifying top sold items by quantity
+  - [ ] Optimize low stock detection and alerting system
+  - [ ] Create simplified inventory count and reconciliation process
+  - [ ] Add stock movement tracking for production in/out, sales, purchases
+  - [ ] Implement stock adjustment endpoints for inventory reconciliation
+  - [ ] Integrate purchase functionality for raw materials acquisition
+  - [ ] Create automatic cost calculation when purchases are recorded
+  - [ ] Implement endpoints for purchase order management
+  - [ ] Add supplier management functionality
+  - [ ] Write unit and integration tests for refactored endpoints
+- [ ] **Stock Module Refactoring (Frontend)**
+  - [ ] Create new Stock dashboard component with overview metrics
+  - [ ] Implement StockList component for viewing all stock items
+  - [ ] Develop StockTransactionForm for recording stock movements
+  - [ ] Create StockValuationReport component for financial tracking
+  - [ ] Build TopSellingProducts and MostProfitableProducts components
+  - [ ] Implement LowStockAlerts component with configurable thresholds
+  - [ ] Create StockCount workflow components for periodic inventory counts
+  - [ ] Add BOM creation and management within Stock module
+  - [ ] Implement Purchase management UI for raw materials
+  - [ ] Create supplier management interface
+  - [ ] Develop purchase order workflow components
+  - [ ] Add automatic cost calculation display on purchases
+  - [ ] Update navigation and routing to reflect new module structure
+  - [ ] Design responsive layouts for all stock-related views
+  - [ ] Implement custom hooks for stock data fetching and processing
+- [ ] **Integration and Testing**
+  - [ ] Connect frontend components to refactored backend endpoints
+  - [ ] Test complete stock management workflow (add stock, create products, update stock)
+  - [ ] Validate metrics calculations (stock value, profitability, top sellers)
+  - [ ] Test BOM creation and management within Stock module
+  - [ ] Verify purchase order creation and processing
+  - [ ] Test automatic cost calculation for purchased items
+  - [ ] Validate stock count and reconciliation process
+  - [ ] Verify low stock alert functionality
+  - [ ] Create end-to-end tests for critical stock operations
+- [ ] **Documentation Updates**
+  - [ ] Update PROJECT_OVERVIEW.md to reflect new Stock module structure
+  - [ ] Create technical documentation for Stock API endpoints
+  - [ ] Document purchase management functionality
+  - [ ] Update user documentation with new Stock module workflows
+  - [ ] Document stock data flow and business logic
+  - [ ] Create data model diagrams for the refactored entities
 
 ## 🏭 Production Management Module
 
@@ -77,6 +119,7 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 - [x] Improve documentation for production API endpoints and frontend features
 
 #### Discovered During Work
+
 - [ ] (Add any new sub-tasks here as discovered)
 
 ## 📑 Bill of Materials (BOM) Module
@@ -159,15 +202,49 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 
 ## 🛒 Purchase Management Module
 
-### Purchase Management - Status: 🔄 PLANNED
+### Purchase Management - Status: 📝 PLANNED
 
-- [ ] Implement purchase management system
-  - [ ] Create purchase database models and types
-  - [ ] Implement purchase API services
-  - [ ] Create supplier management interface
-  - [ ] Implement purchase order tracking
-  - [ ] Add supplier information management
-  - [ ] Create purchase reporting and analytics
+- [ ] **Purchase Module Development (Backend)**
+
+  - [ ] Create purchase database models and types (Supplier, PurchaseOrder, PurchaseOrderItem)
+  - [ ] Implement purchase API services (PurchaseService, SupplierService)
+  - [ ] Develop endpoints for supplier management
+  - [ ] Create purchase order creation and tracking endpoints
+  - [ ] Implement purchase receipt functionality with stock updates
+  - [ ] Add automatic cost calculation for raw materials
+  - [ ] Create purchase reporting and analytics endpoints
+  - [ ] Build integration with Stock module for inventory updates
+  - [ ] Add validation for purchase orders based on stock needs
+  - [ ] Write unit and integration tests for purchase endpoints
+
+- [ ] **Purchase Module Development (Frontend)**
+
+  - [ ] Create Purchase dashboard with key metrics
+  - [ ] Implement supplier management interface
+  - [ ] Develop purchase order creation and management screens
+  - [ ] Build purchase order receipt processing workflow
+  - [ ] Create purchase reports and analytics views
+  - [ ] Implement automatic cost calculation display
+  - [ ] Add purchase history tracking for raw materials
+  - [ ] Develop custom hooks for purchase data management
+  - [ ] Design responsive layouts for all purchase-related views
+  - [ ] Create specialized forms for different purchase workflows
+
+- [ ] **Integration and Testing**
+
+  - [ ] Connect purchase module to stock module for inventory updates
+  - [ ] Test complete purchase workflow (create order, receive items, update stock)
+  - [ ] Validate cost calculation functionality
+  - [ ] Test supplier management features
+  - [ ] Verify purchase reporting accuracy
+  - [ ] Create end-to-end tests for critical purchase operations
+
+- [ ] **Documentation Updates**
+  - [ ] Update PROJECT_OVERVIEW.md to include Purchase module
+  - [ ] Create technical documentation for Purchase API endpoints
+  - [ ] Document purchase workflows and integration points
+  - [ ] Create data model diagrams for purchase entities
+  - [ ] Add user guides for purchase module functionality
 
 ## 📄 Document Generation Module
 

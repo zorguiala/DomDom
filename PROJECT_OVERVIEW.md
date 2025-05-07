@@ -32,14 +32,23 @@ DomDom is an integrated operational management system for food production and ma
 - User registration and authentication
 - JWT-based sessions
 
-### Inventory Management
+### Inventory Management (Refactored)
 
-- Real-time tracking of stock levels
-- Raw materials, work-in-process, and finished goods tracking
-- Inventory transactions history
-- Stock adjustments and transfers
-- Low stock alerts based on daily usage/consumption rates
-- Barcode scanning support
+- Simplified stock management system:
+  - Unified tracking of raw materials and finished products
+  - Stock movement tracking (production in/out, sales, purchases)
+  - Stock adjustment functionality for inventory reconciliation
+- Manual inventory count workflow with discrepancy resolution
+- Product pricing mechanism and comprehensive stock valuation
+- Real-time metrics dashboard displaying:
+  - Lowest stock items with automatic alerts
+  - Total stock value calculation
+  - Most profitable items based on margin analysis
+  - Top-sold items by quantity
+- Analytics features:
+  - Stock level trend visualization
+  - Detailed view for each metric with historical data
+  - Performance optimized data retrieval with caching
 
 ### BOM (Bill of Materials) Management
 
@@ -232,3 +241,26 @@ API documentation is available at `/api/docs` when the backend server is running
   - Production reports with export to PDF/Excel
   - Improved documentation and API docs
   - e2e and unit tests for all features
+
+## Inventory to Stock Module Refactoring
+
+The current inventory management system is being refactored into a more streamlined "Stock" module to better align with the business workflow of food production companies. This refactoring aims to:
+
+1. **Simplify the Data Model**: Focus on stock as the central entity used to create products, with products going back into stock.
+
+2. **Enhance Financial Metrics**: Add key metrics tracking for stock value, most profitable items, top-selling items, and low stock alerts.
+
+3. **Streamline Stock Management Workflows**: Simplify stock-in and stock-out processes, inventory counts, and reconciliation.
+
+4. **Improve Analytics**: Provide better visibility into stock performance, valuation, and movement patterns.
+
+The refactored Stock module will retain essential functionality like stock management and periodic inventory checks while removing unnecessary complexity. The backend services and frontend components will be updated to reflect this new structure and naming convention.
+
+### Key Components of the Stock Module:
+
+- **Stock Management**: Tracking of raw materials and finished products
+- **Stock Transactions**: Recording stock movements (purchases, production inputs/outputs, sales)
+- **Stock Valuation**: Financial tracking of total stock value
+- **Stock Analytics**: Identifying most profitable items and top sellers
+- **Stock Counts**: Simplified periodic inventory verification process
+- **Low Stock Monitoring**: Alerts for items that need replenishment

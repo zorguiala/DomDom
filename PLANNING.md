@@ -190,6 +190,11 @@ src/
 ### Phase 2: Core Features (In Progress)
 
 - ✅ Inventory management
+  - Simplified stock management system for raw materials and finished products
+  - Real-time metrics dashboard (lowest stock, stock value, most profitable, top sold)
+  - Inventory counts with reconciliation workflow
+  - Stock movement tracking and comprehensive valuation
+  - Performance-optimized analytics with caching
 - ✅ BOM management
 - ✅ Basic dashboard
 - ✅ Production management backend
