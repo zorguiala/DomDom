@@ -2,7 +2,7 @@
 import { Menu } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { menuItems } from "./sidebar-menu-items.tsx"; // Import the menu items from a separate file
+import { menuItems } from "./sidebar-menu-items"; // Import the menu items from a separate file
 
 export function Sidebar() {
   const { t } = useTranslation();

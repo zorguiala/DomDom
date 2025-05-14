@@ -14,6 +14,7 @@ import { DocumentTemplate } from './document-template.entity';
 import { ProductionOrder } from './production-order.entity';
 import { ProductionOrderItem } from './production-order-item.entity';
 import { EmployeeSchedule } from './employee-schedule.entity';
+import { StockTransaction } from './stock-transaction.entity';
 
 export const entities = [
   User,
@@ -32,4 +33,5 @@ export const entities = [
   ProductionOrder,
   ProductionOrderItem,
   EmployeeSchedule,
+  StockTransaction,
 ];

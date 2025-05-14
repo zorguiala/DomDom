@@ -12,7 +12,7 @@ import "./index.css";
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Inventory = lazy(() => import("./pages/Inventory"));
+const Stock = lazy(() => import("./pages/Stock"));
 const Production = lazy(() => import("./pages/Production"));
 const Sales = lazy(() => import("./pages/Sales"));
 const Employees = lazy(() => import("./pages/Employees"));
@@ -72,7 +72,7 @@ function App() {
                         <Layout>
                           <Routes>
                             <Route path="/" element={<Dashboard />} />
-                            <Route path="/inventory" element={<Inventory />} />
+                            <Route path="/stock" element={<Stock />} />
                             <Route
                               path="/production"
                               element={<Production />}

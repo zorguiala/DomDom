@@ -1,7 +1,6 @@
 import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { BOMItem } from './bom-item.entity';
-import { InventoryTransaction } from './inventory-transaction.entity';
 import { StockTransaction } from './stock-transaction.entity';
 
 @Entity('products')
@@ -44,13 +43,39 @@ export class Product extends BaseEntity {
 
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   lastPurchasePrice: number;
+  
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  averageCostPrice: number;
+  
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  totalValueInStock: number;
+  
+  @Column('int', { default: 0 })
+  totalSoldQuantity: number;
+  
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  profitMargin: number;
+  
+  @Column({ default: false })
+  lowStockAlert: boolean;
 
   @OneToMany(() => BOMItem, (bomItem) => bomItem.product)
   bomItems: BOMItem[];
 
-  @OneToMany(() => InventoryTransaction, (transaction) => transaction.product)
-  inventoryTransactions: InventoryTransaction[];
-
-  @OneToMany(() => StockTransaction, (stockTransaction) => stockTransaction.product)
+  @OneToMany(() => StockTransaction, (transaction) => transaction.product)
   stockTransactions: StockTransaction[];
+  
+  // Calculated fields (not stored in database)
+  get profit(): number {
+    return this.price - this.costPrice;
+  }
+  
+  get profitPercentage(): number {
+    if (this.costPrice === 0) return 0;
+    return (this.profit / this.costPrice) * 100;
+  }
+  
+  get stockValue(): number {
+    return this.currentStock * this.costPrice;
+  }
 }

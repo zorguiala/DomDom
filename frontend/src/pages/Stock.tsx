@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Typography,
   Input,
@@ -25,7 +25,7 @@ import {
   PartitionOutlined,
 } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { inventoryApi } from "../services/inventoryService";
 import type { Product } from "../types/inventory";
 import { ProductForm } from "../components/inventory/product-form";
@@ -34,10 +34,11 @@ import BatchList from "../components/inventory/batch-tracking/batch-list";
 import CountList from "../components/inventory/inventory-count/count-list";
 import WastageList from "../components/inventory/wastage-management/wastage-list";
 import ForecastDashboard from "../components/inventory/inventory-forecast/forecast-dashboard";
+import { useStock } from "../hooks/use-stock";
 
 const { Search } = Input;
 
-export default function Inventory() {
+export default function Stock() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [modal, contextHolder] = Modal.useModal(); // Using Modal.useModal hook for better modal management
@@ -57,22 +58,17 @@ export default function Inventory() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyProduct, setHistoryProduct] = useState<Product | undefined>();
 
-  // Product list
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", search, showRawMaterials, showInactive],
-    queryFn: () =>
-      inventoryApi.getProducts({
-        search,
-        isRawMaterial: showRawMaterials,
-        isActive: showInactive ? undefined : true, // If showInactive is true, don't filter by isActive
-      }),
+  // Use custom hook for stock data
+  const { products, loadingProducts, lowStock, refetchProducts } = useStock({
+    search,
+    showRawMaterials,
+    showInactive,
   });
 
-  // Low stock
-  const { data: lowStock } = useQuery({
-    queryKey: ["lowStock"],
-    queryFn: () => inventoryApi.getLowStockProducts(),
-  });
+  // refetch on search/filter change
+  React.useEffect(() => {
+    refetchProducts();
+  }, [search, showRawMaterials, showInactive, refetchProducts]);
 
   // Mutations
   const createProduct = useMutation({
@@ -303,7 +299,7 @@ export default function Inventory() {
             </Space>
           </div>
 
-          {isLoading ? (
+          {loadingProducts ? (
             <div className="loading-spinner">
               <Spin size="large" />
             </div>
@@ -320,7 +316,7 @@ export default function Inventory() {
             <Table
               columns={columns}
               dataSource={products || []}
-              loading={isLoading}
+              loading={loadingProducts}
               rowKey="id"
               pagination={{ pageSize: 10 }}
             />

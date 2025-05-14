@@ -5,8 +5,8 @@ These guidelines provide structured rules for working with AI tools (GitHub Copi
 ## 🌟 Golden Rules
 
 These high-level principles guide how to work with AI tools efficiently and effectively:
-
-- Keep files under 500 lines - split into modules when needed
+- code complexty should be kept to a minimum
+- Keep files under 100 lines - split into modules when needed
   - Update TASKS.md file if there is any update needed
   - In tasks description be specific as much as possible
   - One task per message is ideal

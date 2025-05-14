@@ -11,7 +11,7 @@ import {
 
 export const menuItems = [
   { key: "/", icon: <HomeOutlined />, labelKey: "home.title" },
-  { key: "/inventory", icon: <ShopOutlined />, labelKey: "inventory.title" },
+  { key: "/stock", icon: <ShopOutlined />, labelKey: "inventory.title" },
   { key: "/production", icon: <BuildOutlined />, labelKey: "production.title" },
   { key: "/sales", icon: <ShoppingCartOutlined />, labelKey: "sales.title" },
   { key: "/employees", icon: <TeamOutlined />, labelKey: "employees.title" },
