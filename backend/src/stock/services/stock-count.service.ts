@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StockCount, StockCountItem, StockCountStatus } from '../../entities/stock-count.entity';
-import { Product } from '../../entities/product.entity';
-import { StockTransaction, StockTransactionType } from '../../entities/stock-transaction.entity';
+import { StockCount, StockCountItem } from '../../entities/stock-count.entity';
+import { StockItem } from '../../entities/stock-item.entity';
+import { StockTransaction } from '../../entities/stock-transaction.entity';
+import { StockCountStatus, StockTransactionType } from '../types/stock.types';
 import { StockService } from './stock.service';
 
 interface CreateStockCountDto {
@@ -14,7 +15,7 @@ interface CreateStockCountDto {
 }
 
 interface StockCountItemDto {
-  productId: string;
+  stockItemId: string;
   expectedQuantity: number;
   actualQuantity?: number;
   notes?: string;
@@ -27,8 +28,8 @@ export class StockCountService {
     private stockCountRepository: Repository<StockCount>,
     @InjectRepository(StockCountItem)
     private stockCountItemRepository: Repository<StockCountItem>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    @InjectRepository(StockItem)
+    private stockItemRepository: Repository<StockItem>,
     @InjectRepository(StockTransaction)
     private stockTransactionRepository: Repository<StockTransaction>,
     private stockService: StockService
@@ -67,7 +68,7 @@ export class StockCountService {
     const stockCountItems = items.map((item) =>
       this.stockCountItemRepository.create({
         stockCountId,
-        product: { id: item.productId },
+        stockItem: { id: item.stockItemId },
         expectedQuantity: item.expectedQuantity,
         actualQuantity: item.actualQuantity,
         notes: item.notes ?? '',
@@ -94,13 +95,13 @@ export class StockCountService {
     }
 
     // Update all expected quantities to current stock levels
-    const products = await this.productRepository.find();
+    const stockItems = await this.stockItemRepository.find();
 
-    const stockCountItems = products.map((product) =>
+    const stockCountItems = stockItems.map((stockItem) =>
       this.stockCountItemRepository.create({
-        stockCountId,
-        product: { id: product.id },
-        expectedQuantity: product.currentStock,
+        stockCount: { id: stockCountId },
+        stockItem: { id: stockItem.id },
+        expectedQuantity: stockItem.currentQuantity,
       })
     );
 
@@ -121,7 +122,7 @@ export class StockCountService {
    */
   async recordActualQuantities(
     stockCountId: string,
-    items: { productId: string; actualQuantity: number; notes?: string }[]
+    items: { stockItemId: string; actualQuantity: number; notes?: string }[]
   ) {
     const stockCount = await this.stockCountRepository.findOne({
       where: { id: stockCountId },
@@ -138,8 +139,8 @@ export class StockCountService {
     for (const item of items) {
       const stockCountItem = await this.stockCountItemRepository.findOne({
         where: {
-          stockCountId,
-          productId: item.productId,
+          stockCount: { id: stockCountId },
+          stockItem: { id: item.stockItemId },
         },
       });
 
@@ -210,8 +211,8 @@ export class StockCountService {
 
     // Get all items with discrepancies
     const items = await this.stockCountItemRepository.find({
-      where: { stockCountId },
-      relations: ['product'],
+      where: { stockCount: { id: stockCountId } },
+      relations: ['stockItem'],
     });
 
     const itemsWithDiscrepancies = items.filter((item) => item.discrepancy !== 0);
@@ -220,29 +221,29 @@ export class StockCountService {
     for (const item of itemsWithDiscrepancies) {
       // Create adjustment transaction
       const transaction = this.stockTransactionRepository.create({
-        product: { id: item.productId },
+        stockItemId: item.stockItem.id,
         type: StockTransactionType.ADJUSTMENT,
         quantity: Math.abs(item.discrepancy),
-        unitPrice: item.product.costPrice,
+        unitPrice: item.stockItem.costPrice,
         reference: `Stock count reconciliation: ${stockCount.notes ?? ''}`,
         notes: `Adjustment from stock count: ${item.discrepancy > 0 ? 'Surplus' : 'Shortage'}`,
         relatedEntityId: stockCountId,
         relatedEntityType: 'StockCount',
-        createdBy: { id: userId },
+        performedById: userId,
       });
 
       await this.stockTransactionRepository.save(transaction);
 
-      // Update product stock level
+      // Update stock item level
       await this.stockService.updateStockLevels(
-        item.productId,
+        item.stockItem.id,
         item.discrepancy,
         StockTransactionType.ADJUSTMENT
       );
 
       // Mark item as reconciled
       await this.stockCountItemRepository.update(
-        { stockCountId, productId: item.productId },
+        { stockCount: { id: stockCountId }, stockItem: { id: item.stockItem.id } },
         { isReconciled: true }
       );
     }
@@ -285,8 +286,8 @@ export class StockCountService {
    */
   async getStockCountItems(stockCountId: string) {
     return this.stockCountItemRepository.find({
-      where: { stockCountId },
-      relations: ['product'],
+      where: { stockCount: { id: stockCountId } },
+      relations: ['stockItem'],
     });
   }
 }

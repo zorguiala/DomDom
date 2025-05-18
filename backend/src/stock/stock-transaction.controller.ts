@@ -2,10 +2,10 @@ import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/co
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StockTransactionService } from './services/stock-transaction.service';
-import { StockTransactionType } from '../entities/stock-transaction.entity';
+import { StockTransactionType } from './types/stock.types';
 
 interface CreateStockTransactionDto {
-  productId: string;
+  stockItemId: string;
   type: StockTransactionType;
   quantity: number;
   unitPrice: number;

@@ -4,217 +4,246 @@ This document tracks current tasks, priorities, and progress for the DomDom proj
 
 ## 🔄 System-Wide Tasks
 
-### Codebase Refactoring
+### Codebase Modularization Plan - Status: 🔄 IN PROGRESS
 
 - [x] Read rules and coding style and plan refactoring approach
-- [ ] Component Refactoring:
-  - [ ] Resolve component duplication across the system
-  - [ ] Fix file naming conventions (PascalCase to kebab-case)
-  - [ ] Reorganize file structure by feature modules
-  - [ ] Extract business logic from UI components into custom hooks
-- [ ] Code Quality Improvements:
-  - [ ] Review and refactor files exceeding 500 lines
-  - [ ] Ensure consistent module structure across features
-  - [ ] Verify proper separation of concerns (thin controllers, business logic in services)
+- [ ] **Code Reorganization:**
+  - [ ] Create shared component library for common UI elements:
+    - [ ] Create `src/components/common/forms` for reusable form components
+    - [ ] Create `src/components/common/tables` for reusable table components
+    - [ ] Create `src/components/common/cards` for reusable card components
+    - [ ] Create `src/components/common/modals` for reusable modal dialogs
+  - [ ] Create shared hooks library:
+    - [ ] Extract API hooks from components to `src/hooks/api`
+    - [ ] Extract UI state hooks to `src/hooks/ui`
+    - [ ] Extract business logic hooks to `src/hooks/domain`
+  - [ ] Create utilities library:
+    - [ ] Format utilities in `src/utils/format.ts`
+    - [ ] Validation utilities in `src/utils/validation.ts`
+    - [ ] Calculation utilities in `src/utils/calculations.ts`
 
-## 📦 Inventory Management Module
+- [ ] **Component Duplication Resolution:**
+  - [ ] **Inventory/Stock Module Consolidation:**
+    - [ ] Merge `frontend/src/components/inventory/stock-transaction-form.tsx` and `frontend/src/components/stock/stock-transaction-form.tsx` into single component
+    - [ ] Create shared hook `useStockTransactions` in `src/hooks/domain/useStockTransactions.ts`
+    - [ ] Standardize stock-related types in `src/types/stock.ts`
+  - [ ] **Component File Naming:**
+    - [ ] Convert all components to kebab-case (`ProductForm.tsx` → `product-form.tsx`)
+    - [ ] Update all imports to reflect new naming convention
 
-### Core Inventory Management - Status: ✅ COMPLETED
+- [ ] **Backend Modularization:**
+  - [ ] **Service Consolidation:**
+    - [ ] Merge `backend/src/inventory` and `backend/src/stock` services into unified module
+    - [ ] Extract shared logic to common services
+    - [ ] Ensure each file stays under 100 lines (split when necessary)
+  - [ ] **Entity Reorganization:**
+    - [ ] Standardize entity naming conventions
+    - [ ] Move all types to central location in `backend/src/types`
+    - [ ] Update imports across codebase
 
-- ✅ Implement basic inventory management
-  - ✅ Create inventory types and database models
-  - ✅ Implement inventory API services
-  - ✅ Create product management interface
-  - ✅ Implement inventory transactions recording
-  - ✅ Add basic stock level tracking
+## 📦 Stock Management Module (Formerly Inventory)
 
-### Inventory Enhancements - Status: 🚫 SUPERSEDED BY REFACTOR
+### Stock Module Implementation - Status: 🔄 IN PROGRESS
 
-- [x] Implement advanced inventory management:
-  - [x] Create intelligent low stock alert system based on historical daily usage
-  - [x] Implement predictive stock forecasting based on production schedules
-  - [x] Add batch tracking for raw materials
-  - [x] Create inventory valuation reports
-  - [x] Implement inventory count and reconciliation workflows
-  - [x] Track inventory wastage and spoilage for food products
+- [ ] **Core Components Refactoring:**
+  - [ ] Create unified `StockItem` component with shared logic:
+    - [ ] Path: `frontend/src/components/stock/stock-item.tsx`
+    - [ ] Extract business logic to `useStockItem` hook
+  - [ ] Create modular transaction recording system:
+    - [ ] Path: `frontend/src/components/stock/transactions/transaction-form.tsx`
+    - [ ] Path: `frontend/src/components/stock/transactions/transaction-list.tsx`
+    - [ ] Path: `frontend/src/hooks/domain/useStockTransactions.ts`
+  - [ ] Implement stock dashboard component:
+    - [ ] Path: `frontend/src/components/stock/dashboard/stock-dashboard.tsx`
+    - [ ] Extract metrics calculations to `useStockMetrics` hook
+    - [ ] Create small, focused metric cards (under 100 lines each)
 
-### Inventory Module Refactor - Status: 📝 PLANNED
+- [ ] **Stock Tracking Features:**
+  - [ ] Implement low stock alerts component:
+    - [ ] Path: `frontend/src/components/stock/alerts/low-stock-alerts.tsx`
+    - [ ] Extract alert logic to `useLowStockAlerts` hook
+  - [ ] Create stock valuation reporting:
+    - [ ] Path: `frontend/src/components/stock/reports/stock-valuation.tsx`
+    - [ ] Extract calculation logic to utility functions
 
-- [ ] **Stock Module Refactoring (Backend)**
-  - [ ] Rename and refactor inventory entities to stock entities (Product, StockTransaction, StockCount)
-  - [ ] Create simplified stock service for tracking raw materials and finished products
-  - [ ] Update database schemas and create necessary migrations
-  - [ ] Implement stock valuation logic (calculate total stock value based on cost prices)
-  - [ ] Create endpoints for tracking most profitable items based on margins
-  - [ ] Develop API for identifying top sold items by quantity
-  - [ ] Optimize low stock detection and alerting system
-  - [ ] Create simplified inventory count and reconciliation process
-  - [ ] Add stock movement tracking for production in/out, sales, purchases
-  - [ ] Implement stock adjustment endpoints for inventory reconciliation
-  - [ ] Integrate purchase functionality for raw materials acquisition
-  - [ ] Create automatic cost calculation when purchases are recorded
-  - [ ] Implement endpoints for purchase order management
-  - [ ] Add supplier management functionality
-  - [ ] Write unit and integration tests for refactored endpoints
-- [ ] **Stock Module Refactoring (Frontend)**
-  - [ ] Create new Stock dashboard component with overview metrics
-  - [ ] Implement StockList component for viewing all stock items
-  - [ ] Develop StockTransactionForm for recording stock movements
-  - [ ] Create StockValuationReport component for financial tracking
-  - [ ] Build TopSellingProducts and MostProfitableProducts components
-  - [ ] Implement LowStockAlerts component with configurable thresholds
-  - [ ] Create StockCount workflow components for periodic inventory counts
-  - [ ] Add BOM creation and management within Stock module
-  - [ ] Implement Purchase management UI for raw materials
-  - [ ] Create supplier management interface
-  - [ ] Develop purchase order workflow components
-  - [ ] Add automatic cost calculation display on purchases
-  - [ ] Update navigation and routing to reflect new module structure
-  - [ ] Design responsive layouts for all stock-related views
-  - [ ] Implement custom hooks for stock data fetching and processing
-- [ ] **Integration and Testing**
-  - [ ] Connect frontend components to refactored backend endpoints
-  - [ ] Test complete stock management workflow (add stock, create products, update stock)
-  - [ ] Validate metrics calculations (stock value, profitability, top sellers)
-  - [ ] Test BOM creation and management within Stock module
-  - [ ] Verify purchase order creation and processing
-  - [ ] Test automatic cost calculation for purchased items
-  - [ ] Validate stock count and reconciliation process
-  - [ ] Verify low stock alert functionality
-  - [ ] Create end-to-end tests for critical stock operations
-- [ ] **Documentation Updates**
-  - [ ] Update PROJECT_OVERVIEW.md to reflect new Stock module structure
-  - [ ] Create technical documentation for Stock API endpoints
-  - [ ] Document purchase management functionality
-  - [ ] Update user documentation with new Stock module workflows
-  - [ ] Document stock data flow and business logic
-  - [ ] Create data model diagrams for the refactored entities
+- [ ] **Stock Count Workflow:**
+  - [ ] Refactor existing stock count components:
+    - [ ] Split `frontend/src/components/stock/stock-count.tsx` into smaller components
+    - [ ] Create dedicated hook for stock count logic
+  - [ ] Implement reconciliation process:
+    - [ ] Create reconciliation component and supporting hook
 
 ## 🏭 Production Management Module
 
-### Core Production Management - Status: ✅ COMPLETED
+### Production Enhancement Features - Status: 🔄 IN PROGRESS
 
-- ✅ Implement production management system
-  - ✅ Create production types and database models
-  - ✅ Implement production order API services
-  - ✅ Create production order management interface
-  - ✅ Implement production recording functionality
-  - ✅ Create production order details views
+- [ ] **Production Dashboard Improvements:**
+  - [ ] Create modular production metrics cards:
+    - [ ] Path: `frontend/src/components/production/dashboard/metrics`
+    - [ ] Create separate components for each metric (under 100 lines)
+  - [ ] Implement production efficiency tracking:
+    - [ ] Create components for visualizing efficiency data
+    - [ ] Extract calculation logic to dedicated hooks
 
-### Production Management Enhancements - Status: 🔄 IN PROGRESS
-
-- [x] Add advanced production management features
-  - [x] Implement search and filtering for production orders
-  - [x] Create production statistics and metrics dashboard
-  - [x] Implement production reports with export options
-  - [x] Add batch production tracking
-  - [x] Implement quality control checkpoints
-  - [x] Create notifications for completed production orders
-- [x] Implement export of production reports to PDF/Excel (frontend)
-- [x] Add quality control checkpoints to production recording workflow (backend & frontend)
-- [x] Implement notifications for completed production orders (backend & frontend)
-- [x] Add batch production tracking UI and reporting (frontend)
-- [x] Add advanced filtering for production orders (by employee, BOM, date range) (frontend)
-- [x] Add e2e and unit tests for production management features (backend & frontend)
-- [x] Improve documentation for production API endpoints and frontend features
-
-#### Discovered During Work
-
-- [ ] (Add any new sub-tasks here as discovered)
+- [ ] **Production Report System:**
+  - [ ] Create PDF export functionality:
+    - [ ] Path: `frontend/src/services/reports/production-report-service.ts`
+    - [ ] Path: `frontend/src/components/production/reports/production-report.tsx`
+  - [ ] Implement advanced filtering options:
+    - [ ] Extract filter logic to custom hook
+    - [ ] Create reusable filter components
 
 ## 📑 Bill of Materials (BOM) Module
 
-### Core BOM Management - Status: ✅ COMPLETED
+### BOM Enhancement Features - Status: 🔄 PLANNED
 
-- ✅ Implement basic BOM functionality
-  - ✅ Create BOM types and database models
-  - ✅ Implement BOM API services
-  - ✅ Create basic BOM management interface
-  - ✅ Implement material requirements functionality
+- [ ] **BOM Management Improvements:**
+  - [ ] Refactor BOM components into smaller, focused components:
+    - [ ] Path: `frontend/src/components/bom/editor/bom-editor.tsx`
+    - [ ] Path: `frontend/src/components/bom/editor/bom-item-form.tsx`
+    - [ ] Path: `frontend/src/components/bom/viewer/bom-details.tsx`
+  - [ ] Extract business logic to custom hooks:
+    - [ ] Path: `frontend/src/hooks/domain/useBomManagement.ts`
+    - [ ] Path: `frontend/src/hooks/domain/useBomCalculations.ts`
 
-### BOM Enhancements - Status: 🔄 PLANNED
-
-- [ ] Enhance BOM management system
-  - [ ] Improve BOM component UI/UX
-  - [ ] Add comprehensive material requirements calculation
-  - [ ] Implement advanced cost calculation view
-  - [ ] Support packaging (emballage) as a BOM item
-  - [ ] Create BOM version control and history
-  - [ ] Implement BOM comparison features
-- [ ] Implement advanced product costing
-  - [ ] Calculate material costs based on inventory valuation
-  - [ ] Include packaging costs in product calculations
-  - [ ] Create flexible employee cost allocation options
-  - [ ] Track overhead and fixed cost allocation
-  - [ ] Generate cost breakdown analytics
+- [ ] **Cost Calculation System:**
+  - [ ] Implement advanced cost calculation components:
+    - [ ] Material cost component
+    - [ ] Labor cost component
+    - [ ] Packaging cost component
+    - [ ] Overhead allocation component
+  - [ ] Create unified cost breakdown view:
+    - [ ] Path: `frontend/src/components/bom/costs/cost-breakdown.tsx`
+    - [ ] Extract calculation logic to utility functions
 
 ## 👨‍💼 Employee Management Module
 
-### Core Employee Management - Status: ✅ COMPLETED
+### Employee Enhancement Features - Status: 🔄 PLANNED
 
-- ✅ Implement basic employee management
-  - ✅ Create employee database models and types
-  - ✅ Implement employee management API services
-  - ✅ Create employee profiles and management interface
-  - ✅ Implement basic attendance tracking
-  - ✅ Create simple employee scheduling system
+- [ ] **Employee Profile System:**
+  - [ ] Refactor employee components into smaller, focused components:
+    - [ ] Path: `frontend/src/components/employee/profile/employee-profile.tsx`
+    - [ ] Path: `frontend/src/components/employee/profile/employee-edit-form.tsx`
+    - [ ] Extract shared logic to hooks:
+      - [ ] Path: `frontend/src/hooks/domain/useEmployeeProfile.ts`
 
-### Employee Management Enhancements - Status: 🔄 PLANNED
+- [ ] **Attendance Tracking System:**
+  - [ ] Create modular attendance components:
+    - [ ] Path: `frontend/src/components/employee/attendance/attendance-record.tsx`
+    - [ ] Path: `frontend/src/components/employee/attendance/attendance-report.tsx`
+    - [ ] Path: `frontend/src/components/employee/attendance/attendance-summary.tsx`
+  - [ ] Extract business logic to dedicated hooks:
+    - [ ] Path: `frontend/src/hooks/domain/useAttendanceTracking.ts`
+    - [ ] Path: `frontend/src/hooks/domain/useAttendanceReporting.ts`
 
-- [ ] Enhance employee management system
-  - [ ] Add employee roles and skill sets
-  - [ ] Track daily employee assignments to different products
-  - [ ] Implement comprehensive scheduling system
-  - [ ] Create employee performance metrics
-- [ ] Implement salary and bonus management
-  - [ ] Create base salary configuration for roles
-  - [ ] Implement timesheet tracking and validation
-  - [ ] Develop performance-based bonus calculation
-  - [ ] Create payroll and performance reporting
+- [ ] **Performance Management System:**
+  - [ ] Create performance tracking components:
+    - [ ] Path: `frontend/src/components/employee/performance/performance-metrics.tsx`
+    - [ ] Path: `frontend/src/components/employee/performance/productivity-chart.tsx`
+  - [ ] Create KPI dashboard:
+    - [ ] Path: `frontend/src/components/employee/dashboard/employee-dashboard.tsx`
+    - [ ] Each metric card should be under 100 lines
+
+- [ ] **Salary and Bonus Management:**
+  - [ ] Implement salary configuration components:
+    - [ ] Path: `frontend/src/components/employee/salary/salary-config.tsx`
+    - [ ] Path: `frontend/src/components/employee/salary/role-salary-matrix.tsx`
+  - [ ] Create bonus calculation system:
+    - [ ] Path: `frontend/src/components/employee/bonus/bonus-calculator.tsx`
+    - [ ] Path: `frontend/src/hooks/domain/useBonusCalculation.ts`
+  - [ ] Implement payroll reporting:
+    - [ ] Path: `frontend/src/components/employee/reports/payroll-report.tsx`
+    - [ ] Path: `frontend/src/services/reports/payroll-report-service.ts`
 
 ## 💰 Sales Management Module
 
-### Core Sales Management - Status: ✅ PARTIALLY COMPLETED
+### Sales Enhancement Features - Status: 🔄 PLANNED
 
-- ✅ Implement basic sales recording
-  - ✅ Create sales database models and types
-  - ✅ Implement sales API services
-  - ✅ Create sales list and form components
-  - ✅ Implement CRUD operations for sales
-  - ✅ Add basic sales reporting endpoints
+- [ ] **Core Sales System Refactoring:**
+  - [ ] Create modular sales components:
+    - [ ] Path: `frontend/src/components/sales/core/sales-form.tsx`
+    - [ ] Path: `frontend/src/components/sales/core/sales-list.tsx`
+    - [ ] Path: `frontend/src/components/sales/core/sales-details.tsx`
+  - [ ] Extract business logic to dedicated hooks:
+    - [ ] Path: `frontend/src/hooks/domain/useSalesManagement.ts`
+    - [ ] Path: `frontend/src/hooks/domain/useSalesReporting.ts`
 
-### Sales Management Enhancements - Status: 🔄 PLANNED
+- [ ] **Door-to-Door Sales System:**
+  - [ ] Create mobile-optimized sales interface:
+    - [ ] Path: `frontend/src/components/sales/mobile/mobile-sales-form.tsx`
+    - [ ] Path: `frontend/src/components/sales/mobile/daily-reconciliation.tsx`
+  - [ ] Implement offline capabilities:
+    - [ ] Path: `frontend/src/hooks/api/useOfflineSalesSync.ts`
+    - [ ] Path: `frontend/src/services/offline-storage-service.ts`
+  - [ ] Create sales team dashboard:
+    - [ ] Path: `frontend/src/components/sales/dashboard/sales-team-dashboard.tsx`
+    - [ ] Path: `frontend/src/components/sales/dashboard/salesperson-performance.tsx`
 
-- [ ] Implement door-to-door sales workflow
-  - [ ] Create mobile-friendly interface for door-to-door salespeople
-  - [ ] Implement end-of-day sales reconciliation
-  - [ ] Add offline mode for areas with poor connectivity
-  - [ ] Create sales team dashboard with performance metrics
-- [ ] Implement business client order management
-  - [ ] Create specialized order form for business clients
-  - [ ] Implement recurring order functionality
-  - [ ] Add business customer management
-  - [ ] Create business customer invoicing with payment tracking
-- [ ] Implement invoice generation
-  - [ ] Create invoice template system
-  - [ ] Implement invoice generation UI and logic
-  - [ ] Add invoice export options (PDF/Excel)
+- [ ] **Business Client Order System:**
+  - [ ] Implement business client order components:
+    - [ ] Path: `frontend/src/components/sales/business/business-order-form.tsx`
+    - [ ] Path: `frontend/src/components/sales/business/recurring-order-config.tsx`
+  - [ ] Create customer management interface:
+    - [ ] Path: `frontend/src/components/sales/customers/customer-list.tsx`
+    - [ ] Path: `frontend/src/components/sales/customers/customer-details.tsx`
+  - [ ] Implement invoicing system:
+    - [ ] Path: `frontend/src/components/sales/invoicing/invoice-generator.tsx`
+    - [ ] Path: `frontend/src/components/sales/invoicing/invoice-list.tsx`
+    - [ ] Path: `frontend/src/components/sales/invoicing/invoice-details.tsx`
+    - [ ] Path: `frontend/src/services/reports/invoice-service.ts`
+
+- [ ] **Sales Reporting System:**
+  - [ ] Create advanced sales report components:
+    - [ ] Path: `frontend/src/components/sales/reports/sales-summary-report.tsx`
+    - [ ] Path: `frontend/src/components/sales/reports/product-sales-report.tsx`
+  - [ ] Implement export functionality:
+    - [ ] Path: `frontend/src/services/reports/sales-report-service.ts`
+    - [ ] Support PDF and Excel exports
 
 ## 🛒 Purchase Management Module
 
-### Purchase Management - Status: 📝 PLANNED
+### Purchase Management Features - Status: 🔄 PLANNED
 
-- [ ] **Purchase Module Development (Backend)**
+- [ ] **Purchase Core System:**
+  - [ ] Create modular backend services:
+    - [ ] Path: `backend/src/purchase/services/purchase-order.service.ts`
+    - [ ] Path: `backend/src/purchase/services/supplier.service.ts`
+    - [ ] Path: `backend/src/purchase/controllers/purchase-order.controller.ts`
+    - [ ] Path: `backend/src/purchase/controllers/supplier.controller.ts`
+  - [ ] Implement purchase DTOs and entities:
+    - [ ] Path: `backend/src/purchase/dto/create-purchase-order.dto.ts`
+    - [ ] Path: `backend/src/purchase/dto/update-purchase-order.dto.ts`
+    - [ ] Path: `backend/src/purchase/entities/purchase-order.entity.ts`
+    - [ ] Path: `backend/src/purchase/entities/purchase-order-item.entity.ts`
+    - [ ] Path: `backend/src/purchase/entities/supplier.entity.ts`
+  
+- [ ] **Supplier Management System:**
+  - [ ] Create frontend supplier components:
+    - [ ] Path: `frontend/src/components/purchase/suppliers/supplier-list.tsx`
+    - [ ] Path: `frontend/src/components/purchase/suppliers/supplier-form.tsx`
+    - [ ] Path: `frontend/src/components/purchase/suppliers/supplier-details.tsx`
+  - [ ] Extract business logic to hooks:
+    - [ ] Path: `frontend/src/hooks/domain/useSupplierManagement.ts`
 
-  - [ ] Create purchase database models and types (Supplier, PurchaseOrder, PurchaseOrderItem)
-  - [ ] Implement purchase API services (PurchaseService, SupplierService)
-  - [ ] Develop endpoints for supplier management
+- [ ] **Purchase Order System:**
+  - [ ] Create frontend purchase order components:
+    - [ ] Path: `frontend/src/components/purchase/orders/purchase-order-list.tsx`
+    - [ ] Path: `frontend/src/components/purchase/orders/purchase-order-form.tsx`
+    - [ ] Path: `frontend/src/components/purchase/orders/purchase-order-details.tsx`
+  - [ ] Implement purchase item components:
+    - [ ] Path: `frontend/src/components/purchase/items/purchase-item-form.tsx`
+    - [ ] Path: `frontend/src/components/purchase/items/purchase-item-list.tsx`
+  - [ ] Create order workflow:
+    - [ ] Path: `frontend/src/components/purchase/workflow/purchase-approval.tsx`
+    - [ ] Path: `frontend/src/components/purchase/workflow/purchase-receipt.tsx`
+  - [ ] Extract business logic to hooks:
+    - [ ] Path: `frontend/src/hooks/domain/usePurchaseOrder.ts`
+    - [ ] Path: `frontend/src/hooks/domain/usePurchaseWorkflow.ts`
   - [ ] Create purchase order creation and tracking endpoints
   - [ ] Implement purchase receipt functionality with stock updates
   - [ ] Add automatic cost calculation for raw materials
   - [ ] Create purchase reporting and analytics endpoints
   - [ ] Build integration with Stock module for inventory updates
-  - [ ] Add validation for purchase orders based on stock needs
   - [ ] Write unit and integration tests for purchase endpoints
 
 - [ ] **Purchase Module Development (Frontend)**

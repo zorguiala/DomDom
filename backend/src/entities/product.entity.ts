@@ -1,8 +1,7 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { BOMItem } from './bom-item.entity';
-import { InventoryTransaction } from './inventory-transaction.entity';
-import { StockTransaction } from './stock-transaction.entity';
+// Import removed during refactoring: import { InventoryTransaction } from './inventory-transaction.entity';
 
 @Entity('products')
 export class Product extends BaseEntity {
@@ -45,12 +44,44 @@ export class Product extends BaseEntity {
   @Column('decimal', { precision: 10, scale: 2, nullable: true })
   lastPurchasePrice: number;
 
+  // Profitability metrics
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  profitMargin: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  averageSalesPerDay: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  totalSalesQuantity: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  totalSalesValue: number;
+
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  stockValue: number;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  lastSoldAt: Date;
+
   @OneToMany(() => BOMItem, (bomItem) => bomItem.product)
   bomItems: BOMItem[];
 
+  /* Temporarily disabled during refactoring to StockItem
   @OneToMany(() => InventoryTransaction, (transaction) => transaction.product)
   inventoryTransactions: InventoryTransaction[];
+  */
 
-  @OneToMany(() => StockTransaction, (stockTransaction) => stockTransaction.product)
-  stockTransactions: StockTransaction[];
+  // Reference to the corresponding StockItem - temporarily commented out during refactoring
+  @Column({ nullable: true })
+  stockItemId: string;
+  
+  /* Temporarily disabled during refactoring to StockItem to avoid circular references
+  @ManyToOne('StockItem', { nullable: true })
+  @JoinColumn({ name: 'stockItemId' })
+  stockItem: any;
+  */
+  
+  // Category for the product
+  @Column({ nullable: true })
+  categoryId: string;
 }

@@ -20,9 +20,10 @@ export class InventoryTransaction extends BaseEntity {
   @Column()
   productId: string;
 
-  @ManyToOne(() => Product, (product) => product.inventoryTransactions)
+  // Using string literal to avoid circular dependency during refactoring
+  @ManyToOne('Product')
   @JoinColumn({ name: 'productId' })
-  product: Product;
+  product: any;
 
   @Column('enum', { enum: TransactionType })
   type: TransactionType;

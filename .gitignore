@@ -4,6 +4,8 @@ node_modules/
 .trae
 .windsurfrules
 .github\copilot-instructions.md
+.junie
+.idea
 
 # Build outputs
 dist/

@@ -2,12 +2,12 @@ import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { User } from './src/entities/user.entity';
 import { Product } from './src/entities/product.entity';
+import { StockItem } from './src/entities/stock-item.entity';
 import { BOM } from './src/entities/bom.entity';
 import { BOMItem } from './src/entities/bom-item.entity';
-import { InventoryTransaction } from './src/entities/inventory-transaction.entity';
-import { InventoryBatch } from './src/entities/inventory-batch.entity';
-import { InventoryWastage } from './src/entities/inventory-wastage.entity';
-import { InventoryCount, InventoryCountItem } from './src/entities/inventory-count.entity';
+import { StockTransaction } from './src/entities/stock-transaction.entity';
+import { StockCount, StockCountItem } from './src/entities/stock-count.entity';
+import { StockWastage } from './src/entities/stock-wastage.entity';
 import { Employee } from './src/entities/employee.entity';
 import { EmployeeAttendance } from './src/entities/employee-attendance.entity';
 import { EmployeeSchedule } from './src/entities/employee-schedule.entity';
@@ -32,13 +32,13 @@ export default new DataSource({
   entities: [
     User,
     Product,
-    InventoryBatch,
-    InventoryWastage,
-    InventoryCount,
-    InventoryCountItem,
+    StockItem,
+    StockWastage,
+    StockCount,
+    StockCountItem,
     BOM,
     BOMItem,
-    InventoryTransaction,
+    StockTransaction,
     Employee,
     EmployeeAttendance,
     EmployeeSchedule,

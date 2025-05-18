@@ -83,7 +83,7 @@ React application with component-based architecture and Ant Design for UI:
 - **Files**:
   - Frontend: kebab-case for components (`production-order-list.tsx`)
   - Backend: camelCase for files (`productionOrder.service.ts`)
-- **Components**: PascalCase (`ProductionOrderList`)
+- **Components**: PascalCase (`ProductionOrderList/ProductionOrderList.tsx`)
 - **Functions**: camelCase (`getProductionOrders`)
 - **Variables**: camelCase (`productionOrder`)
 - **Types/Interfaces**: PascalCase (`ProductionOrder`)

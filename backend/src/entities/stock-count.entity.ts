@@ -1,14 +1,8 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
-import { Product } from './product.entity';
-
-export enum StockCountStatus {
-  DRAFT = 'draft',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  RECONCILED = 'reconciled',
-}
+import { StockItem } from './stock-item.entity';
+import { StockCountStatus } from '../stock/types/stock.types';
 
 @Entity('stock_counts')
 export class StockCount extends BaseEntity {
@@ -52,11 +46,11 @@ export class StockCountItem extends BaseEntity {
   stockCount: StockCount;
 
   @Column()
-  productId: string;
+  stockItemId: string;
 
-  @ManyToOne(() => Product)
-  @JoinColumn({ name: 'productId' })
-  product: Product;
+  @ManyToOne(() => StockItem)
+  @JoinColumn({ name: 'stockItemId' })
+  stockItem: StockItem;
 
   @Column('decimal', { precision: 10, scale: 2 })
   expectedQuantity: number;
