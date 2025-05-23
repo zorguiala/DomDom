@@ -4,23 +4,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Product } from '../../entities/product.entity';
-import { StockTransaction, StockTransactionType } from '../../entities/stock-transaction.entity';
+import { StockItem } from '../../entities/stock-item.entity';
+import { StockTransaction } from '../../entities/stock-transaction.entity';
+import { StockTransactionType } from '../types/stock.types';
 
 @Injectable()
 export class StockService {
   constructor(
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    @InjectRepository(StockItem)
+    private stockItemRepository: Repository<StockItem>,
     @InjectRepository(StockTransaction)
     private stockTransactionRepository: Repository<StockTransaction>
   ) {}
 
   /**
-   * Get all products with current stock information
+   * Get all stock items with current stock information
    */
   async getAllStock() {
-    return this.productRepository.find({
+    return this.stockItemRepository.find({
       order: {
         name: 'ASC',
       },
@@ -28,13 +29,13 @@ export class StockService {
   }
 
   /**
-   * Get products with low stock (below minimum threshold)
+   * Get stock items with low stock (below minimum threshold)
    */
   async getLowStockItems() {
-    return this.productRepository
-      .createQueryBuilder('product')
-      .where('product.currentStock <= product.minimumStock')
-      .andWhere('product.isActive = :isActive', { isActive: true })
+    return this.stockItemRepository
+      .createQueryBuilder('stockItem')
+      .where('stockItem.currentQuantity <= stockItem.minimumQuantity')
+      .andWhere('stockItem.isActive = :isActive', { isActive: true })
       .getMany();
   }
 
@@ -42,9 +43,9 @@ export class StockService {
    * Calculate total stock value based on current stock and cost prices
    */
   async calculateTotalStockValue() {
-    const result = await this.productRepository
-      .createQueryBuilder('product')
-      .select('SUM(product.currentStock * product.costPrice)', 'totalValue')
+    const result = await this.stockItemRepository
+      .createQueryBuilder('stockItem')
+      .select('SUM(stockItem.currentQuantity * stockItem.costPrice)', 'totalValue')
       .getRawOne();
     const totalValue =
       typeof result?.totalValue === 'number' ? result.totalValue : Number(result?.totalValue) || 0;
@@ -52,28 +53,28 @@ export class StockService {
   }
 
   /**
-   * Get most profitable products based on margin
+   * Get most profitable stock items based on margin
    */
   async getMostProfitableProducts(limit = 10) {
-    return this.productRepository
-      .createQueryBuilder('product')
-      .where('product.currentStock > 0')
-      .andWhere('product.isActive = :isActive', { isActive: true })
-      .orderBy('(product.price - product.costPrice) / product.costPrice', 'DESC')
+    return this.stockItemRepository
+      .createQueryBuilder('stockItem')
+      .where('stockItem.currentQuantity > 0')
+      .andWhere('stockItem.isActive = :isActive', { isActive: true })
+      .orderBy('(stockItem.sellingPrice - stockItem.costPrice) / stockItem.costPrice', 'DESC')
       .limit(limit)
       .getMany();
   }
 
   /**
-   * Get top selling products by quantity
+   * Get top selling stock items by quantity
    */
   async getTopSellingProducts(limit = 10, dateRange?: { startDate: Date; endDate: Date }) {
     let query = this.stockTransactionRepository
       .createQueryBuilder('transaction')
-      .select('transaction.productId')
+      .select('transaction.stockItemId')
       .addSelect('SUM(transaction.quantity)', 'totalSold')
       .where('transaction.type = :type', { type: StockTransactionType.SALE })
-      .groupBy('transaction.productId')
+      .groupBy('transaction.stockItemId')
       .orderBy('totalSold', 'DESC')
       .limit(limit);
 
@@ -90,83 +91,79 @@ export class StockService {
       return [];
     }
 
-    const productIds = Array.isArray(topSellingIds)
-      ? topSellingIds.map((item: any) => item.productId)
+    const stockItemIds = Array.isArray(topSellingIds)
+      ? topSellingIds.map((item: any) => item.stockItemId)
       : [];
 
-    return this.productRepository
-      .createQueryBuilder('product')
-      .where('product.id IN (:...ids)', { ids: productIds })
+    return this.stockItemRepository
+      .createQueryBuilder('stockItem')
+      .where('stockItem.id IN (:...ids)', { ids: stockItemIds })
       .getMany();
   }
 
   /**
-   * Update product stock levels based on a transaction
+   * Update stock item levels based on a transaction
    */
-  async updateStockLevels(productId: string, quantity: number, type: StockTransactionType) {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+  async updateStockLevels(stockItemId: string, quantity: number, type: StockTransactionType) {
+    const stockItem = await this.stockItemRepository.findOne({ where: { id: stockItemId } });
 
-    if (!product) {
-      throw new Error(`Product with ID ${productId} not found`);
+    if (!stockItem) {
+      throw new Error(`Stock item with ID ${stockItemId} not found`);
     }
 
-    let updatedStock = product.currentStock;
+    let updatedQuantity = stockItem.currentQuantity;
 
     switch (type) {
       case StockTransactionType.PURCHASE:
       case StockTransactionType.PRODUCTION_IN:
       case StockTransactionType.ADJUSTMENT:
-        updatedStock += quantity;
+        updatedQuantity += quantity;
         break;
       case StockTransactionType.SALE:
       case StockTransactionType.PRODUCTION_OUT:
-        updatedStock -= quantity;
+        updatedQuantity -= quantity;
         break;
     }
 
-    // Update product stock level
-    await this.productRepository.update(productId, {
-      currentStock: updatedStock,
-      // If you add metrics fields to Product entity, add them here
+    // Update stock item level
+    await this.stockItemRepository.update(stockItemId, {
+      currentQuantity: updatedQuantity,
     });
 
-    return this.productRepository.findOne({ where: { id: productId } });
+    return this.stockItemRepository.findOne({ where: { id: stockItemId } });
   }
 
   /**
-   * Calculate and update product metrics (profitability, stock value)
+   * Calculate and update stock item metrics (profitability, stock value)
    */
-  async updateProductMetrics(productId: string) {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+  async updateStockItemMetrics(stockItemId: string) {
+    const stockItem = await this.stockItemRepository.findOne({ where: { id: stockItemId } });
 
-    if (!product) {
-      throw new Error(`Product with ID ${productId} not found`);
+    if (!stockItem) {
+      throw new Error(`Stock item with ID ${stockItemId} not found`);
     }
 
     // Calculate profit margin
     const profitMargin =
-      product.costPrice > 0 ? ((product.price - product.costPrice) / product.costPrice) * 100 : 0;
+      stockItem.costPrice > 0 ? ((stockItem.sellingPrice - stockItem.costPrice) / stockItem.costPrice) * 100 : 0;
 
     // Calculate total value in stock
-    const totalValueInStock = product.currentStock * product.costPrice;
+    const totalValueInStock = stockItem.currentQuantity * stockItem.costPrice;
 
-    // Update product metrics
-    // If you add metrics fields to Product entity, add them here
-    await this.productRepository.update(productId, {
-      // profitMargin,
-      // totalValueInStock,
-    });
+    // These metric fields would need to be added to the StockItem entity
+    // For now we'll just log these metrics instead of updating the entity
+    console.log(`Stock Item ${stockItemId} metrics:`, { profitMargin, totalValueInStock });
 
-    return this.productRepository.findOne({ where: { id: productId } });
+    return this.stockItemRepository.findOne({ where: { id: stockItemId } });
   }
 
   /**
-   * Get stock movement history for a product
+   * Get stock movement history for a stock item
    */
-  async getStockMovementHistory(productId: string, dateRange?: { startDate: Date; endDate: Date }) {
+  async getStockMovementHistory(stockItemId: string, dateRange?: { startDate: Date; endDate: Date }) {
     let query = this.stockTransactionRepository
       .createQueryBuilder('transaction')
-      .where('transaction.productId = :productId', { productId })
+      .where('transaction.stockItemId = :stockItemId', { stockItemId })
       .orderBy('transaction.createdAt', 'DESC');
 
     if (dateRange) {

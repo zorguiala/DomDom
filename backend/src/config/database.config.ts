@@ -20,6 +20,7 @@ import { ProductionOrder } from '../entities/production-order.entity';
 import { ProductionOrderItem } from '../entities/production-order-item.entity';
 import { EmployeeSchedule } from '../entities/employee-schedule.entity';
 import { StockTransaction } from '../entities/stock-transaction.entity';
+import { StockBatch } from '../entities/stock-batch.entity';
 
 config();
 
@@ -52,6 +53,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
     ProductionOrderItem,
     EmployeeSchedule,
     StockTransaction,
+    StockBatch,
   ],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',

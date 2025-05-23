@@ -12,7 +12,7 @@ interface CreateStockCountDto {
 }
 
 interface StockCountItemDto {
-  productId: string;
+  stockItemId: string;
   expectedQuantity: number;
   actualQuantity?: number;
   notes?: string;
@@ -56,7 +56,7 @@ export class StockCountController {
   @ApiResponse({ status: 200, description: 'Quantities recorded successfully' })
   async recordActualQuantities(
     @Param('id') stockCountId: string,
-    @Body() items: { productId: string; actualQuantity: number; notes?: string }[]
+    @Body() items: { stockItemId: string; actualQuantity: number; notes?: string }[]
   ) {
     return this.stockCountService.recordActualQuantities(stockCountId, items);
   }

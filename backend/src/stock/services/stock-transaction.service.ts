@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StockTransaction, StockTransactionType } from '../../entities/stock-transaction.entity';
-import { Product } from '../../entities/product.entity';
+import { StockTransaction } from '../../entities/stock-transaction.entity';
+import { StockItem } from '../../entities/stock-item.entity';
 import { StockService } from './stock.service';
+import { StockTransactionType } from '../types/stock.types';
 
 interface CreateStockTransactionDto {
-  productId: string;
+  stockItemId: string;
   type: StockTransactionType;
   quantity: number;
   unitPrice: number;
@@ -22,8 +23,8 @@ export class StockTransactionService {
   constructor(
     @InjectRepository(StockTransaction)
     private stockTransactionRepository: Repository<StockTransaction>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    @InjectRepository(StockItem)
+    private stockItemRepository: Repository<StockItem>,
     private stockService: StockService
   ) {}
 
@@ -31,9 +32,9 @@ export class StockTransactionService {
    * Create a new stock transaction and update stock levels
    */
   async createTransaction(createDto: CreateStockTransactionDto) {
-    // Create the transaction
+    // Create the transaction with correct property mapping
     const transaction = this.stockTransactionRepository.create({
-      product: { id: createDto.productId },
+      stockItemId: createDto.stockItemId,
       type: createDto.type,
       quantity: createDto.quantity,
       unitPrice: createDto.unitPrice,
@@ -41,7 +42,6 @@ export class StockTransactionService {
       notes: createDto.notes,
       relatedEntityId: createDto.relatedEntityId,
       relatedEntityType: createDto.relatedEntityType,
-      createdBy: { id: createDto.createdById },
     });
 
     // Save the transaction
@@ -49,22 +49,22 @@ export class StockTransactionService {
 
     // Update stock levels
     await this.stockService.updateStockLevels(
-      createDto.productId,
+      createDto.stockItemId,
       createDto.quantity,
       createDto.type
     );
 
-    // Update product metrics
-    await this.stockService.updateProductMetrics(createDto.productId);
+    // Update stock item metrics
+    await this.stockService.updateStockItemMetrics(createDto.stockItemId);
 
     // If it's a purchase, update the last purchase price
     if (createDto.type === StockTransactionType.PURCHASE) {
-      await this.productRepository.update(createDto.productId, {
+      await this.stockItemRepository.update(createDto.stockItemId, {
         lastPurchasePrice: createDto.unitPrice,
       });
 
       // Update average cost price
-      await this.updateAverageCostPrice(createDto.productId);
+      await this.updateAverageCostPrice(createDto.stockItemId);
     }
 
     return savedTransaction;
@@ -78,6 +78,7 @@ export class StockTransactionService {
 
     for (const dto of createDtos) {
       const result = await this.createTransaction(dto);
+      // Add the transaction to our results array
       results.push(result);
     }
 
@@ -88,16 +89,16 @@ export class StockTransactionService {
    * Get all transactions with optional filtering
    */
   async getTransactions(filters?: {
-    productId?: string;
+    stockItemId?: string;
     type?: StockTransactionType;
     startDate?: Date;
     endDate?: Date;
   }) {
     let query = this.stockTransactionRepository.createQueryBuilder('transaction');
 
-    if (filters?.productId) {
-      query = query.andWhere('transaction.productId = :productId', {
-        productId: filters.productId,
+    if (filters?.stockItemId) {
+      query = query.andWhere('transaction.stockItemId = :stockItemId', {
+        stockItemId: filters.stockItemId,
       });
     }
 
@@ -123,26 +124,20 @@ export class StockTransactionService {
   }
 
   /**
-   * Update average cost price for a product based on purchase history
+   * Update average cost price for a stock item based on its transactions
    */
-  private async updateAverageCostPrice(productId: string) {
-    // Get all purchase transactions for this product
+  async updateAverageCostPrice(stockItemId: string) {
+    // Get all purchase transactions
     const purchases = await this.stockTransactionRepository.find({
       where: {
-        productId,
+        stockItemId,
         type: StockTransactionType.PURCHASE,
       },
-      order: {
-        createdAt: 'DESC',
-      },
-      take: 10, // Consider last 10 purchases for average
     });
 
-    if (purchases.length === 0) {
-      return;
-    }
+    if (!purchases.length) return;
 
-    // Calculate weighted average cost
+    // Calculate weighted average
     let totalCost = 0;
     let totalQuantity = 0;
 
@@ -151,12 +146,11 @@ export class StockTransactionService {
       totalQuantity += purchase.quantity;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const averageCostPrice = totalQuantity > 0 ? totalCost / totalQuantity : 0;
+    const averageCost = totalCost / totalQuantity;
 
-    // Update the product's average cost price
-    // await this.productRepository.update(productId, {
-    //   averageCostPrice,
-    // });
+    // Update the stock item with the new average cost
+    await this.stockItemRepository.update(stockItemId, {
+      averageCostPrice: averageCost,
+    });
   }
 }

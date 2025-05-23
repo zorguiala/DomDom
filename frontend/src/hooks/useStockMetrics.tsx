@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { stockApi, Product, StockMetrics } from "../services/stock-service";
+import { stockApi, StockMetrics, StockItem } from "../services/stock-service";
 
 interface UseStockMetricsResult {
   metrics: StockMetrics | null;
-  lowStockItems: Product[];
-  mostProfitableProducts: Product[];
-  topSellingProducts: Product[];
+  lowStockItems: StockItem[];
+  mostProfitableItems: StockItem[];
+  topSellingItems: StockItem[];
   loading: boolean;
   error: string | null;
   fetchMetrics: () => Promise<void>;
   fetchLowStockItems: () => Promise<void>;
-  fetchMostProfitableProducts: (limit?: number) => Promise<void>;
-  fetchTopSellingProducts: (
+  fetchMostProfitableItems: (limit?: number) => Promise<void>;
+  fetchTopSellingItems: (
     limit?: number,
     dateRange?: { start: string; end: string }
   ) => Promise<void>;
@@ -19,11 +19,11 @@ interface UseStockMetricsResult {
 
 export const useStockMetrics = (): UseStockMetricsResult => {
   const [metrics, setMetrics] = useState<StockMetrics | null>(null);
-  const [lowStockItems, setLowStockItems] = useState<Product[]>([]);
-  const [mostProfitableProducts, setMostProfitableProducts] = useState<
-    Product[]
+  const [lowStockItems, setLowStockItems] = useState<StockItem[]>([]);
+  const [mostProfitableItems, setMostProfitableItems] = useState<
+    StockItem[]
   >([]);
-  const [topSellingProducts, setTopSellingProducts] = useState<Product[]>([]);
+  const [topSellingItems, setTopSellingItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,32 +55,32 @@ export const useStockMetrics = (): UseStockMetricsResult => {
     }
   };
 
-  const fetchMostProfitableProducts = async (limit = 5) => {
+  const fetchMostProfitableItems = async (limit = 5) => {
     try {
       setLoading(true);
-      const data = await stockApi.getMostProfitableProducts(limit);
-      setMostProfitableProducts(data);
+      const data = await stockApi.getMostProfitableItems(limit);
+      setMostProfitableItems(data);
       setError(null);
     } catch (err) {
-      console.error("Error fetching most profitable products:", err);
-      setError("Failed to load most profitable products");
+      console.error("Error fetching most profitable items:", err);
+      setError("Failed to load most profitable items");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchTopSellingProducts = async (
+  const fetchTopSellingItems = async (
     limit = 5,
     dateRange?: { start: string; end: string }
   ) => {
     try {
       setLoading(true);
-      const data = await stockApi.getTopSellingProducts(limit, dateRange);
-      setTopSellingProducts(data);
+      const data = await stockApi.getTopSellingItems(limit, dateRange);
+      setTopSellingItems(data);
       setError(null);
     } catch (err) {
-      console.error("Error fetching top selling products:", err);
-      setError("Failed to load top selling products");
+      console.error("Error fetching top selling items:", err);
+      setError("Failed to load top selling items");
     } finally {
       setLoading(false);
     }
@@ -93,8 +93,8 @@ export const useStockMetrics = (): UseStockMetricsResult => {
         await Promise.all([
           fetchMetrics(),
           fetchLowStockItems(),
-          fetchMostProfitableProducts(),
-          fetchTopSellingProducts(),
+          fetchMostProfitableItems(),
+          fetchTopSellingItems()
         ]);
       } catch (err) {
         console.error("Error fetching initial stock metrics data:", err);
@@ -110,13 +110,13 @@ export const useStockMetrics = (): UseStockMetricsResult => {
   return {
     metrics,
     lowStockItems,
-    mostProfitableProducts,
-    topSellingProducts,
+    mostProfitableItems,
+    topSellingItems,
     loading,
     error,
     fetchMetrics,
     fetchLowStockItems,
-    fetchMostProfitableProducts,
-    fetchTopSellingProducts,
+    fetchMostProfitableItems,
+    fetchTopSellingItems,
   };
 };

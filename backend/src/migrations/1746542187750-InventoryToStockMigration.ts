@@ -11,6 +11,12 @@ export class InventoryToStockMigration1746542187750 implements MigrationInterfac
     // Rename inventory_count_items table to stock_count_items
     await queryRunner.query(`ALTER TABLE "inventory_count_items" RENAME TO "stock_count_items"`);
 
+    // Rename inventory_batches table to stock_batches
+    await queryRunner.query(`ALTER TABLE "inventory_batches" RENAME TO "stock_batches"`);
+
+    // Rename inventory_wastage table to stock_wastage
+    await queryRunner.query(`ALTER TABLE "inventory_wastage" RENAME TO "stock_wastage"`);
+
     // Add new columns to products table
     await queryRunner.query(
       `ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "average_cost_price" decimal(10,2) DEFAULT 0`
@@ -83,6 +89,8 @@ export class InventoryToStockMigration1746542187750 implements MigrationInterfac
     );
 
     // Rename tables back to original names
+    await queryRunner.query(`ALTER TABLE "stock_wastage" RENAME TO "inventory_wastage"`);
+    await queryRunner.query(`ALTER TABLE "stock_batches" RENAME TO "inventory_batches"`);
     await queryRunner.query(`ALTER TABLE "stock_count_items" RENAME TO "inventory_count_items"`);
     await queryRunner.query(`ALTER TABLE "stock_counts" RENAME TO "inventory_counts"`);
     await queryRunner.query(`ALTER TABLE "stock_transactions" RENAME TO "inventory_transactions"`);
