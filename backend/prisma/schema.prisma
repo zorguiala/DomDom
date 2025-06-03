@@ -1,0 +1,456 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User and Authentication
+model User {
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  name              String?
+  role              UserRole            @default(USER)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  sales             Sale[]
+  reminders         Reminder[]
+  documents         Document[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  USER
+  SALES
+  INVENTORY
+  PRODUCTION
+}
+
+// Products
+model Product {
+  id                String              @id @default(uuid())
+  name              String
+  description       String?
+  sku               String              @unique
+  category          String?
+  unit              String
+  price             Decimal             @db.Decimal(10, 2)
+  cost              Decimal             @db.Decimal(10, 2)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  isRawMaterial     Boolean             @default(false)
+  isFinishedGood    Boolean             @default(false)
+  minStockLevel     Decimal?            @db.Decimal(10, 2)
+  stockItems        StockItem[]
+  bomItems          BOMItem[]           // Where this product is used as a component
+  finalProductBoms  BOM[]               // Where this product is the final product
+  stockTransactions StockTransaction[]
+  stockCountItems   StockCountItem[]
+  stockWastages     StockWastage[]
+  saleItems         SaleItem[]
+  purchaseItems     PurchaseItem[]
+  productionOrderItems ProductionOrderItem[]
+}
+
+// Stock Management
+model StockItem {
+  id                String              @id @default(uuid())
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  location          String?
+  batchNumber       String?
+  expiryDate        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  stockTransactions StockTransaction[]
+}
+
+model StockTransaction {
+  id                String              @id @default(uuid())
+  stockItemId       String
+  stockItem         StockItem           @relation(fields: [stockItemId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  type              TransactionType
+  reference         String?             // Reference to related entity (sale, purchase, production)
+  referenceType     ReferenceType?
+  notes             String?
+  date              DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum TransactionType {
+  PURCHASE
+  SALE
+  PRODUCTION_IN
+  PRODUCTION_OUT
+  ADJUSTMENT
+  WASTAGE
+  TRANSFER
+}
+
+enum ReferenceType {
+  SALE
+  PURCHASE
+  PRODUCTION
+  STOCK_COUNT
+  WASTAGE
+  MANUAL
+}
+
+model StockCount {
+  id                String              @id @default(uuid())
+  date              DateTime            @default(now())
+  status            StockCountStatus    @default(DRAFT)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  items             StockCountItem[]
+}
+
+model StockCountItem {
+  id                String              @id @default(uuid())
+  stockCountId      String
+  stockCount        StockCount          @relation(fields: [stockCountId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  expectedQuantity  Decimal             @db.Decimal(10, 2)
+  actualQuantity    Decimal             @db.Decimal(10, 2)
+  difference        Decimal             @db.Decimal(10, 2)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum StockCountStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model StockWastage {
+  id                String              @id @default(uuid())
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  reason            String?
+  date              DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+// Bill of Materials (BOM)
+model BOM {
+  id                String              @id @default(uuid())
+  name              String
+  description       String?
+  finalProductId    String
+  finalProduct      Product             @relation(fields: [finalProductId], references: [id])
+  items             BOMItem[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  productionOrders  ProductionOrder[]
+}
+
+model BOMItem {
+  id                String              @id @default(uuid())
+  bomId             String
+  bom               BOM                 @relation(fields: [bomId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  unit              String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+// Production
+model ProductionOrder {
+  id                String              @id @default(uuid())
+  bomId             String
+  bom               BOM                 @relation(fields: [bomId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  status            ProductionStatus    @default(PLANNED)
+  startDate         DateTime?
+  endDate           DateTime?
+  notes             String?
+  items             ProductionOrderItem[]
+  records           ProductionRecord[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model ProductionOrderItem {
+  id                String              @id @default(uuid())
+  productionOrderId String
+  productionOrder   ProductionOrder     @relation(fields: [productionOrderId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  plannedQuantity   Decimal             @db.Decimal(10, 2)
+  actualQuantity    Decimal?            @db.Decimal(10, 2)
+  unit              String
+  isOutput          Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model ProductionRecord {
+  id                String              @id @default(uuid())
+  productionOrderId String
+  productionOrder   ProductionOrder     @relation(fields: [productionOrderId], references: [id])
+  employeeId        String?
+  employee          Employee?           @relation(fields: [employeeId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  date              DateTime            @default(now())
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum ProductionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// Sales
+model Sale {
+  id                String              @id @default(uuid())
+  customerName      String?
+  customerContact   String?
+  saleType          SaleType            @default(STANDARD)
+  status            SaleStatus          @default(DRAFT)
+  date              DateTime            @default(now())
+  totalAmount       Decimal             @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus       @default(PENDING)
+  paymentMethod     PaymentMethod?
+  notes             String?
+  userId            String?
+  user              User?               @relation(fields: [userId], references: [id])
+  items             SaleItem[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model SaleItem {
+  id                String              @id @default(uuid())
+  saleId            String
+  sale              Sale                @relation(fields: [saleId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  price             Decimal             @db.Decimal(10, 2)
+  discount          Decimal?            @db.Decimal(10, 2)
+  total             Decimal             @db.Decimal(10, 2)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum SaleType {
+  STANDARD
+  DOOR_TO_DOOR
+  WHOLESALE
+  ONLINE
+}
+
+enum SaleStatus {
+  DRAFT
+  CONFIRMED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  BANK_TRANSFER
+  CHECK
+  MOBILE_PAYMENT
+  OTHER
+}
+
+// Purchases
+model Purchase {
+  id                String              @id @default(uuid())
+  supplierName      String
+  supplierContact   String?
+  referenceNumber   String?
+  date              DateTime            @default(now())
+  status            PurchaseStatus      @default(DRAFT)
+  totalAmount       Decimal             @db.Decimal(10, 2)
+  paymentStatus     PaymentStatus       @default(PENDING)
+  paymentMethod     PaymentMethod?
+  notes             String?
+  items             PurchaseItem[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model PurchaseItem {
+  id                String              @id @default(uuid())
+  purchaseId        String
+  purchase          Purchase            @relation(fields: [purchaseId], references: [id])
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id])
+  quantity          Decimal             @db.Decimal(10, 2)
+  price             Decimal             @db.Decimal(10, 2)
+  receivedQuantity  Decimal?            @db.Decimal(10, 2)
+  total             Decimal             @db.Decimal(10, 2)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum PurchaseStatus {
+  DRAFT
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+// Employees
+model Employee {
+  id                String              @id @default(uuid())
+  name              String
+  position          String?
+  department        String?
+  contactInfo       String?
+  salary            Decimal?            @db.Decimal(10, 2)
+  hireDate          DateTime?
+  status            EmployeeStatus      @default(ACTIVE)
+  attendance        EmployeeAttendance[]
+  schedules         EmployeeSchedule[]
+  productionRecords ProductionRecord[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model EmployeeAttendance {
+  id                String              @id @default(uuid())
+  employeeId        String
+  employee          Employee            @relation(fields: [employeeId], references: [id])
+  date              DateTime            @default(now())
+  checkIn           DateTime?
+  checkOut          DateTime?
+  status            AttendanceStatus    @default(PRESENT)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model EmployeeSchedule {
+  id                String              @id @default(uuid())
+  employeeId        String
+  employee          Employee            @relation(fields: [employeeId], references: [id])
+  startDate         DateTime
+  endDate           DateTime
+  shift             String?
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+  SUSPENDED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
+// Expenses
+model Expense {
+  id                String              @id @default(uuid())
+  category          String
+  amount            Decimal             @db.Decimal(10, 2)
+  date              DateTime            @default(now())
+  description       String?
+  paymentMethod     PaymentMethod?
+  reference         String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+// Reminders & Notifications
+model Reminder {
+  id                String              @id @default(uuid())
+  title             String
+  description       String?
+  dueDate           DateTime
+  status            ReminderStatus      @default(PENDING)
+  priority          ReminderPriority    @default(MEDIUM)
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum ReminderStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum ReminderPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// Documents
+model Document {
+  id                String              @id @default(uuid())
+  title             String
+  documentType      DocumentType
+  content           String?             // Could be JSON or file path
+  userId            String
+  user              User                @relation(fields: [userId], references: [id])
+  templateId        String?
+  template          DocumentTemplate?   @relation(fields: [templateId], references: [id])
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model DocumentTemplate {
+  id                String              @id @default(uuid())
+  name              String
+  documentType      DocumentType
+  template          String              // Template content (HTML, JSON, etc.)
+  documents         Document[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+enum DocumentType {
+  INVOICE
+  RECEIPT
+  REPORT
+  CONTRACT
+  OTHER
+}

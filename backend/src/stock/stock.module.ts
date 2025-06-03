@@ -1,52 +1,22 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Product } from '../entities/product.entity';
-import { StockTransaction } from '../entities/stock-transaction.entity';
-import { StockCount, StockCountItem } from '../entities/stock-count.entity';
-import { StockBatch } from '../entities/stock-batch.entity';
-import { StockWastage } from '../entities/stock-wastage.entity';
+import { StockService } from './stock.service';
 import { StockController } from './stock.controller';
-import { StockTransactionController } from './stock-transaction.controller';
-import { StockCountController } from './stock-count.controller';
 import { StockBatchController } from './stock-batch.controller';
+import { StockCountController } from './stock-count.controller';
+import { StockTransactionController } from './stock-transaction.controller';
 import { StockWastageController } from './stock-wastage.controller';
-import { StockService } from './services/stock.service';
-import { StockTransactionService } from './services/stock-transaction.service';
-import { StockCountService } from './services/stock-count.service';
-import { StockBatchService } from './services/stock-batch.service';
-import { StockWastageService } from './services/stock-wastage.service';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      Product, 
-      StockTransaction, 
-      StockCount, 
-      StockCountItem,
-      StockBatch,
-      StockWastage
-    ])
-  ],
+  imports: [PrismaModule],
   controllers: [
-    StockController, 
-    StockTransactionController, 
-    StockCountController,
+    StockController,
     StockBatchController,
-    StockWastageController
+    StockCountController,
+    StockTransactionController,
+    StockWastageController,
   ],
-  providers: [
-    StockService, 
-    StockTransactionService, 
-    StockCountService,
-    StockBatchService,
-    StockWastageService
-  ],
-  exports: [
-    StockService, 
-    StockTransactionService, 
-    StockCountService,
-    StockBatchService,
-    StockWastageService
-  ],
+  providers: [StockService],
+  exports: [StockService],
 })
 export class StockModule {}

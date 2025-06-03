@@ -1,41 +1,43 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { InventoryModule } from './inventory/inventory.module';
+import { UsersModule } from './users/users.module';
 import { ProductsModule } from './products/products.module';
-import { BOMModule } from './bom/bom.module';
+import { BomModule } from './bom/bom.module';
 import { ProductionModule } from './production/production.module';
 import { SalesModule } from './sales/sales.module';
+import { EmployeesModule } from './employees/employees.module';
 import { DocumentsModule } from './documents/documents.module';
 import { RemindersModule } from './reminders/reminders.module';
-import { UsersModule } from './users/users.module';
-import { EmployeesModule } from './employees/employees.module';
-import { User } from './entities/user.entity';
-import { databaseConfig } from './config/database.config';
-import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
+import { PrismaModule } from './prisma/prisma.module';
+import { StockModule } from './stock/stock.module';
+import { PurchaseModule } from './purchase/purchase.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
+    // Core modules
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
-    TypeOrmModule.forRoot({
-      ...databaseConfig,
-      entities: [User, ...(databaseConfig.entities as EntityClassOrSchema[])],
-    }),
+    PrismaModule,
+    
+    // Feature modules
     AuthModule,
-    InventoryModule,
+    UsersModule,
     ProductsModule,
-    BOMModule,
+    StockModule,
+    BomModule,
     ProductionModule,
     SalesModule,
+    PurchaseModule,
+    EmployeesModule,
     DocumentsModule,
     RemindersModule,
-    UsersModule,
-    EmployeesModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

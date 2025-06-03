@@ -1,83 +1,149 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { StockService } from './services/stock.service';
-import { StockTransactionService } from './services/stock-transaction.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpStatus,
+  HttpCode,
+  Logger,
+} from '@nestjs/common';
+import { StockService } from './stock.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Prisma } from '@prisma/client';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('stock')
-@Controller('stock')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('stock')
 export class StockController {
-  constructor(
-    private readonly stockService: StockService,
-    private readonly stockTransactionService: StockTransactionService
-  ) {}
+  private readonly logger = new Logger(StockController.name);
+
+  constructor(private readonly stockService: StockService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all stock items' })
-  @ApiResponse({ status: 200, description: 'Returns all stock items' })
-  async getAllStock() {
-    return this.stockService.getAllStock();
+  @ApiOperation({ summary: 'Get all stock items with optional filtering' })
+  @ApiQuery({ name: 'skip', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
+  @ApiQuery({ name: 'productId', required: false, type: String })
+  @ApiQuery({ name: 'location', required: false, type: String })
+  @ApiQuery({ name: 'batchNumber', required: false, type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns all stock items matching the criteria' })
+  async findAll(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('productId') productId?: string,
+    @Query('location') location?: string,
+    @Query('batchNumber') batchNumber?: string,
+  ) {
+    const where: Prisma.StockItemWhereInput = {};
+    
+    if (productId) {
+      where.productId = productId;
+    }
+    
+    if (location) {
+      where.location = location;
+    }
+    
+    if (batchNumber) {
+      where.batchNumber = batchNumber;
+    }
+
+    return this.stockService.findAllStockItems({
+      skip: skip ? parseInt(skip) : undefined,
+      take: take ? parseInt(take) : undefined,
+      where,
+      orderBy: { updatedAt: 'desc' },
+    });
   }
 
   @Get('low-stock')
-  @ApiOperation({ summary: 'Get low stock items' })
-  @ApiResponse({ status: 200, description: 'Returns items with stock below minimum threshold' })
-  async getLowStockItems() {
+  @ApiOperation({ summary: 'Get all items with stock below minimum level' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns all low stock items' })
+  async getLowStock() {
     return this.stockService.getLowStockItems();
   }
 
-  @Get('metrics/total-value')
-  @ApiOperation({ summary: 'Get total stock value' })
-  @ApiResponse({ status: 200, description: 'Returns total value of all stock' })
-  async getTotalStockValue() {
-    return {
-      totalValue: await this.stockService.calculateTotalStockValue(),
-    };
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a stock item by ID' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns the stock item' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Stock item not found' })
+  async findOne(@Param('id') id: string) {
+    return this.stockService.findStockItemById(id);
   }
 
-  @Get('metrics/most-profitable')
-  @ApiOperation({ summary: 'Get most profitable products' })
-  @ApiResponse({ status: 200, description: 'Returns most profitable products' })
-  async getMostProfitableProducts(@Query('limit') limit = 10) {
-    return this.stockService.getMostProfitableProducts(+limit);
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a new stock item' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Stock item created successfully' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+  async create(@Body() createStockItemDto: Prisma.StockItemCreateInput) {
+    return this.stockService.createStockItem(createStockItemDto);
   }
 
-  @Get('metrics/top-selling')
-  @ApiOperation({ summary: 'Get top selling products' })
-  @ApiResponse({ status: 200, description: 'Returns top selling products' })
-  async getTopSellingProducts(
-    @Query('limit') limit = 10,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a stock item' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Stock item updated successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Stock item not found' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateStockItemDto: Prisma.StockItemUpdateInput,
   ) {
-    const dateRange =
-      startDate && endDate
-        ? {
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
-          }
-        : undefined;
-
-    return this.stockService.getTopSellingProducts(+limit, dateRange);
+    return this.stockService.updateStockItem(id, updateStockItemDto);
   }
 
-  @Get(':id/movement-history')
-  @ApiOperation({ summary: 'Get stock movement history for a product' })
-  @ApiResponse({ status: 200, description: 'Returns stock movement history' })
-  async getStockMovementHistory(
-    @Param('id') productId: string,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string
-  ) {
-    const dateRange =
-      startDate && endDate
-        ? {
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
-          }
-        : undefined;
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a stock item' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Stock item deleted successfully' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Stock item not found' })
+  async remove(@Param('id') id: string) {
+    await this.stockService.deleteStockItem(id);
+    return;
+  }
 
-    return this.stockService.getStockMovementHistory(productId, dateRange);
+  @Post('transfer')
+  @ApiOperation({ summary: 'Transfer stock between locations' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Stock transferred successfully' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid transfer request' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Stock item not found' })
+  async transferStock(
+    @Body() transferData: {
+      fromStockItemId: string;
+      toStockItemId?: string;
+      productId: string;
+      quantity: number;
+      newLocation?: string;
+      notes?: string;
+    },
+  ) {
+    return this.stockService.transferStock(transferData);
+  }
+
+  @Get('product/:productId')
+  @ApiOperation({ summary: 'Get stock items by product ID' })
+  @ApiParam({ name: 'productId', type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns stock items for the product' })
+  async findByProduct(@Param('productId') productId: string) {
+    return this.stockService.findStockItemsByProductId(productId);
+  }
+
+  @Get('product/:productId/quantity')
+  @ApiOperation({ summary: 'Get total quantity of a product in stock' })
+  @ApiParam({ name: 'productId', type: String })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns the total quantity' })
+  async getProductQuantity(@Param('productId') productId: string) {
+    const quantity = await this.stockService.getProductTotalQuantity(productId);
+    return { productId, quantity };
   }
 }
