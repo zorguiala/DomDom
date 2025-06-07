@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  role          String   @default("ADMIN") // ADMIN, SALES, INVENTORY, HR
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  name           String
+  sku            String   @unique
+  category       String?
+  unit           String
+  priceSell      Float
+  priceCost      Float
+  qtyOnHand      Float    @default(0)
+  minQty         Float?
+  isRawMaterial  Boolean  @default(false)
+  isFinishedGood Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  bomComponents    BomComponent[]
+  purchaseItems    PurchaseItem[]
+  saleItems        SaleItem[]
+  stockMoves       StockMovement[]
+  productionOrders ProductionOrder[]
+
+  @@map("products")
+}
+
+model BillOfMaterials {
+  id              String            @id @default(uuid())
+  name            String
+  description     String?
+  finalProductId  String
+  components      BomComponent[]
+  productionOrders ProductionOrder[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("bill_of_materials")
+}
+
+model BomComponent {
+  id        String          @id @default(uuid())
+  bomId     String
+  bom       BillOfMaterials @relation(fields: [bomId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  quantity  Float
+  unit      String
+
+  @@map("bom_components")
+}
+
+model ProductionOrder {
+  id              String   @id @default(uuid())
+  orderNumber     String   @unique
+  bomId           String?
+  bom             BillOfMaterials? @relation(fields: [bomId], references: [id])
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  qtyOrdered      Float
+  qtyProduced     Float    @default(0)
+  status          String   @default("PLANNED") // PLANNED, IN_PROGRESS, DONE
+  priority        String?  // HIGH, MEDIUM, LOW
+  startDate       DateTime?
+  expectedEndDate DateTime?
+  actualEndDate   DateTime?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("production_orders")
+}
+
+model StockMovement {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  qty          Float
+  movementType String   // IN, OUT, TRANSFER
+  movementDate DateTime @default(now())
+  reference    String?  // Reference to order/transaction
+  reason       String?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  @@map("stock_movements")
+}
+
+model Purchase {
+  id            String   @id @default(uuid())
+  orderNumber   String   @unique
+  poNumber      String   @unique
+  supplierName  String
+  supplierEmail String?
+  status        String   @default("DRAFT") // DRAFT, CONFIRMED, RECEIVED
+  orderDate     DateTime @default(now())
+  expectedDate  DateTime?
+  receivedDate  DateTime?
+  totalAmount   Float
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         PurchaseItem[]
+
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id          String   @id @default(uuid())
+  purchaseId  String
+  purchase    Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  qtyOrdered  Float
+  qtyReceived Float    @default(0)
+  unitCost    Float
+  totalCost   Float
+
+  @@map("purchase_items")
+}
+
+model Sale {
+  id            String   @id @default(uuid())
+  saleNumber    String   @unique
+  customerName  String
+  customerEmail String?
+  customerPhone String?
+  type          String   @default("CLASSIC") // DOOR_TO_DOOR, CLASSIC
+  status        String   @default("QUOTE") // QUOTE, CONFIRMED, DELIVERED
+  orderDate     DateTime @default(now())
+  saleDate      DateTime @default(now())
+  deliveryDate  DateTime?
+  totalAmount   Float
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id           String  @id @default(uuid())
+  saleId       String
+  sale         Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  qty          Float
+  unitPrice    Float
+  totalPrice   Float
+  deliveredQty Float   @default(0)
+
+  @@map("sale_items")
+}
+
+model Employee {
+  id         String   @id @default(uuid())
+  employeeId String   @unique
+  name       String
+  email      String?  @unique
+  phone      String?
+  department String?
+  position   String?
+  salary     Float?
+  hireDate   DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  attendance Attendance[]
+  payrolls   Payroll[]
+
+  @@map("employees")
+}
+
+model Attendance {
+  id          String   @id @default(uuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  date        DateTime
+  status      String   @default("PRESENT") // PRESENT, ABSENT, HALF_DAY
+  hoursWorked Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([employeeId, date])
+  @@map("attendance")
+}
+
+model Payroll {
+  id         String   @id @default(uuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  month      Int
+  year       Int
+  baseSalary Float
+  overtime   Float    @default(0)
+  deductions Float    @default(0)
+  netSalary  Float
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, month, year])
+  @@map("payrolls")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  category    String
+  amount      Float
+  expenseDate DateTime @default(now())
+  receipt     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("expenses")
+}
+
