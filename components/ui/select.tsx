@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as RadixSelect from "@radix-ui/react-select";
 
 // Inline MagicCard (from Magic UI MCP)
 const MagicCard = ({
@@ -19,14 +20,20 @@ const MagicCard = ({
   gradientTo?: string;
 }) => {
   const cardRef = React.useRef<HTMLDivElement>(null);
-  const [mouse, setMouse] = React.useState({ x: -gradientSize, y: -gradientSize });
+  const [mouse, setMouse] = React.useState({
+    x: -gradientSize,
+    y: -gradientSize,
+  });
 
-  const handleMouseMove = React.useCallback((e: React.MouseEvent) => {
-    if (cardRef.current) {
-      const { left, top } = cardRef.current.getBoundingClientRect();
-      setMouse({ x: e.clientX - left, y: e.clientY - top });
-    }
-  }, [cardRef]);
+  const handleMouseMove = React.useCallback(
+    (e: React.MouseEvent) => {
+      if (cardRef.current) {
+        const { left, top } = cardRef.current.getBoundingClientRect();
+        setMouse({ x: e.clientX - left, y: e.clientY - top });
+      }
+    },
+    [cardRef],
+  );
 
   const handleMouseLeave = React.useCallback(() => {
     setMouse({ x: -gradientSize, y: -gradientSize });
@@ -77,32 +84,91 @@ const ShineBorder = ({
 }) => {
   return (
     <div
-      style={{
-        "--border-width": `${borderWidth}px`,
-        "--duration": `${duration}s`,
-        backgroundImage: `radial-gradient(transparent,transparent, ${Array.isArray(shineColor) ? shineColor.join(",") : shineColor},transparent,transparent)`,
-        backgroundSize: "300% 300%",
-        mask: `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`,
-        WebkitMask: `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`,
-        WebkitMaskComposite: "xor",
-        maskComposite: "exclude",
-        padding: "var(--border-width)",
-        ...style,
-      } as React.CSSProperties}
+      style={
+        {
+          "--border-width": `${borderWidth}px`,
+          "--duration": `${duration}s`,
+          backgroundImage: `radial-gradient(transparent,transparent, ${Array.isArray(shineColor) ? shineColor.join(",") : shineColor},transparent,transparent)`,
+          backgroundSize: "300% 300%",
+          mask: `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`,
+          WebkitMask: `linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)`,
+          WebkitMaskComposite: "xor",
+          maskComposite: "exclude",
+          padding: "var(--border-width)",
+          ...style,
+        } as React.CSSProperties
+      }
       className={`pointer-events-none absolute inset-0 size-full rounded-[inherit] will-change-[background-position] motion-safe:animate-shine ${className}`}
       {...props}
     />
   );
 };
 
+// Radix UI Select wrapper with Magic UI styling
 export const Select = React.forwardRef<
-  HTMLSelectElement,
-  React.SelectHTMLAttributes<HTMLSelectElement>
->(({ className = "block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500", ...props }, ref) => (
-  <MagicCard className="w-full">
-    <ShineBorder shineColor={["#A07CFE", "#FE8FB5", "#FFBE7B"]} />
-    <select ref={ref} className={className} {...props} />
-  </MagicCard>
+  React.ElementRef<typeof RadixSelect.Root>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Root>
+>(({ children, ...props }, ref) => (
+  <RadixSelect.Root {...props}>{children}</RadixSelect.Root>
 ));
+Select.displayName = "Select";
 
-Select.displayName = "Select"; 
+export const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Trigger>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Trigger>
+>(
+  (
+    {
+      className = "w-full border rounded px-3 py-2 text-sm flex items-center justify-between bg-white",
+      children,
+      ...props
+    },
+    ref,
+  ) => (
+    <RadixSelect.Trigger ref={ref} className={className} {...props}>
+      {children}
+    </RadixSelect.Trigger>
+  ),
+);
+SelectTrigger.displayName = "SelectTrigger";
+
+export const SelectValue = RadixSelect.Value;
+export const SelectContent = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Content>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Content>
+>(
+  (
+    {
+      className = "bg-white border rounded shadow p-2 z-50",
+      children,
+      ...props
+    },
+    ref,
+  ) => (
+    <RadixSelect.Portal>
+      <RadixSelect.Content ref={ref} className={className} {...props}>
+        {children}
+      </RadixSelect.Content>
+    </RadixSelect.Portal>
+  ),
+);
+SelectContent.displayName = "SelectContent";
+
+export const SelectItem = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Item>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Item>
+>(
+  (
+    {
+      className = "px-3 py-2 cursor-pointer rounded hover:bg-blue-100 text-sm",
+      children,
+      ...props
+    },
+    ref,
+  ) => (
+    <RadixSelect.Item ref={ref} className={className} {...props}>
+      <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
+    </RadixSelect.Item>
+  ),
+);
+SelectItem.displayName = "SelectItem";

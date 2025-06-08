@@ -20,8 +20,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
-import { MoreHorizontal, PlusCircle, Receipt, CreditCard, TrendingDown, AlertTriangle, Download } from "lucide-react"; // Added Download
+import { useToast } from "@/hooks/use-toast";
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Receipt,
+  CreditCard,
+  TrendingDown,
+  AlertTriangle,
+  Download,
+} from "lucide-react"; // Added Download
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +61,11 @@ export default function ExpensesPage() {
       setExpenses(await res.json());
     } catch (err: any) {
       setError(err.message);
-      toast({ variant: "destructive", title: t("errorFetchingExpensesTitle"), description: err.message });
+      toast({
+        variant: "destructive",
+        title: t("errorFetchingExpensesTitle"),
+        description: err.message,
+      });
     } finally {
       setLoading(false);
     }
@@ -61,34 +73,51 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = async (expenseId: string) => {
-    if (!confirm(t("confirmDeleteExpense") || "Are you sure you want to delete this expense?")) {
+    if (
+      !confirm(
+        t("confirmDeleteExpense") ||
+          "Are you sure you want to delete this expense?",
+      )
+    ) {
       return;
     }
     try {
-      const res = await fetch(`/api/expenses/${expenseId}`, { method: "DELETE" });
+      const res = await fetch(`/api/expenses/${expenseId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.details || errorData.error || t("errorDeletingExpense"));
+        throw new Error(
+          errorData.details || errorData.error || t("errorDeletingExpense"),
+        );
       }
       toast({
         title: t("expenseDeletedTitle") || "Expense Deleted",
-        description: t("expenseDeletedDesc") || "The expense has been successfully deleted.",
+        description:
+          t("expenseDeletedDesc") ||
+          "The expense has been successfully deleted.",
       });
       fetchExpenses(); // Refresh list
     } catch (err: any) {
-      toast({ variant: "destructive", title: t("errorDeletingExpenseTitle"), description: err.message });
+      toast({
+        variant: "destructive",
+        title: t("errorDeletingExpenseTitle"),
+        description: err.message,
+      });
     }
   };
 
   // Function to format currency, can be moved to a utils file
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
   };
-
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -105,7 +134,10 @@ export default function ExpensesPage() {
             </Button>
           </Link>
           <Button asChild variant="outline">
-            <a href="/api/expenses/export" download={`expenses-${new Date().toISOString().split('T')[0]}.csv`}>
+            <a
+              href="/api/expenses/export"
+              download={`expenses-${new Date().toISOString().split("T")[0]}.csv`}
+            >
               <Download className="mr-2 h-4 w-4" />
               {t("exportToCsv") || "Export to CSV"}
             </a>
@@ -117,42 +149,58 @@ export default function ExpensesPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalExpenses")}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("totalExpenses")}
+            </CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$12,450</div> {/* Static */}
-            <p className="text-xs text-muted-foreground">This month</p> {/* Static */}
+            <p className="text-xs text-muted-foreground">This month</p>{" "}
+            {/* Static */}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("pending")}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("pending")}
+            </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">8</div> {/* Static */}
-            <p className="text-xs text-muted-foreground">Awaiting approval</p> {/* Static */}
+            <p className="text-xs text-muted-foreground">
+              Awaiting approval
+            </p>{" "}
+            {/* Static */}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("avgExpense")}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("avgExpense")}
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$285</div> {/* Static */}
-            <p className="text-xs text-muted-foreground">Per transaction</p> {/* Static */}
+            <p className="text-xs text-muted-foreground">
+              Per transaction
+            </p>{" "}
+            {/* Static */}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("overBudget")}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("overBudget")}
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">3</div> {/* Static */}
-            <p className="text-xs text-muted-foreground">Categories</p> {/* Static */}
+            <p className="text-xs text-muted-foreground">Categories</p>{" "}
+            {/* Static */}
           </CardContent>
         </Card>
       </div>
@@ -165,7 +213,9 @@ export default function ExpensesPage() {
         </CardHeader>
         <CardContent>
           {loading && <p className="text-center py-4">{common("loading")}</p>}
-          {error && !loading && <p className="text-destructive text-center py-4">{error}</p>}
+          {error && !loading && (
+            <p className="text-destructive text-center py-4">{error}</p>
+          )}
           {!loading && !error && (
             <Table>
               <TableHeader>
@@ -173,9 +223,13 @@ export default function ExpensesPage() {
                   <TableHead>{t("expenseDateField")}</TableHead>
                   <TableHead>{t("descriptionField")}</TableHead>
                   <TableHead>{t("categoryField")}</TableHead>
-                  <TableHead className="text-right">{t("amountField")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("amountField")}
+                  </TableHead>
                   <TableHead>{t("paymentMethodField")}</TableHead>
-                  <TableHead className="text-center">{common("actions")}</TableHead>
+                  <TableHead className="text-center">
+                    {common("actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -188,22 +242,41 @@ export default function ExpensesPage() {
                 ) : (
                   expenses.map((expense) => (
                     <TableRow key={expense.id}>
-                      <TableCell>{new Date(expense.expenseDate).toLocaleDateString()}</TableCell>
-                      <TableCell className="font-medium max-w-xs truncate" title={expense.description}>{expense.description}</TableCell>
+                      <TableCell>
+                        {new Date(expense.expenseDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell
+                        className="font-medium max-w-xs truncate"
+                        title={expense.description}
+                      >
+                        {expense.description}
+                      </TableCell>
                       <TableCell>{expense.category}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
-                      <TableCell>{expense.paymentMethod || common("na")}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(expense.amount)}
+                      </TableCell>
+                      <TableCell>
+                        {expense.paymentMethod || common("na")}
+                      </TableCell>
                       <TableCell className="text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">{common("openMenu")}</span>
+                              <span className="sr-only">
+                                {common("openMenu")}
+                              </span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>{common("actions")}</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => router.push(`/expenses/${expense.id}/edit`)}>
+                            <DropdownMenuLabel>
+                              {common("actions")}
+                            </DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(`/expenses/${expense.id}/edit`)
+                              }
+                            >
                               {common("edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem

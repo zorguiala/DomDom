@@ -8,10 +8,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 import { EmployeeFormData } from "@/types/hr"; // Using the shared type
 import { Employee } from "@prisma/client"; // For fetching data
 
@@ -19,19 +31,33 @@ import { Employee } from "@prisma/client"; // For fetching data
 const editEmployeeFormSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required").optional(),
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
-  email: z.string().email("Invalid email address").optional().nullable().or(z.literal('')),
-  phone: z.string().optional().nullable().or(z.literal('')),
-  department: z.string().optional().nullable().or(z.literal('')),
-  position: z.string().optional().nullable().or(z.literal('')),
+  email: z
+    .string()
+    .email("Invalid email address")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  phone: z.string().optional().nullable().or(z.literal("")),
+  department: z.string().optional().nullable().or(z.literal("")),
+  position: z.string().optional().nullable().or(z.literal("")),
   salary: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
-    z.number().positive("Salary must be a positive number").nullable().optional()
+    (val) =>
+      val === "" || val === null || val === undefined ? null : Number(val),
+    z
+      .number()
+      .positive("Salary must be a positive number")
+      .nullable()
+      .optional(),
   ),
-  hireDate: z.string().refine((date) => !!date, { message: "Hire date is required." })
-    .refine((date) => !isNaN(Date.parse(date)), { message: "Invalid date format for hire date." }).optional(),
+  hireDate: z
+    .string()
+    .refine((date) => !!date, { message: "Hire date is required." })
+    .refine((date) => !isNaN(Date.parse(date)), {
+      message: "Invalid date format for hire date.",
+    })
+    .optional(),
   isActive: z.boolean().optional(),
 });
-
 
 export default function EditEmployeePage() {
   const router = useRouter();
@@ -46,9 +72,15 @@ export default function EditEmployeePage() {
 
   const employeeIdParam = params?.id as string;
 
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EmployeeFormData>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<EmployeeFormData>({
     resolver: zodResolver(editEmployeeFormSchema),
-    defaultValues: { // Default values will be overridden by fetched data
+    defaultValues: {
+      // Default values will be overridden by fetched data
       employeeId: "",
       name: "",
       email: "",
@@ -58,7 +90,7 @@ export default function EditEmployeePage() {
       salary: null,
       hireDate: "",
       isActive: true,
-    }
+    },
   });
 
   useEffect(() => {
@@ -68,7 +100,9 @@ export default function EditEmployeePage() {
         .then(async (res) => {
           if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || `Failed to fetch employee: ${res.statusText}`);
+            throw new Error(
+              errorData.error || `Failed to fetch employee: ${res.statusText}`,
+            );
           }
           return res.json();
         })
@@ -79,7 +113,9 @@ export default function EditEmployeePage() {
             ...data,
             salary: data.salary ?? null,
             // Format date for input type="date" which expects "YYYY-MM-DD"
-            hireDate: data.hireDate ? new Date(data.hireDate).toISOString().split('T')[0] : "",
+            hireDate: data.hireDate
+              ? new Date(data.hireDate).toISOString().split("T")[0]
+              : "",
           };
           reset(formData);
           setApiError(null);
@@ -102,11 +138,11 @@ export default function EditEmployeePage() {
     setApiError(null);
 
     const payload: Partial<EmployeeFormData> = {
-        ...data,
-        salary: data.salary ? Number(data.salary) : null,
-        // Ensure hireDate is sent in a format the API expects if it's changed
-        // The API expects an ISO string or a date string it can parse.
-        // The input type="date" provides "YYYY-MM-DD", which is fine.
+      ...data,
+      salary: data.salary ? Number(data.salary) : null,
+      // Ensure hireDate is sent in a format the API expects if it's changed
+      // The API expects an ISO string or a date string it can parse.
+      // The input type="date" provides "YYYY-MM-DD", which is fine.
     };
 
     try {
@@ -118,12 +154,16 @@ export default function EditEmployeePage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.details || errorData.error || "Failed to update employee");
+        throw new Error(
+          errorData.details || errorData.error || "Failed to update employee",
+        );
       }
 
       toast({
         title: t("employeeUpdatedTitle") || "Employee Updated",
-        description: t("employeeUpdatedDesc", { name: data.name || employee?.name }) || `Employee ${data.name || employee?.name} has been updated.`,
+        description:
+          t("employeeUpdatedDesc", { name: data.name || employee?.name }) ||
+          `Employee ${data.name || employee?.name} has been updated.`,
       });
       router.push("/hr/employees"); // Redirect to employee list
     } catch (err: any) {
@@ -137,112 +177,282 @@ export default function EditEmployeePage() {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
-  if (apiError && !employee) return <div className="text-red-500 text-center p-4">{apiError}</div>;
-  if (!employee) return <div className="text-red-500 text-center p-4">{t("employeeNotFound")}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-64">
+        {common("loading")}
+      </div>
+    );
+  if (apiError && !employee)
+    return <div className="text-red-500 text-center p-4">{apiError}</div>;
+  if (!employee)
+    return (
+      <div className="text-red-500 text-center p-4">
+        {t("employeeNotFound")}
+      </div>
+    );
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-       <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t("editEmployeeTitle")} - {employee.name}</h2>
-          <p className="text-muted-foreground">{t("editEmployeeDescription")}</p>
+          <h2 className="text-3xl font-bold tracking-tight">
+            {t("editEmployeeTitle")} - {employee.name}
+          </h2>
+          <p className="text-muted-foreground">
+            {t("editEmployeeDescription")}
+          </p>
         </div>
-         <Link href="/hr/employees">
-            <Button variant="outline">{common("backToList")}</Button>
-          </Link>
+        <Link href="/hr/employees">
+          <Button variant="outline">{common("backToList")}</Button>
+        </Link>
       </div>
 
       <Card>
         <CardContent className="mt-6">
-          {apiError && !errors && <p className="text-sm font-medium text-destructive mb-4">{apiError}</p>}
+          {apiError && !errors && (
+            <p className="text-sm font-medium text-destructive mb-4">
+              {apiError}
+            </p>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Employee ID */}
               <div>
-                <label htmlFor="employeeId" className="block text-sm font-medium mb-1">{t("employeeIdField")}</label>
-                <Controller name="employeeId" control={control} render={({ field }) => <Input id="employeeId" {...field} />} />
-                {errors.employeeId && <p className="text-sm text-destructive mt-1">{errors.employeeId.message}</p>}
+                <label
+                  htmlFor="employeeId"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("employeeIdField")}
+                </label>
+                <Controller
+                  name="employeeId"
+                  control={control}
+                  render={({ field }) => <Input id="employeeId" {...field} />}
+                />
+                {errors.employeeId && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.employeeId.message}
+                  </p>
+                )}
               </div>
 
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-1">{t("employeeNameField")}</label>
-                <Controller name="name" control={control} render={({ field }) => <Input id="name" {...field} />} />
-                {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("employeeNameField")}
+                </label>
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => <Input id="name" {...field} />}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-1">{t("emailField")}</label>
-                <Controller name="email" control={control} render={({ field }) => <Input id="email" type="email" {...field} value={field.value ?? ""} />} />
-                {errors.email && <p className="text-sm text-destructive mt-1">{errors.email.message}</p>}
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("emailField")}
+                </label>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="email"
+                      type="email"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  )}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium mb-1">{t("phoneField")}</label>
-                <Controller name="phone" control={control} render={({ field }) => <Input id="phone" {...field} value={field.value ?? ""} />} />
-                {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("phoneField")}
+                </label>
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <Input id="phone" {...field} value={field.value ?? ""} />
+                  )}
+                />
+                {errors.phone && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               {/* Department */}
               <div>
-                <label htmlFor="department" className="block text-sm font-medium mb-1">{t("departmentField")}</label>
-                <Controller name="department" control={control} render={({ field }) => <Input id="department" {...field} value={field.value ?? ""} />} />
-                {errors.department && <p className="text-sm text-destructive mt-1">{errors.department.message}</p>}
+                <label
+                  htmlFor="department"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("departmentField")}
+                </label>
+                <Controller
+                  name="department"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      id="department"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  )}
+                />
+                {errors.department && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.department.message}
+                  </p>
+                )}
               </div>
 
               {/* Position */}
               <div>
-                <label htmlFor="position" className="block text-sm font-medium mb-1">{t("positionField")}</label>
-                <Controller name="position" control={control} render={({ field }) => <Input id="position" {...field} value={field.value ?? ""} />} />
-                {errors.position && <p className="text-sm text-destructive mt-1">{errors.position.message}</p>}
+                <label
+                  htmlFor="position"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("positionField")}
+                </label>
+                <Controller
+                  name="position"
+                  control={control}
+                  render={({ field }) => (
+                    <Input id="position" {...field} value={field.value ?? ""} />
+                  )}
+                />
+                {errors.position && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.position.message}
+                  </p>
+                )}
               </div>
 
               {/* Salary */}
               <div>
-                <label htmlFor="salary" className="block text-sm font-medium mb-1">{t("salaryField")}</label>
+                <label
+                  htmlFor="salary"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("salaryField")}
+                </label>
                 <Controller
                   name="salary"
                   control={control}
-                  render={({ field }) => <Input id="salary" type="number" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === '' ? null : Number(e.target.value))} />}
+                  render={({ field }) => (
+                    <Input
+                      id="salary"
+                      type="number"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === "" ? null : Number(e.target.value),
+                        )
+                      }
+                    />
+                  )}
                 />
-                {errors.salary && <p className="text-sm text-destructive mt-1">{errors.salary.message}</p>}
+                {errors.salary && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.salary.message}
+                  </p>
+                )}
               </div>
 
               {/* Hire Date */}
               <div>
-                <label htmlFor="hireDate" className="block text-sm font-medium mb-1">{t("hireDateField")}</label>
-                <Controller name="hireDate" control={control} render={({ field }) => <Input id="hireDate" type="date" {...field} />} />
-                {errors.hireDate && <p className="text-sm text-destructive mt-1">{errors.hireDate.message}</p>}
+                <label
+                  htmlFor="hireDate"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("hireDateField")}
+                </label>
+                <Controller
+                  name="hireDate"
+                  control={control}
+                  render={({ field }) => (
+                    <Input id="hireDate" type="date" {...field} />
+                  )}
+                />
+                {errors.hireDate && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.hireDate.message}
+                  </p>
+                )}
               </div>
 
               {/* Is Active Status */}
               <div className="md:col-span-2">
-                <label htmlFor="isActive" className="block text-sm font-medium mb-1">{t("statusField")}</label>
+                <label
+                  htmlFor="isActive"
+                  className="block text-sm font-medium mb-1"
+                >
+                  {t("statusField")}
+                </label>
                 <Controller
                   name="isActive"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={(value) => field.onChange(value === "true")} value={String(field.value)}>
+                    <Select
+                      onValueChange={(value) =>
+                        field.onChange(value === "true")
+                      }
+                      value={String(field.value)}
+                    >
                       <SelectTrigger id="isActive">
-                        <SelectValue placeholder={t("selectStatusPlaceholder")} />
+                        <SelectValue
+                          placeholder={t("selectStatusPlaceholder")}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="true">{common("active")}</SelectItem>
-                        <SelectItem value="false">{common("inactive")}</SelectItem>
+                        <SelectItem value="false">
+                          {common("inactive")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.isActive && <p className="text-sm text-destructive mt-1">{errors.isActive.message}</p>}
+                {errors.isActive && (
+                  <p className="text-sm text-destructive mt-1">
+                    {errors.isActive.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Link href="/hr/employees">
-                <Button type="button" variant="outline" disabled={isSubmitting}>{common("cancel")}</Button>
+                <Button type="button" variant="outline" disabled={isSubmitting}>
+                  {common("cancel")}
+                </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? common("saving") : common("saveChanges")}
