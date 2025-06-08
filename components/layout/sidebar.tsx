@@ -19,6 +19,8 @@ import {
   X,
   List,
   ClipboardList,
+  Briefcase,
+  CalendarCheck, // Icon for Attendance
 } from "lucide-react";
 import { useState } from "react";
 
@@ -76,6 +78,19 @@ export function Sidebar({ className }: SidebarProps) {
       title: t("hr"),
       href: "/hr",
       icon: Users,
+      children: [
+        {
+          title: t("manageEmployees") || "Manage Employees", // Added translation key
+          href: "/hr/employees",
+          icon: Briefcase,
+        },
+        {
+          title: t("attendance") || "Attendance", // Added translation key
+          href: "/hr/attendance",
+          icon: CalendarCheck, // Using CalendarCheck icon for Attendance
+        },
+        // Placeholder for future Payroll
+      ],
     },
     {
       title: t("expenses"),

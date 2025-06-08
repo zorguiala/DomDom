@@ -214,12 +214,15 @@ model Payroll {
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id])
   month      Int
-  year       Int
-  baseSalary Float
-  overtime   Float    @default(0)
-  deductions Float    @default(0)
-  netSalary  Float
-  createdAt  DateTime @default(now())
+  year               Int
+  baseSalary         Float
+  // overtime           Float    @default(0) // Replaced by bonusesOrOvertime
+  bonusesOrOvertime  Json? // Stores array of {reason: string, amount: Float}
+  deductions         Json? // Stores array of {reason: string, amount: Float}
+  netSalary          Float
+  paid               Boolean  @default(false)
+  paidAt             DateTime?
+  createdAt          DateTime @default(now())
 
   @@unique([employeeId, month, year])
   @@map("payrolls")
@@ -228,11 +231,12 @@ model Payroll {
 model Expense {
   id          String   @id @default(uuid())
   description String
-  category    String
-  amount      Float
-  expenseDate DateTime @default(now())
-  receipt     String?
-  notes       String?
+  category      String
+  amount        Float
+  expenseDate   DateTime @default(now())
+  paymentMethod String? // Added paymentMethod
+  receipt       String?
+  notes         String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
