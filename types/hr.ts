@@ -45,6 +45,34 @@ import { Attendance as PrismaAttendance } from "@prisma/client";
 
 export type AttendanceWithEmployee = PrismaAttendance & {
   employee?: {
-    name: string; // Or Employee model if you need more details
+    name: string;
+    employeeId?: string; // Custom Employee ID
   };
 };
+
+// --- Payroll Types ---
+import { Payroll as PrismaPayroll, Employee as PrismaEmployee } from "@prisma/client";
+
+export interface PayrollGenerationRequest {
+  month: number; // 1-12
+  year: number;
+  standardWorkingDays?: number; // Optional, e.g., 22, or calculated by daysInMonth
+}
+
+// For API responses, with deserialized adjustments
+export type PayrollData = Omit<PrismaPayroll, 'bonusesOrOvertime' | 'deductions'> & {
+  bonusesOrOvertime: PayrollAdjustmentItem[];
+  deductions: PayrollAdjustmentItem[];
+  employee?: Pick<PrismaEmployee, 'id' | 'name' | 'employeeId'>; // Include some employee details
+};
+
+// For updating a payroll record
+export interface UpdatePayrollRequest {
+  bonusesOrOvertime?: PayrollAdjustmentItem[];
+  deductions?: PayrollAdjustmentItem[];
+  baseSalary?: number; // If base salary for that month needs adjustment
+  netSalary?: number; // Could be auto-recalculated or manually set
+  paid?: boolean;
+  paidAt?: string | null; // ISO date string or null
+  notes?: string | null; // Assuming Payroll model might have notes
+}

@@ -5,23 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,9 +36,7 @@ export default function EmployeesListPage() {
       const res = await fetch("/api/hr/employees");
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(
-          errorData.error || `Failed to fetch employees: ${res.statusText}`,
-        );
+        throw new Error(errorData.error || `Failed to fetch employees: ${res.statusText}`);
       }
       setEmployees(await res.json());
     } catch (err: any) {
@@ -68,33 +53,22 @@ export default function EmployeesListPage() {
 
   useEffect(() => {
     fetchEmployees();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = async (employeeId: string) => {
-    if (
-      !confirm(
-        t("confirmDeleteEmployee") ||
-          "Are you sure you want to delete this employee?",
-      )
-    ) {
+    if (!confirm(t("confirmDeleteEmployee") || "Are you sure you want to delete this employee?")) {
       return;
     }
     try {
-      const res = await fetch(`/api/hr/employees/${employeeId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/hr/employees/${employeeId}`, { method: "DELETE" });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(
-          errorData.details || errorData.error || "Failed to delete employee",
-        );
+        throw new Error(errorData.details || errorData.error || "Failed to delete employee");
       }
       toast({
         title: t("employeeDeletedTitle") || "Employee Deleted",
-        description:
-          t("employeeDeletedDesc") ||
-          "The employee has been successfully deleted.",
+        description: t("employeeDeletedDesc") || "The employee has been successfully deleted.",
       });
       fetchEmployees(); // Refresh list
     } catch (err: any) {
@@ -110,25 +84,15 @@ export default function EmployeesListPage() {
     return isActive ? "success" : "secondary";
   };
 
-  if (loading)
-    return (
-      <div className="flex justify-center items-center h-64">
-        {common("loading")}
-      </div>
-    );
-  if (error && employees.length === 0)
-    return <div className="text-red-500 text-center p-4">{error}</div>;
+  if (loading) return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
+  if (error && employees.length === 0) return <div className="text-red-500 text-center p-4">{error}</div>;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {t("manageEmployeesTitle")}
-          </h2>
-          <p className="text-muted-foreground">
-            {t("manageEmployeesDescription")}
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">{t("manageEmployeesTitle")}</h2>
+          <p className="text-muted-foreground">{t("manageEmployeesDescription")}</p>
         </div>
         <Link href="/hr/employees/new">
           <Button>
@@ -137,11 +101,7 @@ export default function EmployeesListPage() {
         </Link>
       </div>
 
-      {error && employees.length > 0 && (
-        <p className="text-sm font-medium text-destructive text-center py-2">
-          {error}
-        </p>
-      )}
+      {error && employees.length > 0 && <p className="text-sm font-medium text-destructive text-center py-2">{error}</p>}
 
       <Card>
         <CardContent className="mt-4">
@@ -153,9 +113,7 @@ export default function EmployeesListPage() {
                 <TableHead>{t("position")}</TableHead>
                 <TableHead>{t("department")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
-                <TableHead className="text-center">
-                  {common("actions")}
-                </TableHead>
+                <TableHead className="text-center">{common("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -174,9 +132,7 @@ export default function EmployeesListPage() {
                   <TableCell>{employee.department || common("na")}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(employee.isActive)}>
-                      {employee.isActive
-                        ? common("active")
-                        : common("inactive")}
+                      {employee.isActive ? common("active") : common("inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
@@ -188,17 +144,11 @@ export default function EmployeesListPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>
-                          {common("actions")}
-                        </DropdownMenuLabel>
+                        <DropdownMenuLabel>{common("actions")}</DropdownMenuLabel>
                         {/* <DropdownMenuItem onClick={() => router.push(`/hr/employees/${employee.id}`)}>
                           {common("viewDetails")}
                         </DropdownMenuItem> */}
-                        <DropdownMenuItem
-                          onClick={() =>
-                            router.push(`/hr/employees/${employee.id}/edit`)
-                          }
-                        >
+                        <DropdownMenuItem onClick={() => router.push(`/hr/employees/${employee.id}/edit`)}>
                           {common("edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem

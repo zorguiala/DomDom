@@ -6,61 +6,27 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import {
-  AttendanceFormData,
-  AttendanceStatus,
-  AttendanceStatusValues,
-  AttendanceWithEmployee,
-} from "@/types/hr";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { AttendanceFormData, AttendanceStatus, AttendanceStatusValues, AttendanceWithEmployee } from "@/types/hr";
 import { Employee } from "@prisma/client";
 import { PlusCircle, Edit2, FilterX, Search } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker } from "@/components/ui/date-picker"; // Assuming a DatePicker component exists
 
 // Zod schema for attendance form validation
 const attendanceFormSchema = z.object({
-  id: z.string().optional(),
   employeeId: z.string().min(1, "Employee is required"),
-  date: z.string().min(1, "Date is required."),
-  status: z.enum(AttendanceStatusValues, {
-    required_error: "Status is required.",
-  }),
-  hoursWorked: z
-    .preprocess((val) => {
-      if (val === "" || val === null || val === undefined) return null;
-      const num = Number(val);
-      return isNaN(num) ? null : num;
-    }, z.any())
-    .transform((val) => (typeof val === "number" ? val : null))
-    .nullable()
-    .optional(),
+  date: z.date({ required_error: "Date is required." }), // Using react-day-picker so it's a Date object
+  status: z.enum(AttendanceStatusValues, { required_error: "Status is required." }),
+  hoursWorked: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
+    z.number().min(0).max(24).nullable().optional()
+  ),
   notes: z.string().optional().nullable(),
 });
-
-type AttendanceFormSchemaType = z.infer<typeof attendanceFormSchema>;
 
 export default function AttendancePage() {
   const t = useTranslations("hr");
@@ -68,27 +34,19 @@ export default function AttendancePage() {
   const { toast } = useToast();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<
-    AttendanceWithEmployee[]
-  >([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceWithEmployee[]>([]);
   const [loadingRecords, setLoadingRecords] = useState(false);
-  const [editingRecord, setEditingRecord] =
-    useState<AttendanceWithEmployee | null>(null);
+  const [editingRecord, setEditingRecord] = useState<AttendanceWithEmployee | null>(null);
 
   const [filterEmployeeId, setFilterEmployeeId] = useState<string>("");
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors, isSubmitting },
-  } = useForm<AttendanceFormSchemaType>({
+
+  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AttendanceFormData>({
     resolver: zodResolver(attendanceFormSchema),
     defaultValues: {
       employeeId: "",
-      date: new Date().toISOString().split("T")[0], // Default to today
+      date: new Date().toISOString().split('T')[0], // Default to today
       status: "PRESENT",
       hoursWorked: null,
       notes: "",
@@ -103,11 +61,7 @@ export default function AttendancePage() {
         if (!res.ok) throw new Error(t("errorFetchingEmployees"));
         setEmployees(await res.json());
       } catch (error: any) {
-        toast({
-          variant: "destructive",
-          title: t("error"),
-          description: error.message,
-        });
+        toast({ variant: "destructive", title: t("error"), description: error.message });
       }
     };
     fetchEmployees();
@@ -119,19 +73,14 @@ export default function AttendancePage() {
     try {
       const queryParams = new URLSearchParams();
       if (employeeId) queryParams.append("employeeId", employeeId);
-      if (date)
-        queryParams.append("dateFrom", date.toISOString().split("T")[0]);
-      if (date) queryParams.append("dateTo", date.toISOString().split("T")[0]); // Filter for specific date
+      if (date) queryParams.append("dateFrom", date.toISOString().split('T')[0]);
+      if (date) queryParams.append("dateTo", date.toISOString().split('T')[0]); // Filter for specific date
 
       const res = await fetch(`/api/hr/attendance?${queryParams.toString()}`);
       if (!res.ok) throw new Error(t("errorFetchingAttendance"));
       setAttendanceRecords(await res.json());
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: error.message,
-      });
+      toast({ variant: "destructive", title: t("error"), description: error.message });
     } finally {
       setLoadingRecords(false);
     }
@@ -141,20 +90,16 @@ export default function AttendancePage() {
     fetchAttendanceRecords(filterEmployeeId || undefined, filterDate);
   }, [filterEmployeeId, filterDate]);
 
-  const onSubmit = async (data: AttendanceFormSchemaType) => {
+
+  const onSubmit = async (data: AttendanceFormData) => {
     const payload = {
       ...data,
-      date: data.date, // Already a string in YYYY-MM-DD
-      hoursWorked:
-        data.hoursWorked !== undefined && data.hoursWorked !== null
-          ? Number(data.hoursWorked)
-          : null,
+      date: new Date(data.date).toISOString().split('T')[0], // Ensure date is YYYY-MM-DD string
+      hoursWorked: data.hoursWorked ? Number(data.hoursWorked) : null,
     };
 
     try {
-      const url = editingRecord
-        ? `/api/hr/attendance/${editingRecord.id}`
-        : "/api/hr/attendance";
+      const url = editingRecord ? `/api/hr/attendance/${editingRecord.id}` : "/api/hr/attendance";
       const method = editingRecord ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -165,31 +110,17 @@ export default function AttendancePage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(
-          errorData.details?.fieldErrors?.date?.[0] ||
-            errorData.error ||
-            (editingRecord
-              ? t("errorUpdatingAttendance")
-              : t("errorCreatingAttendance")),
-        );
+        throw new Error(errorData.details?.fieldErrors?.date?.[0] || errorData.error || (editingRecord ? t("errorUpdatingAttendance") : t("errorCreatingAttendance")));
       }
 
       toast({
-        title: editingRecord
-          ? t("attendanceUpdatedTitle")
-          : t("attendanceRecordedTitle"),
-        description: editingRecord
-          ? t("attendanceUpdatedDesc")
-          : t("attendanceRecordedDesc"),
+        title: editingRecord ? t("attendanceUpdatedTitle") : t("attendanceRecordedTitle"),
+        description: editingRecord ? t("attendanceUpdatedDesc") : t("attendanceRecordedDesc"),
       });
       resetFormAndFilters();
       fetchAttendanceRecords(filterEmployeeId || undefined, filterDate); // Refresh list
     } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: t("error"),
-        description: err.message,
-      });
+      toast({ variant: "destructive", title: t("error"), description: err.message });
     }
   };
 
@@ -197,7 +128,7 @@ export default function AttendancePage() {
     setEditingRecord(record);
     reset({
       employeeId: record.employeeId,
-      date: new Date(record.date).toISOString().split("T")[0], // Ensure YYYY-MM-DD for form
+      date: new Date(record.date).toISOString().split('T')[0], // Ensure YYYY-MM-DD for form
       status: record.status as AttendanceStatus, // Prisma status should align with AttendanceStatus
       hoursWorked: record.hoursWorked ?? null,
       notes: record.notes ?? "",
@@ -207,9 +138,7 @@ export default function AttendancePage() {
   const resetFormAndFilters = () => {
     reset({
       employeeId: filterEmployeeId || "", // Keep filter if applied
-      date: filterDate
-        ? filterDate.toISOString().split("T")[0]
-        : new Date().toISOString().split("T")[0],
+      date: filterDate ? filterDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       status: "PRESENT",
       hoursWorked: null,
       notes: "",
@@ -223,225 +152,101 @@ export default function AttendancePage() {
     resetFormAndFilters(); // Also reset form to default or current filter state
   };
 
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            {t("manageAttendanceTitle")}
-          </h2>
-          <p className="text-muted-foreground">
-            {t("manageAttendanceDescription")}
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">{t("manageAttendanceTitle")}</h2>
+          <p className="text-muted-foreground">{t("manageAttendanceDescription")}</p>
         </div>
       </div>
 
       {/* Attendance Form Card */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {editingRecord
-              ? t("editAttendanceTitle")
-              : t("recordAttendanceTitle")}
-          </CardTitle>
-          <CardDescription>
-            {editingRecord
-              ? t("editAttendanceDesc")
-              : t("recordAttendanceDesc")}
-          </CardDescription>
+          <CardTitle>{editingRecord ? t("editAttendanceTitle") : t("recordAttendanceTitle")}</CardTitle>
+          <CardDescription>{editingRecord ? t("editAttendanceDesc") : t("recordAttendanceDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end">
               {/* Employee */}
               <div className="sm:col-span-2 md:col-span-1 lg:col-span-1">
-                <label
-                  htmlFor="employeeId"
-                  className="block text-sm font-medium mb-1"
-                >
-                  {t("employeeField")}
-                </label>
+                <label htmlFor="employeeId" className="block text-sm font-medium mb-1">{t("employeeField")}</label>
                 <Controller
                   name="employeeId"
                   control={control}
                   render={({ field }) => (
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={!!editingRecord}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!!editingRecord}>
                       <SelectTrigger id="employeeId">
-                        <SelectValue
-                          placeholder={t("selectEmployeePlaceholder")}
-                        />
+                        <SelectValue placeholder={t("selectEmployeePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            {emp.name} ({emp.employeeId})
-                          </SelectItem>
-                        ))}
+                        {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name} ({emp.employeeId})</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.employeeId && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors.employeeId.message}
-                  </p>
-                )}
+                {errors.employeeId && <p className="text-sm text-destructive mt-1">{errors.employeeId.message}</p>}
               </div>
 
               {/* Date */}
               <div>
-                <label
-                  htmlFor="date"
-                  className="block text-sm font-medium mb-1"
-                >
-                  {t("dateField")}
-                </label>
+                <label htmlFor="date" className="block text-sm font-medium mb-1">{t("dateField")}</label>
                 <Controller
                   name="date"
                   control={control}
                   render={({ field }) => (
-                    <DatePicker
-                      date={field.value ? new Date(field.value) : undefined}
-                      setDate={(date: Date | undefined) =>
-                        field.onChange(
-                          date ? date.toISOString().split("T")[0] : "",
-                        )
-                      }
-                      disabled={!!editingRecord}
-                    />
+                     <DatePicker date={field.value ? new Date(field.value) : undefined} setDate={field.onChange} disabled={!!editingRecord} />
                   )}
                 />
-                {errors.date && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors.date.message}
-                  </p>
-                )}
+                {errors.date && <p className="text-sm text-destructive mt-1">{errors.date.message}</p>}
               </div>
 
               {/* Status */}
               <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium mb-1"
-                >
-                  {t("statusField")}
-                </label>
+                <label htmlFor="status" className="block text-sm font-medium mb-1">{t("statusField")}</label>
                 <Controller
                   name="status"
                   control={control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger id="status">
-                        <SelectValue
-                          placeholder={t("selectStatusPlaceholder")}
-                        />
+                        <SelectValue placeholder={t("selectStatusPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        {AttendanceStatusValues.map((val) => (
-                          <SelectItem key={val} value={val}>
-                            {t(val.toLowerCase()) || val}
-                          </SelectItem>
-                        ))}
+                        {AttendanceStatusValues.map(val => <SelectItem key={val} value={val}>{t(val.toLowerCase()) || val}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
                 />
-                {errors.status && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors.status.message}
-                  </p>
-                )}
+                {errors.status && <p className="text-sm text-destructive mt-1">{errors.status.message}</p>}
               </div>
 
               {/* Hours Worked */}
               <div>
-                <label
-                  htmlFor="hoursWorked"
-                  className="block text-sm font-medium mb-1"
-                >
-                  {t("hoursWorkedField")}
-                </label>
-                <Controller
-                  name="hoursWorked"
-                  control={control}
-                  render={({ field }) => (
-                    <Input
-                      id="hoursWorked"
-                      type="number"
-                      step="0.1"
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(
-                          e.target.value === "" ? null : Number(e.target.value),
-                        )
-                      }
-                    />
-                  )}
-                />
-                {errors.hoursWorked && (
-                  <p className="text-sm text-destructive mt-1">
-                    {errors.hoursWorked.message}
-                  </p>
-                )}
+                <label htmlFor="hoursWorked" className="block text-sm font-medium mb-1">{t("hoursWorkedField")}</label>
+                <Controller name="hoursWorked" control={control} render={({ field }) => <Input id="hoursWorked" type="number" step="0.1" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === '' ? null : Number(e.target.value))} />} />
+                {errors.hoursWorked && <p className="text-sm text-destructive mt-1">{errors.hoursWorked.message}</p>}
               </div>
 
               {/* Submit Button */}
               <div className="flex items-end space-x-2">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {editingRecord ? (
-                    <>
-                      <Edit2 className="mr-2 h-4 w-4" />{" "}
-                      {isSubmitting ? common("saving") : common("saveChanges")}
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle className="mr-2 h-4 w-4" />{" "}
-                      {isSubmitting ? common("recording") : t("recordButton")}
-                    </>
-                  )}
+                 <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {editingRecord
+                    ? <><Edit2 className="mr-2 h-4 w-4" /> {isSubmitting ? common("saving") : common("saveChanges")}</>
+                    : <><PlusCircle className="mr-2 h-4 w-4" /> {isSubmitting ? common("recording") : t("recordButton")}</>
+                  }
                 </Button>
-                {editingRecord && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={resetFormAndFilters}
-                  >
-                    {common("cancel")}
-                  </Button>
-                )}
+                {editingRecord && <Button type="button" variant="outline" onClick={resetFormAndFilters}>{common("cancel")}</Button>}
               </div>
             </div>
             {/* Notes */}
             <div>
-              <label htmlFor="notes" className="block text-sm font-medium mb-1">
-                {t("notesField")}
-              </label>
-              <Controller
-                name="notes"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    id="notes"
-                    {...field}
-                    value={field.value ?? ""}
-                    placeholder={t("notesPlaceholder")}
-                  />
-                )}
-              />
-              {errors.notes && (
-                <p className="text-sm text-destructive mt-1">
-                  {errors.notes.message}
-                </p>
-              )}
+                <label htmlFor="notes" className="block text-sm font-medium mb-1">{t("notesField")}</label>
+                <Controller name="notes" control={control} render={({ field }) => <Input id="notes" {...field} value={field.value ?? ""} placeholder={t("notesPlaceholder")} />} />
+                {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
             </div>
           </form>
         </CardContent>
@@ -452,52 +257,20 @@ export default function AttendancePage() {
         <CardHeader>
           <CardTitle>{t("attendanceRecordsTitle")}</CardTitle>
           <div className="flex flex-col md:flex-row gap-2 mt-2">
-            <Select
-              value={filterEmployeeId}
-              onValueChange={setFilterEmployeeId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("filterByEmployee")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allEmployees")}</SelectItem>
-                {employees.map((emp) => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+             <Select value={filterEmployeeId} onValueChange={setFilterEmployeeId}>
+                <SelectTrigger><SelectValue placeholder={t("filterByEmployee")} /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="">{t("allEmployees")}</SelectItem>
+                    {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
+                </SelectContent>
             </Select>
-            <DatePicker
-              date={filterDate}
-              setDate={setFilterDate}
-              placeholder={t("filterByDate")}
-            />
-            <Button
-              onClick={() =>
-                fetchAttendanceRecords(
-                  filterEmployeeId !== "all" && filterEmployeeId
-                    ? filterEmployeeId
-                    : undefined,
-                  filterDate,
-                )
-              }
-              variant="outline"
-              size="icon"
-              title={common("search")}
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-            {(filterEmployeeId || filterDate) && (
-              <Button
-                onClick={clearFilters}
-                variant="ghost"
-                size="icon"
-                title={t("clearFilters")}
-              >
-                <FilterX className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            )}
+            <DatePicker date={filterDate} setDate={setFilterDate} placeholder={t("filterByDate")} />
+            <Button onClick={() => fetchAttendanceRecords(filterEmployeeId || undefined, filterDate)} variant="outline" size="icon" title={common("search")}><Search className="h-4 w-4"/></Button>
+            {(filterEmployeeId || filterDate) &&
+                <Button onClick={clearFilters} variant="ghost" size="icon" title={t("clearFilters")}>
+                    <FilterX className="h-4 w-4 text-muted-foreground"/>
+                </Button>
+            }
           </div>
         </CardHeader>
         <CardContent>
@@ -509,53 +282,28 @@ export default function AttendancePage() {
                 <TableHead>{t("statusField")}</TableHead>
                 <TableHead>{t("hoursWorkedField")}</TableHead>
                 <TableHead>{t("notesField")}</TableHead>
-                <TableHead className="text-right">
-                  {common("actions")}
-                </TableHead>
+                <TableHead className="text-right">{common("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingRecords && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    {common("loading")}
-                  </TableCell>
-                </TableRow>
-              )}
+              {loadingRecords && <TableRow><TableCell colSpan={6} className="text-center">{common("loading")}</TableCell></TableRow>}
               {!loadingRecords && attendanceRecords.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    {t("noAttendanceRecordsFound")}
+                <TableRow><TableCell colSpan={6} className="h-24 text-center">{t("noAttendanceRecordsFound")}</TableCell></TableRow>
+              )}
+              {!loadingRecords && attendanceRecords.map((record) => (
+                <TableRow key={record.id}>
+                  <TableCell>{record.employee?.name || record.employeeId}</TableCell>
+                  <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{t(record.status.toLowerCase()) || record.status}</TableCell>
+                  <TableCell>{record.hoursWorked ?? common("na")}</TableCell>
+                  <TableCell className="max-w-xs truncate">{record.notes ?? common("na")}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(record)}>
+                      <Edit2 className="h-4 w-4 mr-1" /> {common("edit")}
+                    </Button>
                   </TableCell>
                 </TableRow>
-              )}
-              {!loadingRecords &&
-                attendanceRecords.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>
-                      {record.employee?.name || record.employeeId}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(record.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {t(record.status.toLowerCase()) || record.status}
-                    </TableCell>
-                    <TableCell>{record.hoursWorked ?? common("na")}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {record.notes ?? common("na")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(record)}
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" /> {common("edit")}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+              ))}
             </TableBody>
           </Table>
         </CardContent>

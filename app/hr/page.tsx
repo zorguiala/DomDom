@@ -123,19 +123,21 @@ export default function HRPage() {
           </Link>
         </Card>
 
-        {/* Placeholder for Payroll Link */}
-        <Card className="hover:shadow-lg transition-shadow opacity-60 cursor-not-allowed">
+        {/* Payroll Link */}
+        <Card className="hover:shadow-lg transition-shadow">
+          <Link href="/hr/payroll" className="block h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-base font-semibold">
                 {t("runPayrollTitle") || "Run Payroll"}
               </CardTitle>
-              <Calendar className="h-5 w-5 text-muted-foreground" />
+              <Calendar className="h-5 w-5 text-muted-foreground" /> {/* Icon can be changed if a better one for payroll is available */}
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                {t("runPayrollCtaDescription") || "Process salaries and generate payslips. (Coming Soon)"}
+                {t("runPayrollCtaDescription") || "Generate, view, and manage employee payroll."}
               </p>
             </CardContent>
+          </Link>
         </Card>
       </div>
     </div>

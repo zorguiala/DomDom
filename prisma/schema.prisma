@@ -217,8 +217,8 @@ model Payroll {
   year               Int
   baseSalary         Float
   // overtime           Float    @default(0) // Replaced by bonusesOrOvertime
-  bonusesOrOvertime  Json? // Stores array of {reason: string, amount: Float}
-  deductions         Json? // Stores array of {reason: string, amount: Float}
+  bonusesOrOvertime  String? // Stores JSON as String: array of {reason: string, amount: Float}
+  deductions         String? // Stores JSON as String: array of {reason: string, amount: Float}
   netSalary          Float
   paid               Boolean  @default(false)
   paidAt             DateTime?

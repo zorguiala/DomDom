@@ -21,6 +21,7 @@ import {
   ClipboardList,
   Briefcase,
   CalendarCheck, // Icon for Attendance
+  DollarSign, // Icon for Payroll
 } from "lucide-react";
 import { useState } from "react";
 
@@ -87,9 +88,13 @@ export function Sidebar({ className }: SidebarProps) {
         {
           title: t("attendance") || "Attendance", // Added translation key
           href: "/hr/attendance",
-          icon: CalendarCheck, // Using CalendarCheck icon for Attendance
+          icon: CalendarCheck,
         },
-        // Placeholder for future Payroll
+        {
+          title: t("payroll") || "Payroll", // Added translation key
+          href: "/hr/payroll",
+          icon: DollarSign, // Using DollarSign icon for Payroll
+        },
       ],
     },
     {

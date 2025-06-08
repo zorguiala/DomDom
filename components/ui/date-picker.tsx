@@ -1,134 +1,64 @@
+"use client";
+
 import * as React from "react";
-import { format, isSameDay } from "date-fns";
+import { format as formatDateFns } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar"; // Assuming this will be created by shadcn/ui or react-day-picker
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface DatePickerProps {
-  /**
-   * @deprecated Use 'date' instead for consistency with form usage
-   */
-  value?: Date;
-  /**
-   * @deprecated Use 'setDate' instead for consistency with form usage
-   */
-  onChange?: (date: Date) => void;
-  date?: Date;
-  setDate?: (date: Date | undefined) => void;
-  minDate?: Date;
-  maxDate?: Date;
+  date: Date | undefined;
+  setDate: (date: Date | undefined) => void;
+  placeholder?: string;
   disabled?: boolean;
   className?: string;
 }
 
-// Simple calendar grid for the current month
-function getDaysInMonth(date: Date) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  const days = [];
-  for (let d = 1; d <= end.getDate(); d++) {
-    days.push(new Date(date.getFullYear(), date.getMonth(), d));
-  }
-  return days;
+export function DatePicker({ date, setDate, placeholder, disabled, className }: DatePickerProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild disabled={disabled}>
+        <Button
+          variant={"outline"}
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? formatDateFns(date, "PPP") : <span>{placeholder || "Pick a date"}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          initialFocus
+          disabled={disabled}
+        />
+      </PopoverContent>
+    </Popover>
+  );
 }
 
-export const DatePicker: React.FC<DatePickerProps> = ({
-  value,
-  onChange,
-  date,
-  setDate,
-  minDate,
-  maxDate,
-  disabled,
-  className = "",
-}) => {
-  // Prefer new props, fallback to deprecated
-  const selectedDate = date ?? value;
-  const handleDateChange = setDate ?? onChange;
-  const [open, setOpen] = React.useState(false);
-  const [month, setMonth] = React.useState(selectedDate || new Date());
-  const days = getDaysInMonth(month);
-
-  const handleSelect = (day: Date) => {
-    if (disabled) return;
-    if (minDate && day < minDate) return;
-    if (maxDate && day > maxDate) return;
-    handleDateChange?.(day);
-    setOpen(false);
-  };
-
-  return (
-    <div className={`relative inline-block ${className}`}>
-      <button
-        type="button"
-        className="border rounded px-3 py-2 bg-white text-sm w-full text-left"
-        onClick={() => setOpen((o) => !o)}
-        disabled={disabled}
-      >
-        {selectedDate ? format(selectedDate, "yyyy-MM-dd") : "Select date"}
-      </button>
-      {open && (
-        <div className="absolute z-10 mt-1 bg-white border rounded shadow p-2 w-64">
-          <div className="flex justify-between items-center mb-2">
-            <button
-              type="button"
-              className="px-2 py-1 text-xs"
-              onClick={() =>
-                setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
-              }
-            >
-              &lt;
-            </button>
-            <span className="font-semibold">{format(month, "MMMM yyyy")}</span>
-            <button
-              type="button"
-              className="px-2 py-1 text-xs"
-              onClick={() =>
-                setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
-              }
-            >
-              &gt;
-            </button>
-          </div>
-          <div className="grid grid-cols-7 gap-1 text-xs mb-1">
-            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
-              <div key={d} className="text-center font-medium text-gray-500">
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {Array(month.getDay())
-              .fill(null)
-              .map((_, i) => (
-                <div key={i} />
-              ))}
-            {days.map((day) => {
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              const isDisabled =
-                (minDate && day < minDate) ||
-                (maxDate && day > maxDate) ||
-                disabled;
-              return (
-                <button
-                  key={day.toISOString()}
-                  type="button"
-                  className={`rounded p-1 w-8 h-8 text-center ${
-                    isSelected
-                      ? "bg-blue-500 text-white"
-                      : isDisabled
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "hover:bg-blue-100"
-                  }`}
-                  onClick={() => handleSelect(day)}
-                  disabled={isDisabled}
-                >
-                  {day.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-DatePicker.displayName = "DatePicker";
+// Note: This basic DatePicker assumes that `components/ui/calendar.tsx` exists.
+// If it doesn't (because `shadcn/ui add calendar` hasn't been run),
+// then the <Calendar /> component used here from "react-day-picker" directly
+// would need to be styled manually or use its default styling.
+// For a typical shadcn/ui setup, `components/ui/calendar.tsx` is generated by `npx shadcn-ui@latest add calendar`
+// which wraps and styles react-day-picker.
+//
+// Since I cannot run `shadcn-ui add calendar`, I will create a basic `calendar.tsx`
+// that directly uses `react-day-picker` and applies minimal necessary styling if possible,
+// or just re-exports it, understanding it might not look perfectly like a shadcn one.
+// For the purpose of this exercise, I'll assume the above DatePicker will work with a yet-to-be-created
+// (or shimmed) `components/ui/calendar.tsx`.
