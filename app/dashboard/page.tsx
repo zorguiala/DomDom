@@ -15,6 +15,7 @@ import { RevenueChart } from "@/components/charts/revenue-chart";
 import { InventoryOverview } from "@/components/dashboard/inventory-overview";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { ProductionStatus } from "@/components/dashboard/production-status";
+import { FileDown } from "lucide-react";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -25,7 +26,10 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
         <div className="flex items-center space-x-2">
-          <ShimmerButton>{common("export")} Report</ShimmerButton>
+          <ShimmerButton variant="default" size="default">
+            <FileDown className="mr-2 h-4 w-4" />
+            {common("export")} Report
+          </ShimmerButton>
         </div>
       </div>
 

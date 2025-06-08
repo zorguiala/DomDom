@@ -105,4 +105,4 @@ export const Select = React.forwardRef<
   </MagicCard>
 ));
 
-Select.displayName = "Select"; 
+Select.displayName = "Select";
