@@ -29,7 +29,6 @@ import {
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react"; // Import useSession and signOut
 import { Button } from "@/components/ui/button"; // Import Button for Sign Out
-import Link from 'next/link'; // Ensure Link is imported
 
 interface SidebarProps {
   className?: string;
@@ -153,7 +152,9 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4 overflow-y-auto"> {/* Added overflow-y-auto */}
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        {" "}
+        {/* Added overflow-y-auto */}
         {navigationItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -209,7 +210,9 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       {/* User section & Actions */}
-      <div className="mt-auto border-t p-4 space-y-2"> {/* Added mt-auto to push to bottom */}
+      <div className="mt-auto border-t p-4 space-y-2">
+        {" "}
+        {/* Added mt-auto to push to bottom */}
         <div
           className={cn(
             "flex",
@@ -218,37 +221,49 @@ export function Sidebar({ className }: SidebarProps) {
         >
           <LanguageSwitcher />
         </div>
-
         {status === "authenticated" && session?.user && (
           <div
             className={cn(
-          "flex items-center mb-2", // Added mb-2 for spacing
-          isCollapsed ? "justify-center flex-col space-y-1" : "space-x-3",
+              "flex items-center mb-2", // Added mb-2 for spacing
+              isCollapsed ? "justify-center flex-col space-y-1" : "space-x-3",
             )}
           >
-        <Link href="/dashboard/profile" title="View Profile">
-          <UserCircle2 className={cn("h-8 w-8 text-muted-foreground hover:text-primary", isCollapsed && "h-6 w-6")} />
-        </Link>
+            <Link href="/dashboard/profile" title="View Profile">
+              <UserCircle2
+                className={cn(
+                  "h-8 w-8 text-muted-foreground hover:text-primary",
+                  isCollapsed && "h-6 w-6",
+                )}
+              />
+            </Link>
             {!isCollapsed && (
               <div className="flex-1">
-                <p className="text-sm font-medium truncate" title={session.user.name || "User"}>
-              <Link href="/dashboard/profile" className="hover:underline">
-                {session.user.name || "User"}
-              </Link>
+                <p
+                  className="text-sm font-medium truncate"
+                  title={session.user.name || "User"}
+                >
+                  <Link href="/dashboard/profile" className="hover:underline">
+                    {session.user.name || "User"}
+                  </Link>
                 </p>
-                <p className="text-xs text-muted-foreground truncate" title={session.user.email || ""}>
+                <p
+                  className="text-xs text-muted-foreground truncate"
+                  title={session.user.email || ""}
+                >
                   {session.user.email}
                 </p>
               </div>
             )}
           </div>
         )}
-
         {status === "authenticated" ? (
           <Button
             variant="ghost"
             size={isCollapsed ? "icon" : "default"}
-            className={cn("w-full flex items-center justify-start", isCollapsed && "justify-center")}
+            className={cn(
+              "w-full flex items-center justify-start",
+              isCollapsed && "justify-center",
+            )}
             onClick={handleSignOut}
             title="Sign Out"
           >
@@ -256,19 +271,35 @@ export function Sidebar({ className }: SidebarProps) {
             {!isCollapsed && <span>Sign Out</span>}
           </Button>
         ) : status === "loading" ? (
-             <div className={cn("flex items-center", isCollapsed ? "justify-center" : "")}>
-                <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
-                {!isCollapsed && <div className="ml-2 h-4 w-20 bg-muted rounded animate-pulse"></div>}
-             </div>
+          <div
+            className={cn(
+              "flex items-center",
+              isCollapsed ? "justify-center" : "",
+            )}
+          >
+            <div className="h-8 w-8 bg-muted rounded-full animate-pulse"></div>
+            {!isCollapsed && (
+              <div className="ml-2 h-4 w-20 bg-muted rounded animate-pulse"></div>
+            )}
+          </div>
         ) : (
           <Button
             variant="outline"
             size={isCollapsed ? "icon" : "default"}
-            className={cn("w-full flex items-center justify-start", isCollapsed && "justify-center")}
+            className={cn(
+              "w-full flex items-center justify-start",
+              isCollapsed && "justify-center",
+            )}
             asChild
           >
             <Link href="/auth/sign-in" title="Sign In">
-              <LogOut className={cn("h-4 w-4 transform rotate-180", !isCollapsed && "mr-2")} /> {/* Icon for Sign In */}
+              <LogOut
+                className={cn(
+                  "h-4 w-4 transform rotate-180",
+                  !isCollapsed && "mr-2",
+                )}
+              />{" "}
+              {/* Icon for Sign In */}
               {!isCollapsed && <span>Sign In</span>}
             </Link>
           </Button>
