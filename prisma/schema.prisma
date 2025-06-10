@@ -35,6 +35,7 @@ model Product {
   updatedAt      DateTime @updatedAt
   
   bomComponents    BomComponent[]
+  bomsAsFinalProduct BillOfMaterials[] @relation("FinalProductForBOM")
   purchaseItems    PurchaseItem[]
   saleItems        SaleItem[]
   stockMoves       StockMovement[]
@@ -48,6 +49,7 @@ model BillOfMaterials {
   name            String
   description     String?
   finalProductId  String
+  finalProduct    Product  @relation("FinalProductForBOM", fields: [finalProductId], references: [id])
   components      BomComponent[]
   productionOrders ProductionOrder[]
   createdAt       DateTime          @default(now())
@@ -110,9 +112,11 @@ model Purchase {
   id            String   @id @default(uuid())
   orderNumber   String   @unique
   poNumber      String   @unique
-  supplierName  String
+  supplierName  String?
   supplierEmail String?
   status        String   @default("DRAFT") // DRAFT, CONFIRMED, RECEIVED
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
   orderDate     DateTime @default(now())
   expectedDate  DateTime?
   receivedDate  DateTime?
@@ -124,6 +128,20 @@ model Purchase {
   items         PurchaseItem[]
 
   @@map("purchases")
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  companyName String
+  email       String?  @unique
+  address     String?
+  phone       String?
+  mf          String? // Matricule Fiscal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  purchases   Purchase[] // Relation to Purchase model
+
+  @@map("suppliers")
 }
 
 model PurchaseItem {
@@ -143,10 +161,14 @@ model PurchaseItem {
 model Sale {
   id            String   @id @default(uuid())
   saleNumber    String   @unique
-  customerName  String
+  customerName  String?
   customerEmail String?
   customerPhone String?
   type          String   @default("CLASSIC") // DOOR_TO_DOOR, CLASSIC
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  commercialId  String?
+  commercial    Commercial? @relation(fields: [commercialId], references: [id])
   status        String   @default("QUOTE") // QUOTE, CONFIRMED, DELIVERED
   orderDate     DateTime @default(now())
   saleDate      DateTime @default(now())
@@ -159,6 +181,36 @@ model Sale {
   items         SaleItem[]
 
   @@map("sales")
+}
+
+model Client {
+  id          String   @id @default(uuid())
+  companyName String
+  email       String?  @unique
+  address     String?
+  phone       String?
+  mf          String? // Matricule Fiscal
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sales       Sale[]     // Relation to Sale model
+  commercials Commercial[] // Relation to Commercial model (if a client can have multiple commercial contacts)
+
+  @@map("clients")
+}
+
+model Commercial {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  address   String?
+  phone     String?
+  clientId  String?  // Optional: if a commercial is primarily associated with one client
+  client    Client?  @relation(fields: [clientId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]   // Relation to Sale model
+
+  @@map("commercials")
 }
 
 model SaleItem {
