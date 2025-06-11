@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ExpenseFormData } from "@/types/expenses";
 import { PlusCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker"; // Assuming this component exists
@@ -118,7 +118,7 @@ export default function AddExpensePage() {
                 <Controller
                   name="amount"
                   control={control}
-                  render={({ field }) => <Input id="amount" type="number" step="0.01" {...field} placeholder="0.00" onChange={e => field.onChange(parseFloat(e.target.value))} />}
+                  render={({ field }) => <Input id="amount" type="number" step="0.01" {...field} placeholder={common("placeholderZeroAmount")} onChange={e => field.onChange(parseFloat(e.target.value))} />}
                 />
                 {errors.amount && <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>}
               </div>

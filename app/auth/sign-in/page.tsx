@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { signIn } from "next-auth/react"; // Import signIn
 import { useTranslations } from "@/lib/language-context"; // Import useTranslations
-import { useToast } from "@/components/ui/use-toast"; // Import useToast
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 import {
   Card,
   CardContent,
@@ -127,7 +127,7 @@ export default function SignInPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    placeholder={t("emailPlaceholder") || "john@example.com"}
+                    placeholder={t("emailPlaceholder")}
                     className="pl-9"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -145,14 +145,14 @@ export default function SignInPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
-                    placeholder={t("passwordPlaceholder") || "Enter your password"}
+                    placeholder={t("passwordPlaceholder")}
                     className="pl-9 pr-9"
                     value={formData.password}
                     onChange={handleInputChange}
                   />
                   <button
                     type="button"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? t("ariaHidePassword") : t("ariaShowPassword")}
                     className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                   >

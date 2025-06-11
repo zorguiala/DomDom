@@ -1,5 +1,6 @@
 import { Clock, CheckCircle, AlertCircle, PlayCircle } from "lucide-react";
 import { formatNumber, formatRelativeTime } from "@/lib/utils";
+import { useTranslations } from "@/lib/language-context";
 
 type ProductionOrderStatus =
   | "pending"
@@ -75,6 +76,9 @@ const statusConfig: Record<ProductionOrderStatus, StatusConfig> = {
 };
 
 export function ProductionStatus() {
+  const common = useTranslations("common");
+  const productionT = useTranslations("production");
+
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
@@ -104,7 +108,7 @@ export function ProductionStatus() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Clock className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-muted-foreground">Pending</span>
+            <span className="text-sm text-muted-foreground">{common("pending")}</span>
           </div>
           <div className="text-2xl font-bold text-gray-600">
             {formatNumber(productionData.pendingOrders)}
@@ -114,7 +118,7 @@ export function ProductionStatus() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Delayed</span>
+            <span className="text-sm text-muted-foreground">{productionT("delayed")}</span>
           </div>
           <div className="text-2xl font-bold text-red-600">
             {formatNumber(productionData.delayedOrders)}

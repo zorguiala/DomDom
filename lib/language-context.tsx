@@ -384,7 +384,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Don't render until we've loaded the saved preference
   if (!isInitialized) {
-    return <div>Loading...</div>;
+    return <div>{t("common.loading")}</div>;
   }
   const contextValue: LanguageContextType = {
     language: locale,

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { AttendanceFormData, AttendanceStatus, AttendanceStatusValues, AttendanceWithEmployee } from "@/types/hr";
 import { Employee } from "@prisma/client";
 import { PlusCircle, Edit2, FilterX, Search } from "lucide-react";

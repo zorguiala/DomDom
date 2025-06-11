@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MoreHorizontal, PlusCircle, Receipt, CreditCard, TrendingDown, AlertTriangle, Download } from "lucide-react"; // Added Download
 import {
   DropdownMenu,
@@ -152,7 +152,7 @@ export default function ExpensesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">3</div> {/* Static */}
-            <p className="text-xs text-muted-foreground">Categories</p> {/* Static */}
+            <p className="text-xs text-muted-foreground">{common("categories")}</p> {/* Static */}
           </CardContent>
         </Card>
       </div>

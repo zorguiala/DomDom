@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox"; // For 'Paid' status
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { PayrollData, PayrollAdjustmentItem, UpdatePayrollRequest } from "@/types/hr";
 import { DatePicker } from "@/components/ui/date-picker";
 import { PlusCircle, Trash2, Printer, Edit, Save } from "lucide-react";
@@ -151,7 +151,7 @@ export default function PayrollDetailPage() {
     const printContent = document.getElementById("payslip-printable-area");
     if (printContent) {
       const newWindow = window.open('', '_blank', 'width=800,height=600');
-      newWindow?.document.write('<html><head><title>Payslip</title>');
+      newWindow?.document.write(`<html><head><title>${t('payslipTitle')}</title>`);
       // TODO: Add styles here if needed, or link to a stylesheet
       newWindow?.document.write('<style>body {font-family: sans-serif;} table {width: 100%; border-collapse: collapse;} th, td {border: 1px solid #ddd; padding: 8px; text-align: left;} .payslip-header {text-align: center; margin-bottom: 20px;} .payslip-section {margin-bottom: 15px;} .payslip-summary {margin-top:20px; font-weight:bold;}</style>');
       newWindow?.document.write('</head><body>');

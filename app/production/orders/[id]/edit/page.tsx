@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ProductionOrderWithDetails } from "@/types/production"; // Using the main detailed type
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -277,7 +277,7 @@ export default function ProductionOrderEditPage() {
               <Controller
                 name="notes"
                 control={control}
-                render={({ field }) => <Textarea id="notes" {...field} value={field.value ?? ""} placeholder={t("enterNotesPlaceholder", { ns: 'production' }) || "Enter notes..."} rows={3} />}
+                render={({ field }) => <Textarea id="notes" {...field} value={field.value ?? ""} placeholder={t("placeholderEnterNotes")} rows={3} />}
               />
               {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
             </div>

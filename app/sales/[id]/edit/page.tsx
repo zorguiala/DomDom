@@ -211,7 +211,7 @@ export default function EditSalePage() {
                 id="customerName"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Enter customer name"
+                placeholder={t("placeholderEnterCustomerName")}
               />
             </div>
             <div>
@@ -221,7 +221,7 @@ export default function EditSalePage() {
                 type="email"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder="Enter customer email"
+                placeholder={t("placeholderEnterCustomerEmail")}
               />
             </div>
             <div>
@@ -230,11 +230,11 @@ export default function EditSalePage() {
                 id="customerPhone"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="Enter customer phone"
+                placeholder={t("placeholderEnterCustomerPhone")}
               />
             </div>
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{common("status")}</Label>
               <select
                 id="status"
                 value={status}
@@ -277,7 +277,7 @@ export default function EditSalePage() {
                 <span className="font-medium">{sale.totalAmount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Created</span>
+                <span className="text-sm font-medium">{common("created")}</span>
                 <span className="text-sm text-muted-foreground">
                   {formatDate(new Date(sale.createdAt))}
                 </span>
@@ -306,11 +306,11 @@ export default function EditSalePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead>{common("product")}</TableHead>
+                  <TableHead>{t("inventory.sku")}</TableHead>
+                  <TableHead className="text-right">{common("quantity")}</TableHead>
                   <TableHead className="text-right">Unit Price</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">{common("total")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

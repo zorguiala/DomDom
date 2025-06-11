@@ -99,7 +99,7 @@ export default function ProductViewPage() {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">Error</h2>
+          <h2 className="text-2xl font-bold text-red-600">{common("error")}</h2>
           <p className="text-gray-600 mt-2">{error || "Product not found"}</p>
           <Link href="/inventory">
             <Button className="mt-4">
@@ -171,15 +171,15 @@ export default function ProductViewPage() {
                 <p className="text-lg font-mono">{product.sku}</p>
               </div>
               <div>
-                <label className="text-sm font-medium">Category</label>
+                <label className="text-sm font-medium">{t("category")}</label>
                 <p className="text-lg">{product.category || "No category"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium">Unit</label>
+                <label className="text-sm font-medium">{common("unit")}</label>
                 <p className="text-lg">{product.unit}</p>
               </div>
               <div>
-                <label className="text-sm font-medium">Type</label>
+                <label className="text-sm font-medium">{common("type")}</label>
                 <div className="flex gap-2">
                   {product.isRawMaterial && (
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
@@ -227,7 +227,7 @@ export default function ProductViewPage() {
               </div>
             )}
             <div>
-              <label className="text-sm font-medium">Status</label>
+              <label className="text-sm font-medium">{common("status")}</label>
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   getStockStatus(product) === "in_stock"
@@ -263,7 +263,7 @@ export default function ProductViewPage() {
               <p className="text-lg">${product.priceCost.toFixed(2)}</p>
             </div>
             <div>
-              <label className="text-sm font-medium">Margin</label>
+              <label className="text-sm font-medium">{common("margin")}</label>
               <p className="text-lg font-semibold">
                 ${(product.priceSell - product.priceCost).toFixed(2)}
                 <span className="text-sm text-muted-foreground ml-2">

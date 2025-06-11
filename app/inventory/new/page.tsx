@@ -148,7 +148,7 @@ export default function NewProductPage() {
                   id="name"
                   value={formData.name}
                   onChange={handleInputChange("name")}
-                  placeholder="Enter product name"
+                  placeholder={t("placeholderProductName")}
                   required
                 />
               </div>
@@ -158,7 +158,7 @@ export default function NewProductPage() {
                   id="sku"
                   value={formData.sku}
                   onChange={handleInputChange("sku")}
-                  placeholder="Enter unique SKU"
+                  placeholder={t("placeholderSku")}
                   required
                 />
               </div>
@@ -168,7 +168,7 @@ export default function NewProductPage() {
                   id="category"
                   value={formData.category}
                   onChange={handleInputChange("category")}
-                  placeholder="Enter category"
+                  placeholder={t("placeholderCategory")}
                 />
               </div>
               <div className="space-y-2">
@@ -177,7 +177,7 @@ export default function NewProductPage() {
                   id="unit"
                   value={formData.unit}
                   onChange={handleInputChange("unit")}
-                  placeholder="e.g., pcs, kg, liters"
+                  placeholder={t("placeholderUnitExamples")}
                 />
               </div>
             </div>
@@ -204,7 +204,7 @@ export default function NewProductPage() {
                   step="0.01"
                   value={formData.priceCost}
                   onChange={handleInputChange("priceCost")}
-                  placeholder="0.00"
+                  placeholder={common("placeholderZeroAmount")}
                   required
                 />
               </div>
@@ -220,7 +220,7 @@ export default function NewProductPage() {
                   step="0.01"
                   value={formData.qtyOnHand}
                   onChange={handleInputChange("qtyOnHand")}
-                  placeholder="0"
+                  placeholder={common("placeholderZero")}
                 />
               </div>
               <div className="space-y-2">
@@ -231,7 +231,7 @@ export default function NewProductPage() {
                   step="0.01"
                   value={formData.minQty}
                   onChange={handleInputChange("minQty")}
-                  placeholder="Optional"
+                  placeholder={common("optional")}
                 />
               </div>
             </div>
