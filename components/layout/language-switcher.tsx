@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
-import { locales, Locale } from "@/lib/i18n"; // Assuming locales are exported from i18n
+import { Locale } from "@/lib/i18n"; // Assuming Locale is exported from i18n
 
 // Define type for displayLocales if not already present
 interface DisplayLocale {
