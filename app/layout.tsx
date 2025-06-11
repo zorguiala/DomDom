@@ -1,10 +1,10 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers/providers";
-import { LanguageProvider } from "@/lib/language-context";
 import { Toaster } from "@/components/ui/toaster";
-import { Sidebar } from "@/components/layout/sidebar";
+// Sidebar is removed from here
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,21 +19,14 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
-/**
- * Root layout component that wraps the entire application
- * Provides global styles, fonts, and context providers
- */
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <LanguageProvider>
-          <Providers>
-            <div className="flex min-h-screen">
-              <Sidebar />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster />
+        <LanguageProvider> {/* LanguageProvider should likely be inside SessionProvider if it uses session data, or SessionProvider inside Providers */}
+          <Providers> {/* Assuming SessionProvider is within Providers component */}
+            {children} {/* Sidebar is no longer here, main content will be pages or nested layouts */}
+            <Toaster /> {/* Global Toaster */}
           </Providers>
         </LanguageProvider>
       </body>

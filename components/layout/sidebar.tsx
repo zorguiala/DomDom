@@ -1,124 +1,72 @@
+// components/layout/sidebar.tsx
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LanguageSwitcher } from "@/components/layout/language-switcher";
-import { useTranslations } from "@/lib/language-context";
+import { useTranslations } from "next-intl";
 import { NavigationItem } from "@/types";
-import {
-  BarChart3,
-  Package,
-  Factory,
-  ShoppingCart,
-  TrendingUp,
-  Users,
-  CreditCard,
-  Settings,
-  Menu,
-  X,
-  List,
-  ClipboardList,
-  Briefcase,
-  CalendarCheck, // Icon for Attendance
-  DollarSign, // Icon for Payroll
-} from "lucide-react";
-import { useState } from "react";
+import { Factory, Menu, X } from "lucide-react"; // Kept only used icons here
+import { useState, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { getNavigationItems } from "@/lib/navigation"; // Import the new function
+import { UserSection } from "@/components/layout/UserSection"; // Import UserSection
 
 interface SidebarProps {
   className?: string;
 }
 
-/**
- * Main sidebar navigation component
- * Displays navigation links for all ERP modules
- */
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const t = useTranslations("common");
-  const navigationItems: NavigationItem[] = [
-    {
-      title: t("dashboard"),
-      href: "/dashboard",
-      icon: BarChart3,
-    },
-    {
-      title: t("inventory"),
-      href: "/inventory",
-      icon: Package,
-    },
-    {
-      title: t("production"),
-      href: "/production",
-      icon: Factory,
-      children: [
-        {
-          title: t("bomManagement"),
-          href: "/production/bom",
-          icon: List,
-        },
-        {
-          title: t("productionOrders"),
-          href: "/production/orders",
-          icon: ClipboardList,
-        },
-      ],
-    },
-    {
-      title: t("purchases"),
-      href: "/purchases",
-      icon: ShoppingCart,
-    },
-    {
-      title: t("sales"),
-      href: "/sales",
-      icon: TrendingUp,
-    },
-    {
-      title: t("hr"),
-      href: "/hr",
-      icon: Users,
-      children: [
-        {
-          title: t("manageEmployees") || "Manage Employees", // Added translation key
-          href: "/hr/employees",
-          icon: Briefcase,
-        },
-        {
-          title: t("attendance") || "Attendance", // Added translation key
-          href: "/hr/attendance",
-          icon: CalendarCheck,
-        },
-        {
-          title: t("payroll") || "Payroll", // Added translation key
-          href: "/hr/payroll",
-          icon: DollarSign, // Using DollarSign icon for Payroll
-        },
-      ],
-    },
-    {
-      title: t("expenses"),
-      href: "/expenses",
-      icon: CreditCard,
-    },
-    {
-      title: t("settings"),
-      href: "/settings",
-      icon: Settings,
-    },
-  ];
+  const { data: session, status } = useSession();
+  const userRole = session?.user?.role;
+
+  const allNavigationItems = useMemo(() => getNavigationItems(t), [t]);
+
+  const filteredNavigationItems = useMemo(() => {
+    if (status !== "authenticated" || !userRole) {
+      return [];
+    }
+
+    const filterItems = (items: NavigationItem[]): NavigationItem[] => {
+      return items
+        .filter(item => {
+          if (!item.roles || item.roles.length === 0) {
+            return true;
+          }
+          return item.roles.includes(userRole);
+        })
+        .map(item => {
+          if (item.children && item.children.length > 0) {
+            const filteredChildren = filterItems(item.children);
+            if (filteredChildren.length > 0) {
+              return { ...item, children: filteredChildren };
+            }
+            // Keep parent if it's a direct link even if children are filtered out
+            if (item.href && (!item.children || item.children.length === 0 || filteredChildren.length === 0)) {
+               return { ...item, children: [] };
+            }
+            return null; // Parent has no href and all children filtered out OR (no href and no children initially)
+          }
+          return item;
+        })
+        .filter(item => item !== null) as NavigationItem[];
+    };
+
+    return filterItems(allNavigationItems);
+  }, [userRole, status, allNavigationItems]);
 
   return (
     <div
       className={cn(
-        "flex h-full flex-col border-r bg-background",
+        "flex h-screen flex-col border-r bg-background sticky top-0",
         isCollapsed ? "w-16" : "w-64",
         "transition-all duration-200",
         className,
       )}
     >
-      {/* Logo/Header */}{" "}
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!isCollapsed && (
           <Link href="/dashboard" className="flex items-center space-x-2">
@@ -135,33 +83,34 @@ export function Sidebar({ className }: SidebarProps) {
             "hover:bg-accent hover:text-accent-foreground",
           )}
         >
-          {isCollapsed ? (
-            <Menu className="h-4 w-4" />
-          ) : (
-            <X className="h-4 w-4" />
-          )}
+          {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
         </button>
       </div>
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
-        {navigationItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          const Icon = item.icon;
+
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        {filteredNavigationItems.map((item) => {
+          const isActive = item.href && pathname.startsWith(item.href);
+          const Icon = item.icon; // Icon component is part of NavigationItem type
+
+          // Skip rendering if item has no href and no visible children
+          if (!item.href && (!item.children || item.children.length === 0)) {
+              return null;
+          }
 
           return (
-            <div key={item.href}>
+            <div key={item.title}>
               <Link
-                href={item.href}
+                href={item.href || "#"}
+                onClick={(e) => { if (!item.href && item.children && item.children.length > 0) e.preventDefault(); }}
                 className={cn(
                   "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
-                  isActive
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground",
+                  isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
                   isCollapsed && "justify-center px-2",
+                  (!item.href && item.children && item.children.length > 0) && "cursor-default"
                 )}
               >
-                {Icon && <Icon className="h-4 w-4" />}
+                {Icon && <Icon className={cn("h-4 w-4", isCollapsed && "mx-auto")} />}
                 {!isCollapsed && <span className="ml-3">{item.title}</span>}
                 {item.badge && !isCollapsed && (
                   <span className="ml-auto rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
@@ -169,22 +118,19 @@ export function Sidebar({ className }: SidebarProps) {
                   </span>
                 )}
               </Link>
-              {/* Render children if present */}
-              {!isCollapsed && item.children && (
-                <div className="ml-8 mt-1 space-y-1">
+              {!isCollapsed && item.children && item.children.length > 0 && (
+                <div className="ml-4 mt-1 space-y-1 border-l border-border pl-4">
                   {item.children.map((child) => {
-                    const ChildIcon = child.icon;
-                    const isChildActive = pathname.startsWith(child.href);
+                    const ChildIcon = child.icon; // Icon component for child
+                    const isChildActive = child.href && pathname.startsWith(child.href);
                     return (
                       <Link
-                        key={child.href}
+                        key={child.title}
                         href={child.href}
                         className={cn(
                           "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           "hover:bg-accent hover:text-accent-foreground",
-                          isChildActive
-                            ? "bg-accent text-accent-foreground"
-                            : "text-muted-foreground",
+                          isChildActive ? "text-foreground" : "text-muted-foreground",
                         )}
                       >
                         {ChildIcon && <ChildIcon className="h-4 w-4" />}
@@ -197,37 +143,9 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
           );
         })}
-      </nav>{" "}
-      {/* User section */}
-      <div className="border-t p-4 space-y-4">
-        {/* Language switcher */}
-        <div
-          className={cn(
-            "flex",
-            isCollapsed ? "justify-center" : "justify-start",
-          )}
-        >
-          <LanguageSwitcher />
-        </div>
+      </nav>
 
-        {/* User info */}
-        <div
-          className={cn(
-            "flex items-center",
-            isCollapsed ? "justify-center" : "space-x-3",
-          )}
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-            <Users className="h-4 w-4" />
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1">
-              <p className="text-sm font-medium">Admin User</p>
-              <p className="text-xs text-muted-foreground">admin@company.com</p>
-            </div>
-          )}
-        </div>
-      </div>
+      <UserSection isCollapsed={isCollapsed} />
     </div>
   );
 }
