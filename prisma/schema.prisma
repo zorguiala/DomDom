@@ -245,21 +245,38 @@ model Employee {
   @@map("employees")
 }
 
-model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime? // Optional: For email verification process
-  passwordHash  String
-  role          String    @default("USER") // e.g., USER, ADMIN, EDITOR
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model Attendance {
+  id         String   @id @default(uuid())
+  employeeId String
+  date       DateTime
+  status     String   // PRESENT, ABSENT, LATE, etc.
+  checkIn    DateTime?
+  checkOut   DateTime?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  // Optional: If using next-auth Prisma adapter, these fields might be needed
-  // accounts      Account[]
-  // sessions      Session[]
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-  @@map("users")
+  @@map("attendance")
+}
+
+model Payroll {
+  id         String   @id @default(uuid())
+  employeeId String
+  month      Int
+  year       Int
+  salary     Float
+  bonus      Float?
+  deductions Float?
+  netPay     Float
+  status     String   // PENDING, COMPLETED, CANCELLED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("payrolls")
 }
 
 // Optional: If using next-auth Prisma adapter, define Account and Session models
