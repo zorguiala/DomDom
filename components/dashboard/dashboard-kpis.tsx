@@ -11,7 +11,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useTranslations } from "@/lib/language-context"; // Assuming this is the project's i18n hook
+import { useTranslations } from "@/lib/language-context";
 
 interface ApiKpiData {
   totalRevenue: number;
@@ -28,7 +28,8 @@ export function DashboardKPIs() {
   const [kpiData, setKpiData] = useState<ApiKpiData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const common = useTranslations("common"); // For "Loading..."
+  const common = useTranslations("common");
+  const dashboardT = useTranslations("dashboard"); // For dashboard specific translations
 
   useEffect(() => {
     const fetchKpiData = async () => {
@@ -40,7 +41,7 @@ export function DashboardKPIs() {
           throw new Error("Failed to fetch dashboard KPIs");
         }
         const data = await response.json();
-        setKpiData(data.kpis); // Assuming API returns { kpis: { ... } }
+        setKpiData(data.kpis);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
@@ -86,33 +87,32 @@ export function DashboardKPIs() {
     );
   }
 
-  // Transform fetched kpiData into the structure expected by the map function
   const displayKpis = [
     {
-      title: "Total Revenue", // Consider translating these titles if needed
+      title: dashboardT("kpi.totalRevenue"),
       value: formatCurrency(kpiData.totalRevenue),
-      change: `${kpiData.revenueChange >= 0 ? '+' : ''}${kpiData.revenueChange}% from last month`,
+      change: dashboardT("kpi.revenueChange", { change: kpiData.revenueChange }),
       icon: DollarSign,
       trend: kpiData.revenueChange >= 0 ? "up" : "down",
     },
     {
-      title: "Orders",
+      title: dashboardT("kpi.orders"),
       value: formatNumber(kpiData.totalOrders),
-      change: `${kpiData.ordersChange >= 0 ? '+' : ''}${kpiData.ordersChange}% from last month`,
+      change: dashboardT("kpi.ordersChange", { change: kpiData.ordersChange }),
       icon: ShoppingCart,
       trend: kpiData.ordersChange >= 0 ? "up" : "down",
     },
     {
-      title: "Products",
+      title: dashboardT("kpi.products"),
       value: formatNumber(kpiData.totalProducts),
-      change: `${kpiData.lowStockCount} low stock alerts`,
+      change: dashboardT("kpi.lowStockAlert", { count: kpiData.lowStockCount }),
       icon: Package,
-      trend: kpiData.lowStockCount > 0 ? "warning" : "neutral", // Neutral if no low stock
+      trend: kpiData.lowStockCount > 0 ? "warning" : "neutral",
     },
     {
-      title: "Employees",
+      title: dashboardT("kpi.employees"),
       value: formatNumber(kpiData.totalEmployees),
-      change: `${kpiData.employeesChange >= 0 ? '+' : ''}${kpiData.employeesChange} this month`,
+      change: dashboardT("kpi.newEmployees", { count: kpiData.employeesChange }),
       icon: Users,
       trend: kpiData.employeesChange === 0 ? "neutral" : (kpiData.employeesChange > 0 ? "up" : "down"),
     },
@@ -136,7 +136,7 @@ export function DashboardKPIs() {
                     ? "text-red-600"
                     : kpi.trend === "warning"
                       ? "text-yellow-600"
-                      : "text-muted-foreground" // Neutral trend
+                      : "text-muted-foreground"
               }`}
             >
               {kpi.trend === "up" && <TrendingUp className="h-3 w-3 mr-1" />}

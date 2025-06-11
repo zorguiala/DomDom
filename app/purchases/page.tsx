@@ -42,7 +42,7 @@ export default function PurchasesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$45,231</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{t("kpiThisMonth")}</p>
           </CardContent>
         </Card>
 
@@ -55,7 +55,7 @@ export default function PurchasesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">18</div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
+            <p className="text-xs text-muted-foreground">{t("kpiAwaitingApproval")}</p>
           </CardContent>
         </Card>
 
@@ -68,7 +68,7 @@ export default function PurchasesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">156</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{t("kpiThisMonth")}</p>
           </CardContent>
         </Card>
 
@@ -81,7 +81,7 @@ export default function PurchasesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">7</div>
-            <p className="text-xs text-muted-foreground">Expected this week</p>
+            <p className="text-xs text-muted-foreground">{t("kpiExpectedThisWeek")}</p>
           </CardContent>
         </Card>
       </div>
@@ -94,7 +94,7 @@ export default function PurchasesPage() {
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground">
-            Purchase orders management coming soon...
+            {t("managementComingSoon")}
           </div>
         </CardContent>
       </Card>

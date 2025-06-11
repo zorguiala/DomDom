@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress"; // Import Progress component
 import { ProductionOrderWithDetails } from "@/types/production";
 import { useToast } from "@/hooks/use-toast";
 import { MoreHorizontal } from "lucide-react";
@@ -173,7 +174,7 @@ export default function ProductionOrdersPage() {
                     <TableCell className="min-w-[150px]"> {/* Progress Cell */}
                       {order.status === "IN_PROGRESS" ? (
                         <div className="flex flex-col">
-                           {/* <progress value={progressValue} className="w-full h-2.5" /> */}
+                           <Progress value={progressValue} className="w-full h-2.5" />
                            <span className="text-xs text-muted-foreground mt-1">{progressText}</span>
                         </div>
                       ) : (
@@ -210,7 +211,7 @@ export default function ProductionOrdersPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-             )})}
+              ))}
             </TableBody>
           </Table>
         </CardContent>

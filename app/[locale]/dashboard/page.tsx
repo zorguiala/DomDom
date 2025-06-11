@@ -23,12 +23,12 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
         <div className="flex items-center space-x-2">
-          <ShimmerButton>{common("export")} Report</ShimmerButton>
+          <ShimmerButton>{common("export")} {t("reportButtonSuffix")}</ShimmerButton>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <Suspense fallback={<div>Loading KPIs...</div>}>
+      <Suspense fallback={<div>{t("loadingKpis")}</div>}>
         <DashboardKPIs />
       </Suspense>
 
@@ -39,7 +39,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>{t("revenueChart")}</CardTitle>
             <CardDescription>
-              Monthly revenue trends for the past 6 months
+              {t("revenueChartDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
@@ -51,7 +51,7 @@ export default function DashboardPage() {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>{t("recentActivity")}</CardTitle>
-            <CardDescription>Latest transactions and updates</CardDescription>
+            <CardDescription>{t("recentActivityDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Suspense fallback={<div>{common("loading")}</div>}>
@@ -68,7 +68,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>{t("inventoryOverview")}</CardTitle>
             <CardDescription>
-              Stock levels and low inventory alerts
+              {t("inventoryOverviewDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -81,7 +81,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>{t("productionStatus")}</CardTitle>
             <CardDescription>
-              Current production orders and schedules
+              {t("productionStatusDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>

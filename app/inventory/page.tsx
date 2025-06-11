@@ -98,7 +98,7 @@ export default function InventoryPage() {
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
               />
-              Refresh
+              {common("refresh")}
             </Button>
           </div>{" "}
           {/* Products Table */}
@@ -114,12 +114,12 @@ export default function InventoryPage() {
 
             {error && (
               <div className="p-4 text-red-600 bg-red-50 border-b">
-                Error: {error}
+                {common("errorPrefix")}{error}
               </div>
             )}
 
             {loading ? (
-              <div className="p-4">{common("loading")} products...</div>
+              <div className="p-4">{common("loading")}{t("loadingSuffixProducts")}</div>
             ) : (
               <ProductList products={filteredProducts} />
             )}
@@ -138,7 +138,7 @@ function ProductList({ products }: { products: Product[] }) {
   if (products.length === 0) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        No products found. Add your first product to get started.
+        {t("noProductsFound")}
       </div>
     );
   }
@@ -150,7 +150,7 @@ function ProductList({ products }: { products: Product[] }) {
           <div>
             <div className="font-medium">{product.name}</div>
             <div className="text-sm text-muted-foreground">
-              {product.category || "No category"}
+              {product.category || t("noCategory")}
             </div>
           </div>
           <div className="font-mono text-sm">{product.sku}</div>
@@ -176,7 +176,7 @@ function ProductList({ products }: { products: Product[] }) {
               </span>
               {product.minQty && (
                 <span className="text-xs text-muted-foreground">
-                  / {product.minQty} min
+                  / {product.minQty}{t("minSuffix")}
                 </span>
               )}
             </div>

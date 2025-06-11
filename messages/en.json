@@ -107,7 +107,30 @@
     "lowStockAlert": "Low Stock Alert",
     "outOfStock": "Out of Stock",
     "inStock": "In Stock",
-    "lowStock": "Low Stock"
+    "lowStock": "Low Stock",
+    "kpi": {
+      "totalRevenue": "Total Revenue",
+      "orders": "Orders",
+      "products": "Products",
+      "employees": "Employees",
+      "revenueChange": "+{change}% from last month",
+      "ordersChange": "+{change}% from last month",
+      "lowStockAlert": "{count} low stock alerts",
+      "newEmployees": "+{count} new this month"
+    },
+    "production": {
+      "activeOrders": "Active Orders",
+      "completedToday": "Completed Today",
+      "recentOrdersTitle": "Recent Production Orders",
+      "quantityPrefix": "Qty: ",
+      "progressSuffix": "% complete",
+      "completedPrefix": "Completed ",
+      "duePrefix": "Due ",
+      "statusInProgress": "In Progress",
+      "statusCompleted": "Completed",
+      "statusPending": "Pending",
+      "statusDelayed": "Delayed"
+    }
   },
   "inventory": {
     "title": "Inventory Management",
@@ -191,7 +214,13 @@
     "orderUpdatedTitle": "Order Updated",
     "orderUpdatedDesc": "The production order has been successfully updated.",
     "errorUpdatingOrderTitle": "Update Failed",
-    "placeholderEnterNotes": "Enter notes..."
+    "placeholderEnterNotes": "Enter notes...",
+    "labelSkuSuffix": "(SKU: {sku})",
+    "labelCreatedAt": "Created At",
+    "labelUpdatedAt": "Updated At",
+    "notApplicable": "N/A",
+    "bomPrefix": "BOM: ",
+    "notSet": "Not set"
   },
   "hr": {
     "title": "Human Resources",

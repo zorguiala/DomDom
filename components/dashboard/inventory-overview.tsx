@@ -24,6 +24,7 @@ export function InventoryOverview() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const common = useTranslations("common");
+  const dashboardT = useTranslations("dashboard");
 
   useEffect(() => {
     const fetchInventoryData = async () => {
@@ -111,7 +112,7 @@ export function InventoryOverview() {
           <div className="flex items-center space-x-2">
             <Package className="h-4 w-4 text-blue-500" />
             <span className="text-sm text-muted-foreground">
-              Total Products
+              {dashboardT("inventory.totalProducts")}
             </span>
           </div>
           <div className="text-2xl font-bold">
@@ -122,7 +123,7 @@ export function InventoryOverview() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm text-muted-foreground">Low Stock</span>
+            <span className="text-sm text-muted-foreground">{dashboardT("inventory.lowStock")}</span>
           </div>
           <div className="text-2xl font-bold text-yellow-600">
             {formatNumber(data.lowStockItems)}
@@ -132,7 +133,7 @@ export function InventoryOverview() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <TrendingDown className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Out of Stock</span>
+            <span className="text-sm text-muted-foreground">{dashboardT("inventory.outOfStock")}</span>
           </div>
           <div className="text-2xl font-bold text-red-600">
             {formatNumber(data.outOfStockItems)}
@@ -143,7 +144,7 @@ export function InventoryOverview() {
           <div className="flex items-center space-x-2">
             <TrendingUp className="h-4 w-4 text-green-500" />
             <span className="text-sm text-muted-foreground">
-              Recently Updated
+              {dashboardT("inventory.recentlyUpdated")}
             </span>
           </div>
           <div className="text-2xl font-bold text-green-600">
@@ -156,7 +157,7 @@ export function InventoryOverview() {
       <div>
         <h4 className="text-sm font-medium mb-3 flex items-center">
           <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />
-          Low Stock Alerts
+          {dashboardT("inventory.lowStockAlertsTitle")}
         </h4>
         <div className="space-y-2">
           {data.topLowStockItems && data.topLowStockItems.length > 0 ? (
@@ -176,13 +177,13 @@ export function InventoryOverview() {
                     {item.currentStock} / {item.minStock}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Current / Min
+                    {dashboardT("inventory.currentMinLabel")}
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">No low stock items to display.</p>
+            <p className="text-sm text-muted-foreground">{dashboardT("inventory.noLowStockItems")}</p>
           )}
         </div>
       </div>
