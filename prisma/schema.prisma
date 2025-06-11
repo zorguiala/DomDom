@@ -1,6 +1,4 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
 
 datasource db {
   provider = "sqlite"
@@ -247,51 +245,72 @@ model Employee {
   @@map("employees")
 }
 
-model Attendance {
-  id          String   @id @default(uuid())
-  employeeId  String
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  date        DateTime
-  status      String   @default("PRESENT") // PRESENT, ABSENT, HALF_DAY
-  hoursWorked Float?
-  notes       String?
-  createdAt   DateTime @default(now())
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? // Optional: For email verification process
+  passwordHash  String
+  role          String    @default("USER") // e.g., USER, ADMIN, EDITOR
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  @@unique([employeeId, date])
-  @@map("attendance")
+  // Optional: If using next-auth Prisma adapter, these fields might be needed
+  // accounts      Account[]
+  // sessions      Session[]
+
+  @@map("users")
 }
 
-model Payroll {
-  id         String   @id @default(uuid())
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
-  month      Int
-  year               Int
-  baseSalary         Float
-  // overtime           Float    @default(0) // Replaced by bonusesOrOvertime
-  bonusesOrOvertime  String? // Stores JSON as String: array of {reason: string, amount: Float}
-  deductions         String? // Stores JSON as String: array of {reason: string, amount: Float}
-  netSalary          Float
-  paid               Boolean  @default(false)
-  paidAt             DateTime?
-  createdAt          DateTime @default(now())
+// Optional: If using next-auth Prisma adapter, define Account and Session models
+// model Account {
+//   id                String  @id @default(cuid())
+//   userId            String
+//   type              String
+//   provider          String
+//   providerAccountId String
+//   refresh_token     String?
+//   access_token      String?
+//   expires_at        Int?
+//   token_type        String?
+//   scope             String?
+//   id_token          String?
+//   session_state     String?
 
-  @@unique([employeeId, month, year])
-  @@map("payrolls")
+//   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@unique([provider, providerAccountId])
+//   @@map("accounts")
+// }
+
+// model Session {
+//   id           String   @id @default(cuid())
+//   sessionToken String   @unique
+//   userId       String
+//   expires      DateTime
+//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//   @@map("sessions")
+// }
+
+// model VerificationToken {
+//   identifier String
+//   token      String   @unique
+//   expires    DateTime
+
+//   @@unique([identifier, token])
+//   @@map("verification_tokens")
+// }
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+  @@map("password_reset_tokens")
 }
-
-model Expense {
-  id          String   @id @default(uuid())
-  description String
-  category      String
-  amount        Float
-  expenseDate   DateTime @default(now())
-  paymentMethod String? // Added paymentMethod
-  receipt       String?
-  notes         String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("expenses")
-}
-

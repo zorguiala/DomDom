@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { signIn } from "next-auth/react"; // Import signIn
-import { useTranslations } from "@/lib/language-context"; // Import useTranslations
+import { useTranslations } from "next-intl"; // Import useTranslations
 import { useToast } from "@/components/ui/use-toast"; // Import useToast
 import {
   Card,
