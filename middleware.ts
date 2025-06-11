@@ -1,67 +1,73 @@
 // middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { locales, Locale } from './lib/i18n'; // Ensure correct path to i18n config
 
-export async function middleware(request: NextRequest) {
+const publicPages = [
+  '/', // Assuming the root is a public landing page
+  '/auth/sign-in',
+  '/auth/sign-up',
+  '/auth/forgot-password',
+  // Add any other public pages, e.g., '/about', '/contact'
+  // Reset password paths often include a token, so use a regex or startsWith
+];
+
+const intlMiddleware = createMiddleware({
+  locales: locales as unknown as string[], // Cast needed due to `as const` in i18n.ts
+  defaultLocale: 'en',
+  localePrefix: 'always', // Or 'as-needed' or 'never'
+});
+
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow requests for NextAuth.js specific paths, Next.js internals, and common static asset folders
-  if (
-    pathname.startsWith('/api/auth/') ||
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/static/') || // If you serve static assets from a /public/static folder
-    pathname.startsWith('/images/') || // If you serve images from /public/images
-    pathname.match(/\.(?:ico|png|svg|jpg|jpeg|gif|txt|xml|webmanifest)$/i) // Common static file extensions
-  ) {
-    return NextResponse.next();
+  // Apply i18n routing first
+  const i18nResponse = intlMiddleware(request);
+  if (i18nResponse.headers.has('Location')) { // Check if next-intl middleware wants to redirect
+      return i18nResponse;
   }
 
-  // Define public paths that don't require authentication
-  const publicPaths = [
-    '/', // Assuming the root is a public landing page
-    '/auth/sign-in',
-    '/auth/sign-up',
-    '/auth/forgot-password',
-    // Reset password paths often include a token, so use startsWith
-  ];
+  // Extract locale from pathname (e.g., /en/dashboard -> en)
+  const pathnameLocale = locales.find(loc => pathname.startsWith(`/${loc}/`));
+  const basePath = pathnameLocale ? pathname.substring(pathnameLocale.length + 1) : pathname;
 
-  // Check if the current path is public or a reset password path
-  const isPublicPath = publicPaths.some(path => pathname === path) ||
-                       pathname.startsWith('/auth/reset-password/');
+  // Check if the path (without locale prefix) is public or a reset password path
+  // Ensure basePath starts with / for comparison or is empty for root
+  const effectivePath = basePath.startsWith('/') ? basePath : `/${basePath}`;
+
+  const isPublicPath = publicPages.some(path => effectivePath === path) ||
+                       effectivePath.startsWith('/auth/reset-password/');
 
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
     console.error('NEXTAUTH_SECRET is not set. Authentication checks will be skipped in middleware.');
-    // Depending on policy, either allow all or deny all if secret is missing.
-    // For now, allowing to prevent full site block during setup issues.
-    return NextResponse.next();
+    return i18nResponse; // Return the response from intlMiddleware
   }
 
   const token = await getToken({ req: request, secret });
 
   if (!token && !isPublicPath) {
-    const signInUrl = new URL('/auth/sign-in', request.url);
-    signInUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
+    // For unauthenticated users trying to access protected pages,
+    // redirect to the sign-in page *with the current locale*.
+    const signInUrl = new URL(`/${pathnameLocale || 'en'}/auth/sign-in`, request.url);
+    // Append the original path (without locale) as callbackUrl
+    signInUrl.searchParams.set('callbackUrl', effectivePath); // Use effectivePath for callback
     return NextResponse.redirect(signInUrl);
   }
 
-  if (token && (pathname === '/auth/sign-in' || pathname === '/auth/sign-up')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (token && (effectivePath === '/auth/sign-in' || effectivePath === '/auth/sign-up')) {
+    // For authenticated users trying to access sign-in/sign-up,
+    // redirect to the dashboard *with the current locale*.
+    return NextResponse.redirect(new URL(`/${pathnameLocale || 'en'}/dashboard`, request.url));
   }
 
-  return NextResponse.next();
+  return i18nResponse; // If no auth redirect, proceed with the i18n response
 }
 
 export const config = {
+  // Matcher to apply middleware to all paths except for static files and specific API routes
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - (these are now handled inside the middleware logic for more clarity)
-     * This matcher will run on almost all requests, and the middleware logic will decide.
-     * A common alternative is to exclude specific static file patterns here.
-     * For this implementation, we let the middleware logic handle exclusions.
-     */
-    '/((?!api/auth/session|_next/static|_next/image|assets/|favicon.ico|sw.js).*)',
+    '/((?!api/auth/session|_next/static|_next/image|images|static|assets/|favicon.ico|sw.js|robots.txt|sitemap.xml|manifest.json|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

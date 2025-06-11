@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Card,
   CardContent,
@@ -15,7 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Building2, Mail, Lock, User as UserIcon } from "lucide-react"; // Import UserIcon
-import { useToast } from "@/hooks/use-toast";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -103,11 +103,7 @@ export default function SignUpPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <p className="text-sm font-medium text-destructive text-center p-2 bg-destructive/10 rounded-md">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm font-medium text-destructive text-center p-2 bg-destructive/10 rounded-md">{error}</p>}
 
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -174,10 +170,7 @@ export default function SignUpPage() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
-                <Link
-                  href="/auth/sign-in"
-                  className="font-medium text-primary hover:text-primary/80"
-                >
+                <Link href="/auth/sign-in" className="font-medium text-primary hover:text-primary/80">
                   Sign In
                 </Link>
               </p>

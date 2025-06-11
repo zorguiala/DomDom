@@ -380,4 +380,5 @@ export interface NavigationItem {
   >;
   badge?: string | number;
   children?: NavigationItem[];
+  roles?: string[]; // Added for RBAC
 }
