@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         name,
         email,
         passwordHash,
-        role: "ADMIN", // Default role, consider making this more configurable or "USER"
+        role: "USER", // Default role set to "USER" to follow the principle of least privilege
       },
     });
 
