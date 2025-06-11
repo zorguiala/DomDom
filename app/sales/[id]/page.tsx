@@ -167,7 +167,7 @@ export default function SaleDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Status</span>
+              <span className="text-sm font-medium">{common("status")}</span>
               <Badge className={getStatusColor(sale.status)}>
                 {sale.status}
               </Badge>
@@ -183,7 +183,7 @@ export default function SaleDetailPage() {
               <span className="font-medium">{sale.totalAmount}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Created</span>
+              <span className="text-sm font-medium">{common("created")}</span>
               <span className="text-sm text-muted-foreground">
                 {formatDate(new Date(sale.createdAt))}
               </span>
@@ -248,11 +248,11 @@ export default function SaleDetailPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
+                <TableHead>{common("product")}</TableHead>
+                <TableHead>{t("inventory.sku")}</TableHead>
+                <TableHead className="text-right">{common("quantity")}</TableHead>
                 <TableHead className="text-right">Unit Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-right">{common("total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -297,7 +297,7 @@ export default function SaleDetailPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between font-bold text-lg border-t pt-2">
-                  <span>Total:</span>
+                  <span>{common("total")}:</span>
                   <span>{formatCurrency(sale.totalAmount)}</span>
                 </div>
               </div>

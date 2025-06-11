@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { ProductionOrderWithDetails } from "@/types/production";
 
 export default function ProductionOrderDetailPage() {
@@ -80,12 +80,23 @@ export default function ProductionOrderDetailPage() {
   };
 
   const getStatusBadgeVariant = (status: string | undefined) => {
-    switch (status) {
+    switch (status?.toUpperCase()) {
       case "PLANNED": return "secondary";
       case "IN_PROGRESS": return "default";
       case "DONE": return "success";
       case "CANCELLED": return "destructive";
       default: return "outline";
+    }
+  };
+
+  const translateStatus = (status: string | undefined) => {
+    if (!status) return common("na");
+    switch (status.toUpperCase()) {
+      case "PLANNED": return t("statusPlanned");
+      case "IN_PROGRESS": return t("statusInProgress");
+      case "DONE": return t("statusDone");
+      case "CANCELLED": return t("statusCancelled");
+      default: return status;
     }
   };
 
@@ -117,19 +128,19 @@ export default function ProductionOrderDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div><strong>{t("product")}:</strong> {order.product?.name} (SKU: {order.product?.sku})</div>
-            <div><strong>{t("bom")}:</strong> {order.bom?.name || common("na")}</div>
-            <div><strong>{t("status")}:</strong> <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge></div>
-            <div><strong>{t("priority")}:</strong> {order.priority || common("na")}</div>
+            <div><strong>{t("product")}:</strong> {order.product?.name} {order.product?.sku ? t("labelSkuSuffix", { sku: order.product.sku }) : ''}</div>
+            <div><strong>{common("bom")}:</strong> {order.bom?.name || common("na")}</div>
+            <div><strong>{common("status")}:</strong> <Badge variant={getStatusBadgeVariant(order.status)}>{translateStatus(order.status)}</Badge></div>
+            <div><strong>{common("priority")}:</strong> {order.priority || common("na")}</div>
             <div><strong>{t("qtyOrdered")}:</strong> {order.qtyOrdered} {order.product?.unit}</div>
             <div><strong>{t("qtyProduced")}:</strong> {order.qtyProduced} {order.product?.unit}</div>
             <div><strong>{t("startDate")}:</strong> {order.startDate ? new Date(order.startDate).toLocaleDateString() : common("na")}</div>
             <div><strong>{t("expectedEndDate")}:</strong> {order.expectedEndDate ? new Date(order.expectedEndDate).toLocaleDateString() : common("na")}</div>
             <div><strong>{t("actualEndDate")}:</strong> {order.actualEndDate ? new Date(order.actualEndDate).toLocaleDateString() : common("na")}</div>
-            <div><strong>{t("createdAt")}:</strong> {new Date(order.createdAt).toLocaleString()}</div>
-            <div><strong>{t("updatedAt")}:</strong> {new Date(order.updatedAt).toLocaleString()}</div>
+            <div><strong>{t("labelCreatedAt")}:</strong> {new Date(order.createdAt).toLocaleString()}</div>
+            <div><strong>{t("labelUpdatedAt")}:</strong> {new Date(order.updatedAt).toLocaleString()}</div>
           </div>
-          {order.notes && <div className="pt-4"><strong>{t("notes")}:</strong> <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.notes}</p></div>}
+          {order.notes && <div className="pt-4"><strong>{common("notes")}:</strong> <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.notes}</p></div>}
         </CardContent>
       </Card>
 

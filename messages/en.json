@@ -50,7 +50,18 @@
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "creating": "Creating...",
-    "recording": "Recording..."
+    "recording": "Recording...",
+    "categories": "Categories",
+    "unit": "Unit",
+    "type": "Type",
+    "margin": "Margin",
+    "created": "Created",
+    "products": "Products",
+    "items": "Items",
+    "pending": "Pending",
+    "placeholderZeroAmount": "0.00",
+    "optional": "Optional",
+    "placeholderZero": "0"
   },
   "auth": {
     "signIn": "Sign In",
@@ -132,7 +143,30 @@
     "lowStockAlert": "Low Stock Alert",
     "outOfStock": "Out of Stock",
     "inStock": "In Stock",
-    "lowStock": "Low Stock"
+    "lowStock": "Low Stock",
+    "kpi": {
+      "totalRevenue": "Total Revenue",
+      "orders": "Orders",
+      "products": "Products",
+      "employees": "Employees",
+      "revenueChange": "+{change}% from last month",
+      "ordersChange": "+{change}% from last month",
+      "lowStockAlert": "{count} low stock alerts",
+      "newEmployees": "+{count} new this month"
+    },
+    "production": {
+      "activeOrders": "Active Orders",
+      "completedToday": "Completed Today",
+      "recentOrdersTitle": "Recent Production Orders",
+      "quantityPrefix": "Qty: ",
+      "progressSuffix": "% complete",
+      "completedPrefix": "Completed ",
+      "duePrefix": "Due ",
+      "statusInProgress": "In Progress",
+      "statusCompleted": "Completed",
+      "statusPending": "Pending",
+      "statusDelayed": "Delayed"
+    }
   },
   "inventory": {
     "title": "Inventory Management",
@@ -148,7 +182,11 @@
     "lastRestocked": "Last Restocked",
     "stockAlert": "Stock Alert",
     "lowStockProducts": "Low Stock Products",
-    "outOfStockProducts": "Out of Stock Products"
+    "outOfStockProducts": "Out of Stock Products",
+    "placeholderProductName": "Enter product name",
+    "placeholderSku": "Enter unique SKU",
+    "placeholderCategory": "Enter category",
+    "placeholderUnitExamples": "e.g., pcs, kg, liters"
   },
   "production": {
     "title": "Production Management",
@@ -211,7 +249,14 @@
     "orderNotFoundOrError": "Order not found or error loading: {error}",
     "orderUpdatedTitle": "Order Updated",
     "orderUpdatedDesc": "The production order has been successfully updated.",
-    "errorUpdatingOrderTitle": "Update Failed"
+    "errorUpdatingOrderTitle": "Update Failed",
+    "placeholderEnterNotes": "Enter notes...",
+    "labelSkuSuffix": "(SKU: {sku})",
+    "labelCreatedAt": "Created At",
+    "labelUpdatedAt": "Updated At",
+    "notApplicable": "N/A",
+    "bomPrefix": "BOM: ",
+    "notSet": "Not set"
   },
   "hr": {
     "title": "Human Resources",
@@ -286,7 +331,8 @@
     "noAttendanceRecordsFound": "No attendance records found for the selected criteria.",
     "present": "Present",
     "absent": "Absent",
-    "half_day": "Half-day"
+    "half_day": "Half-day",
+    "payslipTitle": "Payslip"
   },
   "expenses": {
     "title": "Expense Management",
@@ -324,7 +370,7 @@
     "errorCreatingExpense": "Error creating expense.",
     "expenseCreatedTitle": "Expense Created",
     "expenseCreatedDesc": "Expense \"{description}\" created.",
-    "errorCreatingExpenseTitle": "Creation Failed",
+    "errorCreatingEmployeeTitle": "Creation Failed",
     "editExpenseTitle": "Edit Expense",
     "editExpenseDescription": "Update the details for expense: {description}",
     "errorFetchingExpense": "Error fetching expense details.",
@@ -348,6 +394,17 @@
     "newCustomers": "New Customers",
     "pending": "Pending",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "placeholderEnterCustomerName": "Enter customer name",
+    "placeholderEnterCustomerEmail": "Enter customer email",
+    "placeholderEnterCustomerPhone": "Enter customer phone",
+    "placeholderSearchProducts": "Search products by name, SKU, or category...",
+    "placeholderSearchSales": "Search sales by customer name, email, or sale ID..."
+  },
+  "settings": {
+    "placeholderEnterName": "Enter your name",
+    "placeholderEnterEmail": "Enter your email",
+    "placeholderEnterNewPassword": "Enter new password",
+    "placeholderConfirmNewPassword": "Confirm new password"
   }
 }

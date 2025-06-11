@@ -46,11 +46,11 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">{t("name")}</Label>
-              <Input id="name" placeholder="Enter your name" />
+              <Input id="name" placeholder={t("placeholderEnterName")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" type="email" placeholder="Enter your email" />
+              <Input id="email" type="email" placeholder={t("placeholderEnterEmail")} />
             </div>
             <Button>{common("save")}</Button>
           </CardContent>
@@ -88,7 +88,7 @@ export default function SettingsPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter new password"
+                placeholder={t("placeholderEnterNewPassword")}
               />
             </div>
             <div className="space-y-2">
@@ -96,7 +96,7 @@ export default function SettingsPage() {
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder="Confirm new password"
+                placeholder={t("placeholderConfirmNewPassword")}
               />
             </div>
             <Button>{t("updatePassword")}</Button>

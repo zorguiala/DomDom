@@ -1,5 +1,6 @@
 import { Clock, CheckCircle, AlertCircle, PlayCircle } from "lucide-react";
 import { formatNumber, formatRelativeTime } from "@/lib/utils";
+import { useTranslations } from "@/lib/language-context";
 
 type ProductionOrderStatus =
   | "pending"
@@ -75,6 +76,25 @@ const statusConfig: Record<ProductionOrderStatus, StatusConfig> = {
 };
 
 export function ProductionStatus() {
+  const common = useTranslations("common");
+  const productionT = useTranslations("production"); // For existing "delayed"
+  const dashProdT = useTranslations("dashboard.production");
+
+  const getStatusTranslation = (status: ProductionOrderStatus) => {
+    switch (status) {
+      case "in_progress":
+        return dashProdT("statusInProgress");
+      case "completed":
+        return dashProdT("statusCompleted");
+      case "pending":
+        return dashProdT("statusPending"); // Using new specific key
+      case "delayed":
+        return dashProdT("statusDelayed"); // Using new specific key
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
@@ -82,7 +102,7 @@ export function ProductionStatus() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <PlayCircle className="h-4 w-4 text-blue-500" />
-            <span className="text-sm text-muted-foreground">Active Orders</span>
+            <span className="text-sm text-muted-foreground">{dashProdT("activeOrders")}</span>
           </div>
           <div className="text-2xl font-bold text-blue-600">
             {formatNumber(productionData.activeOrders)}
@@ -93,7 +113,7 @@ export function ProductionStatus() {
           <div className="flex items-center space-x-2">
             <CheckCircle className="h-4 w-4 text-green-500" />
             <span className="text-sm text-muted-foreground">
-              Completed Today
+              {dashProdT("completedToday")}
             </span>
           </div>
           <div className="text-2xl font-bold text-green-600">
@@ -104,7 +124,7 @@ export function ProductionStatus() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Clock className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-muted-foreground">Pending</span>
+            <span className="text-sm text-muted-foreground">{dashProdT("statusPending")}</span>
           </div>
           <div className="text-2xl font-bold text-gray-600">
             {formatNumber(productionData.pendingOrders)}
@@ -114,7 +134,7 @@ export function ProductionStatus() {
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <span className="text-sm text-muted-foreground">Delayed</span>
+            <span className="text-sm text-muted-foreground">{dashProdT("statusDelayed")}</span>
           </div>
           <div className="text-2xl font-bold text-red-600">
             {formatNumber(productionData.delayedOrders)}
@@ -124,7 +144,7 @@ export function ProductionStatus() {
 
       {/* Recent Orders */}
       <div>
-        <h4 className="text-sm font-medium mb-3">Recent Production Orders</h4>
+        <h4 className="text-sm font-medium mb-3">{dashProdT("recentOrdersTitle")}</h4>
         <div className="space-y-3">
           {productionData.recentOrders.map((order) => {
             const StatusIcon = statusConfig[order.status].icon;
@@ -147,24 +167,24 @@ export function ProductionStatus() {
                       {order.product}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Qty: {formatNumber(order.quantity)}
+                      {dashProdT("quantityPrefix")}{formatNumber(order.quantity)}
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <div className="text-sm font-medium capitalize">
-                    {order.status.replace("_", " ")}
+                    {getStatusTranslation(order.status)}
                   </div>
                   {order.status === "in_progress" && (
                     <div className="text-xs text-muted-foreground">
-                      {order.progress}% complete
+                      {order.progress}{dashProdT("progressSuffix")}
                     </div>
                   )}
                   <div className="text-xs text-muted-foreground">
                     {order.status === "completed"
-                      ? `Completed ${formatRelativeTime(order.expectedCompletion)}`
-                      : `Due ${formatRelativeTime(order.expectedCompletion)}`}
+                      ? `${dashProdT("completedPrefix")}${formatRelativeTime(order.expectedCompletion)}`
+                      : `${dashProdT("duePrefix")}${formatRelativeTime(order.expectedCompletion)}`}
                   </div>
                 </div>
               </div>

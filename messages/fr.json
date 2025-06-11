@@ -50,7 +50,18 @@
     "saveChanges": "Enregistrer les modifications",
     "saving": "Enregistrement...",
     "creating": "Création...",
-    "recording": "Enregistrement..."
+    "recording": "Enregistrement...",
+    "categories": "TRANSLATE_ME: Categories",
+    "unit": "TRANSLATE_ME: Unit",
+    "type": "TRANSLATE_ME: Type",
+    "margin": "TRANSLATE_ME: Margin",
+    "created": "TRANSLATE_ME: Created",
+    "products": "TRANSLATE_ME: Products",
+    "items": "TRANSLATE_ME: Items",
+    "pending": "TRANSLATE_ME: Pending",
+    "placeholderZeroAmount": "TRANSLATE_ME: 0.00",
+    "optional": "TRANSLATE_ME: Optional",
+    "placeholderZero": "TRANSLATE_ME: 0"
   },
   "auth": {
     "signIn": "Se connecter",
@@ -117,6 +128,9 @@
       "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
       "backToSignIn": "Retour à la Connexion"
     }
+    "signInErrorUnexpected": "Une erreur inattendue s'est produite lors de la connexion.",
+    "ariaHidePassword": "TRANSLATE_ME: Hide password",
+    "ariaShowPassword": "TRANSLATE_ME: Show password"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -132,7 +146,30 @@
     "lowStockAlert": "Alerte stock faible",
     "outOfStock": "Rupture de stock",
     "inStock": "En stock",
-    "lowStock": "Stock faible"
+    "lowStock": "Stock faible",
+    "kpi": {
+      "totalRevenue": "TRANSLATE_ME: Total Revenue",
+      "orders": "TRANSLATE_ME: Orders",
+      "products": "TRANSLATE_ME: Products",
+      "employees": "TRANSLATE_ME: Employees",
+      "revenueChange": "TRANSLATE_ME: +{change}% from last month",
+      "ordersChange": "TRANSLATE_ME: +{change}% from last month",
+      "lowStockAlert": "TRANSLATE_ME: {count} low stock alerts",
+      "newEmployees": "TRANSLATE_ME: +{count} new this month"
+    },
+    "production": {
+      "activeOrders": "TRANSLATE_ME: Active Orders",
+      "completedToday": "TRANSLATE_ME: Completed Today",
+      "recentOrdersTitle": "TRANSLATE_ME: Recent Production Orders",
+      "quantityPrefix": "TRANSLATE_ME: Qty: ",
+      "progressSuffix": "TRANSLATE_ME: % complete",
+      "completedPrefix": "TRANSLATE_ME: Completed ",
+      "duePrefix": "TRANSLATE_ME: Due ",
+      "statusInProgress": "TRANSLATE_ME: In Progress",
+      "statusCompleted": "TRANSLATE_ME: Completed",
+      "statusPending": "TRANSLATE_ME: Pending",
+      "statusDelayed": "TRANSLATE_ME: Delayed"
+    }
   },
   "inventory": {
     "title": "Gestion d'inventaire",
@@ -148,7 +185,11 @@
     "lastRestocked": "Dernier réapprovisionnement",
     "stockAlert": "Alerte de stock",
     "lowStockProducts": "Produits en stock faible",
-    "outOfStockProducts": "Produits en rupture de stock"
+    "outOfStockProducts": "Produits en rupture de stock",
+    "placeholderProductName": "TRANSLATE_ME: Enter product name",
+    "placeholderSku": "TRANSLATE_ME: Enter unique SKU",
+    "placeholderCategory": "TRANSLATE_ME: Enter category",
+    "placeholderUnitExamples": "TRANSLATE_ME: e.g., pcs, kg, liters"
   },
   "production": {
     "title": "Gestion de Production",
@@ -211,7 +252,14 @@
     "orderNotFoundOrError": "Ordre non trouvé ou erreur de chargement : {error}",
     "orderUpdatedTitle": "Ordre Mis à Jour",
     "orderUpdatedDesc": "L'ordre de production a été mis à jour avec succès.",
-    "errorUpdatingOrderTitle": "Échec de la Mise à Jour"
+    "errorUpdatingOrderTitle": "Échec de la Mise à Jour",
+    "placeholderEnterNotes": "TRANSLATE_ME: Enter notes...",
+    "labelSkuSuffix": "TRANSLATE_ME: (SKU: {sku})",
+    "labelCreatedAt": "TRANSLATE_ME: Created At",
+    "labelUpdatedAt": "TRANSLATE_ME: Updated At",
+    "notApplicable": "TRANSLATE_ME: N/A",
+    "bomPrefix": "TRANSLATE_ME: BOM: ",
+    "notSet": "TRANSLATE_ME: Not set"
   },
   "hr": {
     "title": "Ressources Humaines",
@@ -286,7 +334,8 @@
     "noAttendanceRecordsFound": "Aucun registre de présence trouvé pour les critères sélectionnés.",
     "present": "Présent",
     "absent": "Absent",
-    "half_day": "Demi-journée"
+    "half_day": "Demi-journée",
+    "payslipTitle": "TRANSLATE_ME: Payslip"
   },
   "expenses": {
     "title": "Gestion des Dépenses",
@@ -324,7 +373,7 @@
     "errorCreatingExpense": "Erreur lors de la création de la dépense.",
     "expenseCreatedTitle": "Dépense Créée",
     "expenseCreatedDesc": "Dépense \"{description}\" créée.",
-    "errorCreatingExpenseTitle": "Échec de la Création",
+    "errorCreatingEmployeeTitle": "Échec de la Création",
     "editExpenseTitle": "Modifier Dépense",
     "editExpenseDescription": "Mettre à jour les détails pour la dépense : {description}",
     "errorFetchingExpense": "Erreur lors de la récupération des détails de la dépense.",
@@ -348,6 +397,17 @@
     "newCustomers": "Nouveaux clients",
     "pending": "En attente",
     "completed": "Terminé",
-    "cancelled": "Annulé"
+    "cancelled": "Annulé",
+    "placeholderEnterCustomerName": "TRANSLATE_ME: Enter customer name",
+    "placeholderEnterCustomerEmail": "TRANSLATE_ME: Enter customer email",
+    "placeholderEnterCustomerPhone": "TRANSLATE_ME: Enter customer phone",
+    "placeholderSearchProducts": "TRANSLATE_ME: Search products by name, SKU, or category...",
+    "placeholderSearchSales": "TRANSLATE_ME: Search sales by customer name, email, or sale ID..."
+  },
+  "settings": {
+    "placeholderEnterName": "TRANSLATE_ME: Enter your name",
+    "placeholderEnterEmail": "TRANSLATE_ME: Enter your email",
+    "placeholderEnterNewPassword": "TRANSLATE_ME: Enter new password",
+    "placeholderConfirmNewPassword": "TRANSLATE_ME: Confirm new password"
   }
 }

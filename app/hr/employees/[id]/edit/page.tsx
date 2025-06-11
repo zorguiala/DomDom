@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { EmployeeFormData } from "@/types/hr"; // Using the shared type
 import { Employee } from "@prisma/client"; // For fetching data
 import { DatePicker } from "@/components/ui/date-picker"; // Import DatePicker

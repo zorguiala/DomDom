@@ -198,7 +198,7 @@ export default function SalesPage() {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search sales by customer name, email, or sale ID..."
+              placeholder={t("placeholderSearchSales")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -306,12 +306,12 @@ export default function SalesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Sale ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t("customer")}</TableHead>
+                <TableHead>{common("date")}</TableHead>
+                <TableHead>{common("items")}</TableHead>
+                <TableHead>{common("amount")}</TableHead>
+                <TableHead>{common("status")}</TableHead>
+                <TableHead className="text-right">{common("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

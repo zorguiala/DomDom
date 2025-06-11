@@ -276,7 +276,7 @@ export default function NewSalePage() {
                 id="customerName"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Enter customer name"
+                placeholder={t("placeholderEnterCustomerName")}
               />
             </div>
             <div>
@@ -286,7 +286,7 @@ export default function NewSalePage() {
                 type="email"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                placeholder="Enter customer email"
+                placeholder={t("placeholderEnterCustomerEmail")}
               />
             </div>
             <div>
@@ -295,7 +295,7 @@ export default function NewSalePage() {
                 id="customerPhone"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="Enter customer phone"
+                placeholder={t("placeholderEnterCustomerPhone")}
               />
             </div>
           </CardContent>
@@ -315,7 +315,7 @@ export default function NewSalePage() {
               <span className="font-medium">{calculateTotalItems()}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Products</span>
+              <span className="text-sm font-medium">{common("products")}</span>
               <span className="font-medium">{saleItems.length}</span>
             </div>
             <div className="flex items-center justify-between border-t pt-2">
@@ -353,7 +353,7 @@ export default function NewSalePage() {
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search products by name, SKU, or category..."
+                  placeholder={t("placeholderSearchProducts")}
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
                   className="pl-8"
@@ -420,12 +420,12 @@ export default function NewSalePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-center">Quantity</TableHead>
+                  <TableHead>{common("product")}</TableHead>
+                  <TableHead>{t("inventory.sku")}</TableHead>
+                  <TableHead className="text-center">{common("quantity")}</TableHead>
                   <TableHead className="text-right">Unit Price</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{common("total")}</TableHead>
+                  <TableHead className="text-right">{common("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -525,7 +525,7 @@ export default function NewSalePage() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between font-bold text-lg border-t pt-2">
-                    <span>Total:</span>
+                    <span>{common("total")}:</span>
                     <span>{formatCurrency(calculateTotal())}</span>
                   </div>
                 </div>

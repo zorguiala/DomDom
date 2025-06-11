@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 // import { Textarea } from "@/components/ui/textarea"; // Not used for now
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { EmployeeFormData } from "@/types/hr"; // Using the shared type
 import { PlusCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker"; // Import DatePicker

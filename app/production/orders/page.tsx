@@ -9,7 +9,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress"; // Import Progress component
 import { ProductionOrderWithDetails } from "@/types/production";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,

@@ -46,7 +46,7 @@ interface ProductionOrder {
 
 function ProductionOrdersTable() {
   const t = useTranslations("production");
-  const common = useTranslations("common");
+  // const common = useTranslations("common"); // common is not used here
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,14 +69,16 @@ function ProductionOrdersTable() {
   }, []);
 
   const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
+    switch (status.toUpperCase()) { // Normalize to uppercase for reliable matching
+      case "COMPLETED":
+      case "DONE": // Assuming DONE maps to completed
         return "default";
-      case "in_progress":
+      case "IN_PROGRESS":
         return "secondary";
-      case "planned":
+      case "PLANNED":
         return "outline";
-      case "delayed":
+      case "DELAYED":
+      case "CANCELLED": // Assuming CANCELLED also uses destructive
         return "destructive";
       default:
         return "outline";
@@ -84,17 +86,36 @@ function ProductionOrdersTable() {
   };
 
   const getPriorityVariant = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case "high":
+    switch (priority.toUpperCase()) { // Normalize
+      case "HIGH":
         return "destructive";
-      case "medium":
+      case "MEDIUM":
         return "secondary";
-      case "low":
+      case "LOW":
         return "outline";
       default:
         return "outline";
     }
   };
+
+  const translateStatus = (status: string) => {
+    const upperStatus = status.toUpperCase();
+    if (upperStatus === "COMPLETED" || upperStatus === "DONE") return t("statusDone");
+    if (upperStatus === "IN_PROGRESS") return t("statusInProgress");
+    if (upperStatus === "PLANNED") return t("statusPlanned");
+    if (upperStatus === "DELAYED") return t("delayed"); // Uses existing production.delayed
+    if (upperStatus === "CANCELLED") return t("statusCancelled");
+    return status; // Fallback to raw status if no match
+  };
+
+  const translatePriority = (priority: string) => {
+    const upperPriority = priority.toUpperCase();
+    if (upperPriority === "HIGH") return t("high");
+    if (upperPriority === "MEDIUM") return t("medium");
+    if (upperPriority === "LOW") return t("low");
+    return priority; // Fallback
+  };
+
 
   if (loading) {
     return (
@@ -138,28 +159,28 @@ function ProductionOrdersTable() {
               <Badge variant="outline">#{order.orderNumber}</Badge>
             </TableCell>
             <TableCell>
-              <div className="font-medium">{order.product?.name || "N/A"}</div>
+              <div className="font-medium">{order.product?.name || t("notApplicable")}</div>
               {order.bom?.name && (
                 <div className="text-sm text-muted-foreground">
-                  BOM: {order.bom.name}
+                  {t("bomPrefix")}{order.bom.name}
                 </div>
               )}
             </TableCell>
             <TableCell>{order.qtyOrdered}</TableCell>
             <TableCell>
               <Badge variant={getStatusVariant(order.status)}>
-                {order.status}
+                {translateStatus(order.status)}
               </Badge>
             </TableCell>
             <TableCell>
               <Badge variant={getPriorityVariant(order.priority)}>
-                {order.priority}
+                {translatePriority(order.priority)}
               </Badge>
             </TableCell>
             <TableCell className="text-muted-foreground">
               {order.expectedEndDate
                 ? formatDate(new Date(order.expectedEndDate))
-                : "Not set"}
+                : t("notSet")}
             </TableCell>
           </TableRow>
         ))}
@@ -170,7 +191,9 @@ function ProductionOrdersTable() {
 
 export default function ProductionPage() {
   const t = useTranslations("production");
-  const common = useTranslations("common");
+  // const common = useTranslations("common"); // Not used directly here, but available if needed
+  const dashboardT = useTranslations("dashboard"); // For dashboard.production keys
+
   const [kpis, setKpis] = useState({
     activeOrders: 0,
     inProgress: 0,
@@ -182,29 +205,30 @@ export default function ProductionPage() {
   useEffect(() => {
     const fetchKpis = async () => {
       try {
-        const response = await fetch("/api/production/orders");
+        const response = await fetch("/api/production/orders"); // This fetches all orders
         if (response.ok) {
-          const orders = await response.json();
+          const orders: ProductionOrder[] = await response.json();
 
-          // Calculate KPIs from real data
           const activeOrders = orders.filter(
-            (order: ProductionOrder) =>
-              order.status !== "COMPLETED" && order.status !== "CANCELLED",
+            (order) =>
+              order.status.toUpperCase() !== "COMPLETED" && order.status.toUpperCase() !== "DONE" && order.status.toUpperCase() !== "CANCELLED",
           ).length;
 
           const inProgress = orders.filter(
-            (order: ProductionOrder) => order.status === "IN_PROGRESS",
+            (order) => order.status.toUpperCase() === "IN_PROGRESS",
           ).length;
 
+          // Assuming "completed" for KPI means "DONE" or "COMPLETED" status
           const completed = orders.filter(
-            (order: ProductionOrder) => order.status === "COMPLETED",
+            (order) => order.status.toUpperCase() === "COMPLETED" || order.status.toUpperCase() === "DONE",
           ).length;
 
           const delayed = orders.filter(
-            (order: ProductionOrder) =>
-              order.status === "DELAYED" ||
+            (order) =>
+              order.status.toUpperCase() === "DELAYED" ||
               (order.expectedEndDate &&
-                new Date(order.expectedEndDate) < new Date()),
+                new Date(order.expectedEndDate) < new Date() &&
+                order.status.toUpperCase() !== "COMPLETED" && order.status.toUpperCase() !== "DONE" && order.status.toUpperCase() !== "CANCELLED"),
           ).length;
 
           setKpis({ activeOrders, inProgress, completed, delayed });
@@ -253,7 +277,7 @@ export default function ProductionPage() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Active production orders
+              {dashboardT("production.kpiActiveOrdersDesc")}
             </p>
           </CardContent>
         </Card>
@@ -274,7 +298,7 @@ export default function ProductionPage() {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Currently manufacturing
+              {dashboardT("production.kpiInProgressDesc")}
             </p>
           </CardContent>
         </Card>
@@ -294,7 +318,7 @@ export default function ProductionPage() {
                 kpis.completed
               )}
             </div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <p className="text-xs text-muted-foreground">{dashboardT("production.kpiCompletedDesc")}</p>
           </CardContent>
         </Card>
 
@@ -313,7 +337,7 @@ export default function ProductionPage() {
                 kpis.delayed
               )}
             </div>
-            <p className="text-xs text-muted-foreground">Require attention</p>
+            <p className="text-xs text-muted-foreground">{dashboardT("production.kpiDelayedDesc")}</p>
           </CardContent>
         </Card>
       </div>{" "}
