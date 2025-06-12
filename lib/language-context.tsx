@@ -38,7 +38,11 @@ const messages = {
 
 // Helper function to get nested value from object
 function getNestedValue(obj: Record<string, any>, path: string): string | undefined {
-  return path.split('.').reduce((current, key) => current?.[key], obj) as string | undefined;
+  const result = path.split('.').reduce((current, key) => {
+    return current && typeof current === 'object' ? current[key] : undefined;
+  }, obj);
+  
+  return typeof result === 'string' ? result : undefined;
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
