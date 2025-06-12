@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 ---
 applyTo: "**"
@@ -42,4 +42,29 @@ Coding standards, domain knowledge, and preferences that AI should follow.
 - Currently using powershell of windows, so please ensure compatibility with it.
 - Use GitHub Actions for CI/CD workflows, ensuring that all tests pass before merging code.
 - Every UI gerenration it should use Magic UI MCP tool.
+- Always use React Query for all data fetching and mutation operations. Do not use useEffect for data fetching.
+- Place all React Query hooks in a data/ subfolder within the relevant feature/module directory.
+- Use the following file naming pattern for hooks:
+  <feature>/data/use-get-<resource>/use-get-<resource>.ts
+  <feature>/data/use-create-<resource>/use-create-<resource>.ts
+  Example: app/inventory/data/use-get-products/use-get-products.ts
+- All data-fetching and mutation logic must be separated from UI components using custom hooks.
+- Define all API response/request types in the types/ directory or a types.ts file within the feature.
+- Document all custom hooks with JSDoc comments.
+- Each module/feature should have a README.md explaining its purpose and usage.
+- Write unit tests for all hooks and components. Use integration tests for critical flows.
+- Use React Query's error and loading states, and consider global error boundaries for robust error handling.
+- Set appropriate staleTime and gcTime for queries to optimize caching and performance.
+- Use query keys that reflect the data's scope and dependencies.
+- Enforce these rules in PR reviews:
+  - Are all data operations using React Query hooks in the correct location and naming pattern?
+  - Is all data logic separated from UI components?
+  - Are types and documentation present?
+  - Are tests included for new hooks/components?
+  - Is Magic UI MCP used for UI?
+  - Is CI passing before merge?
+- Before creating any new function, always check if it already exists in the codebase. If it exists in the wrong place, or can be refactored to be simpler or faster, refactor it first before proceeding with your task.
+- Avoid duplicating logic. Reuse and refactor existing functions and utilities whenever possible.
+- Do not make files longer than 100 lines for components, hooks, and logic files. If you need to work on a file that exceeds this limit, refactor it into smaller, focused files before adding new code. (Reasonable exceptions apply for files like seed scripts, configuration, or generated code.)
+- Prioritize code simplicity, readability, and performance in all refactoring and new code.
 

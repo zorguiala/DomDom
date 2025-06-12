@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { useSales } from "@/hooks/sales/use-sales";
 import { SalesKPICards } from "@/components/sales/sales-kpi-cards";
 import { SalesTable } from "@/components/sales/sales-table";
 import { SaleType } from "@/types/sales";
+
 
 export default function SalesPage() {
   const t = useTranslations("sales");
@@ -40,6 +42,7 @@ export default function SalesPage() {
           <div className="text-center">
             <p className="text-red-500 mb-4">{common("error")}</p>
             <Button onClick={() => refetch()}>
+
               <RefreshCw className="mr-2 h-4 w-4" />
               {common("tryAgain")}
             </Button>
@@ -48,6 +51,14 @@ export default function SalesPage() {
       </div>
     );
   }
+
+  const filteredSales = sales.filter(
+    (sale) =>
+      sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (sale.customerEmail &&
+        sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())),
+  );
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -161,6 +172,7 @@ export default function SalesPage() {
           ) : (
             <SalesTable sales={filteredSales} />
           )}
+
         </CardContent>
       </Card>
     </div>

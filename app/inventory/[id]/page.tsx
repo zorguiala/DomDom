@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -22,59 +22,29 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Product } from "@/types";
+import { useGetProduct } from "../data/use-get-product/use-get-product";
+import { useDeleteProduct } from "../data/use-delete-product/use-delete-product";
 
 export default function ProductViewPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations("inventory");
   const common = useTranslations("common");
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { mutate: deleteProduct, mutateAsync: deleteProductAsync, isLoading: isDeleting } = useDeleteProduct();
 
   const productId = params.id as string;
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/inventory/${productId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch product");
-        }
-        const data = await response.json();
-        setProduct(data.product);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching product:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (productId) {
-      fetchProduct();
-    }
-  }, [productId]);
+  const { data: product, isLoading: loading, error: fetchError } = useGetProduct({ productId });
 
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this product?")) {
       return;
     }
-
     try {
-      const response = await fetch(`/api/inventory/${productId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete product");
-      }
-
+      await deleteProductAsync(productId);
       router.push("/inventory");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete product");
+    } catch (err: any) {
+      setError(err.message || "Failed to delete product");
     }
   };
 
@@ -100,7 +70,9 @@ export default function ProductViewPage() {
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600">{common("error")}</h2>
-          <p className="text-gray-600 mt-2">{error || "Product not found"}</p>
+          <p className="text-gray-600 mt-2">
+            {error || (fetchError instanceof Error ? fetchError.message : "Product not found")}
+          </p>
           <Link href="/inventory">
             <Button className="mt-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -139,9 +111,10 @@ export default function ProductViewPage() {
           <Button
             className="bg-red-600 hover:bg-red-700 text-white"
             onClick={handleDelete}
+            disabled={isDeleting}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </div>
