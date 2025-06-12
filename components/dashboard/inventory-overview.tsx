@@ -1,54 +1,12 @@
 import { AlertTriangle, Package, TrendingDown, TrendingUp, RefreshCw } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
-import { useEffect, useState } from "react";
 import { useTranslations } from "@/lib/language-context";
-
-interface LowStockItem {
-  id: string; // Assuming items have an ID from the database
-  name: string;
-  currentStock: number;
-  minStock: number;
-  category: string;
-}
-
-interface InventoryData {
-  totalProducts: number;
-  lowStockItems: number;
-  outOfStockItems: number;
-  recentlyUpdated: number;
-  topLowStockItems: LowStockItem[];
-}
+import { useDashboardInventory } from "./data/use-get-inventory/use-get-inventory";
 
 export function InventoryOverview() {
-  const [data, setData] = useState<InventoryData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error } = useDashboardInventory();
   const common = useTranslations("common");
   const dashboardT = useTranslations("dashboard");
-
-  useEffect(() => {
-    const fetchInventoryData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/dashboard");
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data for inventory");
-        }
-        const apiResponse = await response.json();
-        if (!apiResponse.inventory) {
-            throw new Error("Inventory data not found in API response");
-        }
-        setData(apiResponse.inventory);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchInventoryData();
-  }, []);
 
   if (isLoading) {
     return (

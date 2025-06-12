@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import {
   Card,
   CardContent,
@@ -15,36 +15,13 @@ import { useTranslations } from "@/lib/language-context";
 import { Plus, Search, Filter, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { Product } from "@/types";
+import { useGetProducts } from "./data/use-get-products/use-get-products";
 
 export default function InventoryPage() {
   const t = useTranslations("inventory");
   const common = useTranslations("common");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loading, error, refetch: fetchProducts } = useGetProducts();
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/inventory");
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      const data = await response.json();
-      setProducts(data.products);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error fetching products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -114,7 +91,7 @@ export default function InventoryPage() {
 
             {error && (
               <div className="p-4 text-red-600 bg-red-50 border-b">
-                {common("errorPrefix")}{error}
+                {common("errorPrefix")}{error instanceof Error ? error.message : 'An error occurred'}
               </div>
             )}
 
