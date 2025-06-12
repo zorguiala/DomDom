@@ -63,6 +63,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "decimal.js": "^10.4.3",
+    "glob": "^11.0.2",
     "lucide-react": "^0.395.0",
     "motion": "^12.17.0",
     "negotiator": "^1.0.0",
