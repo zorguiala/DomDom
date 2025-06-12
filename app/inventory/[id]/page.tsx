@@ -31,18 +31,21 @@ export default function ProductViewPage() {
   const t = useTranslations("inventory");
   const common = useTranslations("common");
   const [error, setError] = useState<string | null>(null);
-  const { mutate: deleteProduct, isLoading: isDeleting } = useDeleteProduct();
+  const { mutate: deleteProduct, mutateAsync: deleteProductAsync, isLoading: isDeleting } = useDeleteProduct();
 
   const productId = params.id as string;
   const { data: product, isLoading: loading, error: fetchError } = useGetProduct({ productId });
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this product?")) {
       return;
     }
-
-    deleteProduct(productId);
-    router.push("/inventory");
+    try {
+      await deleteProductAsync(productId);
+      router.push("/inventory");
+    } catch (err: any) {
+      setError(err.message || "Failed to delete product");
+    }
   };
 
   function getStockStatus(product: Product) {

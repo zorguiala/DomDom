@@ -1,10 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Expense } from '@/types';
 
-interface ExpensesApiResponse {
-  expenses: Expense[];
-}
-
 interface UseGetExpensesReturn {
   data: Expense[] | undefined;
   isLoading: boolean;
@@ -26,8 +22,8 @@ export function useGetExpenses(): UseGetExpensesReturn {
         throw new Error('Failed to fetch expenses');
       }
       
-      const apiData: ExpensesApiResponse = await response.json();
-      return apiData.expenses;
+      const apiData: Expense[] = await response.json();
+      return apiData;
     },
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes

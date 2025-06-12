@@ -1,10 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Employee } from '@/types';
 
-interface EmployeesApiResponse {
-  employees: Employee[];
-}
-
 interface UseGetEmployeesReturn {
   data: Employee[] | undefined;
   isLoading: boolean;
@@ -26,8 +22,8 @@ export function useGetEmployees(): UseGetEmployeesReturn {
         throw new Error('Failed to fetch employees');
       }
       
-      const apiData: EmployeesApiResponse = await response.json();
-      return apiData.employees;
+      const apiData: Employee[] = await response.json();
+      return apiData;
     },
     staleTime: 60 * 1000, // 1 minute
     gcTime: 5 * 60 * 1000, // 5 minutes
