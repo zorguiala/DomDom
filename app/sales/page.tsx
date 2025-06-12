@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import {
   Card,
   CardContent,
@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { useGetSales } from "./data/use-get-sales/use-get-sales";
 
 interface Sale {
   id: string;
@@ -64,40 +65,8 @@ interface Sale {
 export default function SalesPage() {
   const t = useTranslations("sales");
   const common = useTranslations("common");
-  const [sales, setSales] = useState<Sale[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: sales = [], isLoading: loading, error, refetch: fetchSales } = useGetSales();
   const [searchTerm, setSearchTerm] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchSales = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/sales");
-      if (!response.ok) {
-        throw new Error("Failed to fetch sales");
-      }
-      const data = await response.json();
-      setSales(data.sales);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error fetching sales:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSales();
-  }, []);
-
-  const filteredSales = sales.filter(
-    (sale) =>
-      sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sale.customerEmail &&
-        sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
 
   // Calculate metrics from real data
   const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
@@ -156,7 +125,7 @@ export default function SalesPage() {
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-center h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">{error}</p>
+            <p className="text-red-500 mb-4">{error instanceof Error ? error.message : error}</p>
             <Button onClick={fetchSales}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Try Again
@@ -166,6 +135,14 @@ export default function SalesPage() {
       </div>
     );
   }
+
+  const filteredSales = sales.filter(
+    (sale) =>
+      sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (sale.customerEmail &&
+        sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())),
+  );
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
