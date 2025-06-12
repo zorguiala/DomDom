@@ -1,134 +1,50 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ShimmerButton } from "@/components/ui/shimmer-button";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
-import { useTranslations } from "@/lib/language-context";
-import {
-  Plus,
-  TrendingUp,
-  DollarSign,
-  ShoppingCart,
-  Users,
-  Calendar,
-  Search,
-  Filter,
-  RefreshCw,
-  Eye,
-  Edit,
-  Download,
-} from "lucide-react";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { useGetSales } from "./data/use-get-sales/use-get-sales";
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface Sale {
-  id: string;
-  customerName: string;
-  customerEmail: string | null;
-  customerPhone: string | null;
-  status: string;
-  totalAmount: number;
-  totalItems: number;
-  createdAt: string;
-  updatedAt: string;
-  saleItems: Array<{
-    id: string;
-    quantity: number;
-    price: number;
-    product: {
-      id: string;
-      name: string;
-      sku: string;
-    };
-  }>;
-}
+import { Button } from "@/components/ui/button";
+import { ShimmerButton } from "@/components/ui/shimmer-button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-radix";
+import { useTranslations } from "@/lib/language-context";
+import { Calendar, Download, FileText, Filter, RefreshCw, Search, Truck } from "lucide-react";
+import Link from "next/link";
+import { useSales } from "@/hooks/sales/use-sales";
+import { SalesKPICards } from "@/components/sales/sales-kpi-cards";
+import { SalesTable } from "@/components/sales/sales-table";
+import { SaleType } from "@/types/sales";
+
 
 export default function SalesPage() {
   const t = useTranslations("sales");
   const common = useTranslations("common");
-  const { data: sales = [], isLoading: loading, error, refetch: fetchSales } = useGetSales();
+  
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<"ALL" | SaleType>("ALL");
+  
+  const { data: sales = [], isLoading, error, refetch } = useSales();
 
-  // Calculate metrics from real data
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-  const totalOrders = sales.length;
-  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-  const pendingOrders = sales.filter(
-    (sale) => sale.status === "PENDING",
-  ).length;
-
-  const getStatusVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return "default";
-      case "shipped":
-        return "outline";
-      case "processing":
-        return "secondary";
-      case "pending":
-        return "secondary";
-      case "cancelled":
-        return "destructive";
-      default:
-        return "outline";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "completed":
-        return t("completed");
-      case "shipped":
-        return t("shipped");
-      case "processing":
-        return t("processing");
-      case "pending":
-        return t("pending");
-      case "cancelled":
-        return t("cancelled");
-      default:
-        return status;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex-1 space-y-4 p-8 pt-6">
-        <div className="flex items-center justify-center h-[400px]">
-          <RefreshCw className="h-8 w-8 animate-spin" />
-        </div>
-      </div>
-    );
-  }
+  // Filter sales based on search and type
+  const filteredSales = sales.filter(
+    (sale) =>
+      (filterType === "ALL" || sale.type === filterType) &&
+      (sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.saleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (sale.customerEmail &&
+          sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())))
+  );
 
   if (error) {
     return (
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-center h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">{error instanceof Error ? error.message : error}</p>
-            <Button onClick={fetchSales}>
+            <p className="text-red-500 mb-4">{common("error")}</p>
+            <Button onClick={() => refetch()}>
+
               <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
+              {common("tryAgain")}
             </Button>
           </div>
         </div>
@@ -146,30 +62,37 @@ export default function SalesPage() {
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
+      {/* Header */}
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button onClick={fetchSales} className="mr-2">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+          <Button onClick={() => refetch()} variant="outline" disabled={isLoading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            {common("refresh")}
           </Button>
-          <Button>
+          <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             {common("export")}
           </Button>
-          <Link href="/sales/new">
+          <Link href="/sales/new?type=classic">
+            <Button>
+              <FileText className="mr-2 h-4 w-4" />
+              {t("classicSale")}
+            </Button>
+          </Link>
+          <Link href="/sales/new?type=door-to-door">
             <ShimmerButton>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("newSale")}
+              <Truck className="mr-2 h-4 w-4" />
+              {t("vanSale")}
             </ShimmerButton>
           </Link>
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search and Filters */}
       <div className="flex items-center space-x-2">
         <div className="flex-1">
           <div className="relative">
@@ -182,95 +105,59 @@ export default function SalesPage() {
             />
           </div>
         </div>
+        <Select 
+          value={filterType} 
+          onValueChange={(value) => setFilterType(value as "ALL" | SaleType)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={t("filterByType")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">{t("allSales")}</SelectItem>
+            <SelectItem value="CLASSIC">{t("classicSales")}</SelectItem>
+            <SelectItem value="DOOR_TO_DOOR">{t("vanSales")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("totalRevenue")}
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(totalRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              From {totalOrders} sales
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("totalOrders")}
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(totalOrders)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {pendingOrders} pending
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("averageOrderValue")}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(averageOrderValue)}
-            </div>
-            <p className="text-xs text-muted-foreground">Per sale average</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Items Sold
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(
-                sales.reduce((sum, sale) => sum + sale.totalItems, 0),
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Items sold</p>
-          </CardContent>
-        </Card>
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="space-y-0 pb-2">
+                <div className="h-4 w-32 bg-gray-200 animate-pulse rounded" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-24 bg-gray-200 animate-pulse rounded" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <SalesKPICards sales={sales} />
+      )}
 
       {/* Sales Table */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Sales ({filteredSales.length})</CardTitle>
+              <CardTitle>
+                {t("sales")} ({filteredSales.length})
+              </CardTitle>
               <CardDescription>
                 {filteredSales.length === sales.length
-                  ? "All sales records"
-                  : `Filtered from ${sales.length} total sales`}
+                  ? t("allSalesRecords")
+                  : t("filteredFromTotal", { filtered: filteredSales.length, total: sales.length })}
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <Button className="h-8 px-2 lg:px-3">
+              <Button variant="outline" size="sm">
                 <Filter className="mr-2 h-4 w-4" />
                 {common("filter")}
               </Button>
-              <Button className="h-8 px-2 lg:px-3">
+              <Button variant="outline" size="sm">
                 <Calendar className="mr-2 h-4 w-4" />
                 {common("dateRange")}
               </Button>
@@ -278,80 +165,14 @@ export default function SalesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableCaption>Recent sales transactions</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sale ID</TableHead>
-                <TableHead>{t("customer")}</TableHead>
-                <TableHead>{common("date")}</TableHead>
-                <TableHead>{common("items")}</TableHead>
-                <TableHead>{common("amount")}</TableHead>
-                <TableHead>{common("status")}</TableHead>
-                <TableHead className="text-right">{common("actions")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSales.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    {searchTerm
-                      ? "No sales found matching your search."
-                      : "No sales found."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredSales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-medium">
-                      <Badge>#{sale.id.slice(0, 8)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{sale.customerName}</div>
-                        {sale.customerEmail && (
-                          <div className="text-sm text-muted-foreground">
-                            {sale.customerEmail}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(new Date(sale.createdAt))}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <span className="font-medium">{sale.totalItems}</span>
-                        <span className="text-sm text-muted-foreground ml-1">
-                          {sale.totalItems === 1 ? "item" : "items"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(sale.totalAmount)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge>{getStatusLabel(sale.status)}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Link href={`/sales/${sale.id}`}>
-                          <Button className="h-8 w-8 p-0">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/sales/${sale.id}/edit`}>
-                          <Button className="h-8 w-8 p-0">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[200px]">
+              <RefreshCw className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <SalesTable sales={filteredSales} />
+          )}
+
         </CardContent>
       </Card>
     </div>

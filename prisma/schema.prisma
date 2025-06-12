@@ -177,10 +177,23 @@ model Sale {
   deliveryDate  DateTime?
   totalAmount   Float
   notes         String?
+  
+  // New fields for both types
+  subtotal      Float    @default(0)
+  tva           Float    @default(0) // 19% for classic sales
+  timbre        Float    @default(0) // 1 TND for classic sales
+  
+  // Fields specific to door-to-door sales
+  exitSlipNumber String?  // Bon de sortie number
+  exitSlipDate   DateTime? // When products were taken out
+  returnDate     DateTime? // When unsold products were returned
+  returnedAmount Float    @default(0) // Value of returned products
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   items         SaleItem[]
+  vanOperation  VanSalesOperation?
 
   @@map("sales")
 }
@@ -225,6 +238,9 @@ model SaleItem {
   unitPrice    Float
   totalPrice   Float
   deliveredQty Float   @default(0)
+  
+  // New field for door-to-door sales
+  returnedQty  Float   @default(0) // Quantity returned at end of day
 
   @@map("sale_items")
 }
@@ -334,4 +350,25 @@ model PasswordResetToken {
   @@index([email])
   @@index([token])
   @@map("password_reset_tokens")
+}
+
+// New model for tracking daily van operations
+model VanSalesOperation {
+  id                String   @id @default(uuid())
+  operationDate     DateTime @default(now())
+  saleId            String   @unique
+  sale              Sale     @relation(fields: [saleId], references: [id])
+  driverName        String?
+  vehicleNumber     String?
+  departureTime     DateTime?
+  returnTime        DateTime?
+  totalProductsOut  Float    // Total value of products taken out
+  totalProductsSold Float    // Total value of products actually sold
+  totalReturned     Float    // Total value of products returned
+  status            String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("van_sales_operations")
 }

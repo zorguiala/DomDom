@@ -23,6 +23,9 @@ export async function GET(
             },
           },
         },
+        vanOperation: true,
+        client: true,
+        commercial: true,
       },
     });
 
