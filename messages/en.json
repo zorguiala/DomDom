@@ -154,6 +154,14 @@
       "lowStockAlert": "{count} low stock alerts",
       "newEmployees": "+{count} new this month"
     },
+    "inventory": {
+      "totalProducts": "Total Products",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "recentlyUpdated": "Recently Updated",
+      "lowStockAlertsTitle": "Low Stock Alerts",
+      "currentMinLabel": "Current / Min"
+    },
     "production": {
       "activeOrders": "Active Orders",
       "completedToday": "Completed Today",

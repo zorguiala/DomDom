@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { User as UserIcon } from "lucide-react";
 
 interface UpdateNameFormProps {
@@ -14,7 +14,10 @@ interface UpdateNameFormProps {
   onNameUpdate: (newName: string) => Promise<void>; // Callback to update session in parent
 }
 
-export function UpdateNameForm({ currentName, onNameUpdate }: UpdateNameFormProps) {
+export function UpdateNameForm({
+  currentName,
+  onNameUpdate,
+}: UpdateNameFormProps) {
   const [name, setName] = useState(currentName);
   const [isUpdatingName, setIsUpdatingName] = useState(false);
   const { toast } = useToast();
@@ -26,12 +29,12 @@ export function UpdateNameForm({ currentName, onNameUpdate }: UpdateNameFormProp
   const handleNameUpdate = async (e: FormEvent) => {
     e.preventDefault();
     if (name === currentName || !name.trim()) {
-        toast({
-            variant: "default",
-            title: "No Changes",
-            description: "Name is the same or empty.",
-        });
-        return;
+      toast({
+        variant: "default",
+        title: "No Changes",
+        description: "Name is the same or empty.",
+      });
+      return;
     }
     setIsUpdatingName(true);
     try {
@@ -83,7 +86,11 @@ export function UpdateNameForm({ currentName, onNameUpdate }: UpdateNameFormProp
           />
         </div>
       </div>
-      <Button type="submit" disabled={isUpdatingName || name === currentName || !name.trim()} className="w-full sm:w-auto">
+      <Button
+        type="submit"
+        disabled={isUpdatingName || name === currentName || !name.trim()}
+        className="w-full sm:w-auto"
+      >
         {isUpdatingName ? "Saving..." : "Save Name Changes"}
       </Button>
     </form>

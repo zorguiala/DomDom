@@ -6,6 +6,9 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Ensure this route is always dynamic (not statically generated)
+export const dynamic = "force-dynamic";
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -16,6 +19,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        console.log("[DEBUG] Received credentials:", credentials);
         if (!credentials?.email || !credentials?.password) {
           console.log("Missing credentials");
           return null;
@@ -33,7 +37,7 @@ export const authOptions: NextAuthOptions = {
         // Validate password
         const isValidPassword = await bcrypt.compare(
           credentials.password,
-          user.passwordHash
+          user.passwordHash,
         );
 
         if (!isValidPassword) {
@@ -55,7 +59,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user?: any }) {
       // Persist the user id and role to the token right after signin
       if (user) {
         token.id = user.id;
@@ -63,7 +67,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       // Send properties to the client, like an access_token and user id from a provider.
       if (session.user) {
         session.user.id = token.id as string;
@@ -81,5 +85,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

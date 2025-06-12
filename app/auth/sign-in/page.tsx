@@ -145,7 +145,7 @@ export default function SignInPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    placeholder={t("emailPlaceholder")}
+                    placeholder={t("emailPlaceholder") || "john@example.com"}
                     className="pl-9"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -163,7 +163,9 @@ export default function SignInPage() {
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     required
-                    placeholder={t("passwordPlaceholder")}
+                    placeholder={
+                      t("passwordPlaceholder") || "Enter your password"
+                    }
                     className="pl-9 pr-9"
                     value={formData.password}
                     onChange={handleInputChange}
@@ -171,9 +173,7 @@ export default function SignInPage() {
                   <button
                     type="button"
                     aria-label={
-                      showPassword
-                        ? t("ariaHidePassword")
-                        : t("ariaShowPassword")
+                      showPassword ? "Hide password" : "Show password"
                     }
                     className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowPassword(!showPassword)}

@@ -1,8 +1,7 @@
 // components/layout/language-switcher.tsx
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { useRouter, usePathname } from "next/navigation";
+import { useLanguage } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,13 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Globe } from "lucide-react";
-import { Locale } from "@/lib/i18n"; // Assuming Locale is exported from i18n
 
-// Define type for displayLocales if not already present
 interface DisplayLocale {
-    code: Locale;
-    name: string;
-    flag: string;
+  code: "en" | "fr";
+  name: string;
+  flag: string;
 }
 
 const displayLocales: DisplayLocale[] = [
@@ -26,20 +23,9 @@ const displayLocales: DisplayLocale[] = [
 ];
 
 export function LanguageSwitcher() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const currentLocale = useLocale() as Locale;
-  const t = useTranslations("common"); // For potential ARIA labels or tooltips if needed
-
-  const handleLanguageChange = (newLocale: Locale) => {
-    // Replace the /en or /fr part of the path with the new locale
-    // This assumes pathnames are always prefixed with locale, e.g., /en/dashboard
-    const newPathname = pathname.replace(/^\/[^\/]+/, `/${newLocale}`);
-    router.push(newPathname);
-    // router.refresh(); // Might be needed if server components depend on locale
-  };
-
-  const currentDisplayLocale = displayLocales.find((l) => l.code === currentLocale) || displayLocales[0];
+  const { language, setLanguage } = useLanguage();
+  const currentDisplayLocale =
+    displayLocales.find((l) => l.code === language) || displayLocales[0];
 
   return (
     <DropdownMenu>
@@ -56,8 +42,8 @@ export function LanguageSwitcher() {
         {displayLocales.map((loc) => (
           <DropdownMenuItem
             key={loc.code}
-            onClick={() => handleLanguageChange(loc.code)}
-            className={currentLocale === loc.code ? "bg-accent" : ""}
+            onClick={() => setLanguage(loc.code as "en" | "fr")}
+            className={language === loc.code ? "bg-accent" : ""}
           >
             <span className="mr-2">{loc.flag}</span>
             {loc.name}

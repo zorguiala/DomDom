@@ -1,10 +1,10 @@
+// "use-client";
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Providers from "@/components/providers/providers";
-import { Toaster } from "@/components/ui/toaster";
-// Sidebar is removed from here
+// import { LanguageProvider } from "@/lib/language-context"; // Importing LanguageProvider
+import ClientRootLayout from "@/components/layout/ClientRootLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,12 +23,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <LanguageProvider> {/* LanguageProvider should likely be inside SessionProvider if it uses session data, or SessionProvider inside Providers */}
-          <Providers> {/* Assuming SessionProvider is within Providers component */}
-            {children} {/* Sidebar is no longer here, main content will be pages or nested layouts */}
-            <Toaster /> {/* Global Toaster */}
-          </Providers>
-        </LanguageProvider>
+        {/* Only use server-safe providers here */}
+        <ClientRootLayout>{children}</ClientRootLayout>
       </body>
     </html>
   );
