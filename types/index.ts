@@ -142,10 +142,18 @@ export interface Sale {
   saleDate: Date;
   deliveryDate?: Date;
   totalAmount: number;
+  subtotal: number;
+  tva: number;
+  timbre: number;
+  exitSlipNumber?: string;
+  exitSlipDate?: Date;
+  returnDate?: Date;
+  returnedAmount: number;
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
   items: SaleItem[];
+  vanOperation?: VanSalesOperation;
 }
 
 export interface SaleItem {
@@ -157,6 +165,25 @@ export interface SaleItem {
   unitPrice: number;
   totalPrice: number;
   deliveredQty: number;
+  returnedQty: number;
+}
+
+export interface VanSalesOperation {
+  id: string;
+  operationDate: Date;
+  saleId: string;
+  sale?: Sale;
+  driverName?: string;
+  vehicleNumber?: string;
+  departureTime?: Date;
+  returnTime?: Date;
+  totalProductsOut: number;
+  totalProductsSold: number;
+  totalReturned: number;
+  status: "IN_PROGRESS" | "COMPLETED";
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Employee {
@@ -265,6 +292,8 @@ export interface CreateSaleForm {
   type: SaleType;
   deliveryDate?: Date;
   notes?: string;
+  driverName?: string;
+  vehicleNumber?: string;
   items: Array<{
     productId: string;
     quantity: number;

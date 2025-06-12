@@ -35,30 +35,63 @@ import {
   Eye,
   Edit,
   Download,
+  Truck,
+  FileText,
+  Package,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select-radix";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Sale {
   id: string;
+  saleNumber: string;
   customerName: string;
   customerEmail: string | null;
   customerPhone: string | null;
+  type: "DOOR_TO_DOOR" | "CLASSIC";
   status: string;
   totalAmount: number;
-  totalItems: number;
+  subtotal: number;
+  tva: number;
+  timbre: number;
+  exitSlipNumber: string | null;
+  exitSlipDate: string | null;
+  returnDate: string | null;
+  returnedAmount: number;
   createdAt: string;
   updatedAt: string;
-  saleItems: Array<{
+  items: Array<{
     id: string;
-    quantity: number;
-    price: number;
+    qty: number;
+    unitPrice: number;
+    totalPrice: number;
+    deliveredQty: number;
+    returnedQty: number;
     product: {
       id: string;
       name: string;
       sku: string;
     };
   }>;
+  vanOperation?: {
+    id: string;
+    driverName: string | null;
+    vehicleNumber: string | null;
+    status: "IN_PROGRESS" | "COMPLETED";
+    totalProductsOut: number;
+    totalProductsSold: number;
+    totalReturned: number;
+  };
 }
 
 export default function SalesPage() {
@@ -68,6 +101,7 @@ export default function SalesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<"ALL" | "DOOR_TO_DOOR" | "CLASSIC">("ALL");
 
   const fetchSales = async () => {
     try {
@@ -93,30 +127,49 @@ export default function SalesPage() {
 
   const filteredSales = sales.filter(
     (sale) =>
-      sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sale.customerEmail &&
-        sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())),
+      (filterType === "ALL" || sale.type === filterType) &&
+      (sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.saleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (sale.customerEmail &&
+          sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()))),
   );
 
-  // Calculate metrics from real data
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  // Separate calculations for each type
+  const doorToDoorSales = sales.filter((s: Sale) => s.type === "DOOR_TO_DOOR");
+  const classicSales = sales.filter((s: Sale) => s.type === "CLASSIC");
+  
+  const totalRevenue = sales.reduce((sum: number, sale: Sale) => sum + sale.totalAmount, 0);
+  const doorToDoorRevenue = doorToDoorSales.reduce((sum: number, sale: Sale) => sum + sale.totalAmount, 0);
+  const classicRevenue = classicSales.reduce((sum: number, sale: Sale) => sum + sale.totalAmount, 0);
+  
   const totalOrders = sales.length;
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   const pendingOrders = sales.filter(
-    (sale) => sale.status === "PENDING",
+    (sale) => sale.status === "QUOTE",
+  ).length;
+  const inProgressVanSales = doorToDoorSales.filter(
+    (sale) => sale.vanOperation?.status === "IN_PROGRESS",
   ).length;
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string, type: string, sale?: Sale) => {
+    if (type === "DOOR_TO_DOOR") {
+      switch (status) {
+        case "CONFIRMED":
+          return sale?.vanOperation?.status === "IN_PROGRESS" ? "secondary" : "default";
+        case "DELIVERED":
+          return "default";
+        default:
+          return "outline";
+      }
+    }
+    
     switch (status.toLowerCase()) {
-      case "completed":
+      case "quote":
+        return "secondary";
+      case "confirmed":
         return "default";
-      case "shipped":
-        return "outline";
-      case "processing":
-        return "secondary";
-      case "pending":
-        return "secondary";
+      case "delivered":
+        return "default";
       case "cancelled":
         return "destructive";
       default:
@@ -124,16 +177,23 @@ export default function SalesPage() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, sale: Sale) => {
+    if (sale.type === "DOOR_TO_DOOR") {
+      if (status === "CONFIRMED" && sale.vanOperation?.status === "IN_PROGRESS") {
+        return "In Progress";
+      }
+      if (status === "DELIVERED") {
+        return "Completed";
+      }
+    }
+    
     switch (status.toLowerCase()) {
-      case "completed":
-        return t("completed");
-      case "shipped":
-        return t("shipped");
-      case "processing":
-        return t("processing");
-      case "pending":
-        return t("pending");
+      case "quote":
+        return t("quote");
+      case "confirmed":
+        return t("confirmed");
+      case "delivered":
+        return t("delivered");
       case "cancelled":
         return t("cancelled");
       default:
@@ -175,24 +235,30 @@ export default function SalesPage() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button onClick={fetchSales} className="mr-2">
+          <Button onClick={fetchSales} variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button>
+          <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             {common("export")}
           </Button>
-          <Link href="/sales/new">
+          <Link href="/sales/new?type=classic">
+            <Button>
+              <FileText className="mr-2 h-4 w-4" />
+              Classic Sale
+            </Button>
+          </Link>
+          <Link href="/sales/new?type=door-to-door">
             <ShimmerButton>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("newSale")}
+              <Truck className="mr-2 h-4 w-4" />
+              Van Sale
             </ShimmerButton>
           </Link>
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search and Filters */}
       <div className="flex items-center space-x-2">
         <div className="flex-1">
           <div className="relative">
@@ -205,6 +271,16 @@ export default function SalesPage() {
             />
           </div>
         </div>
+        <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">All Sales</SelectItem>
+            <SelectItem value="CLASSIC">Classic Sales</SelectItem>
+            <SelectItem value="DOOR_TO_DOOR">Van Sales</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* KPI Cards */}
@@ -229,16 +305,33 @@ export default function SalesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t("totalOrders")}
+              Van Sales Revenue
+            </CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(doorToDoorRevenue)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {doorToDoorSales.length} van sales ({inProgressVanSales} in progress)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Classic Sales Revenue
             </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatNumber(totalOrders)}
+              {formatCurrency(classicRevenue)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {pendingOrders} pending
+              {classicSales.length} classic sales ({pendingOrders} quotes)
             </p>
           </CardContent>
         </Card>
@@ -257,23 +350,6 @@ export default function SalesPage() {
             <p className="text-xs text-muted-foreground">Per sale average</p>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Items Sold
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatNumber(
-                sales.reduce((sum, sale) => sum + sale.totalItems, 0),
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">Items sold</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Sales Table */}
@@ -289,11 +365,11 @@ export default function SalesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <Button className="h-8 px-2 lg:px-3">
+              <Button variant="outline" size="sm">
                 <Filter className="mr-2 h-4 w-4" />
                 {common("filter")}
               </Button>
-              <Button className="h-8 px-2 lg:px-3">
+              <Button variant="outline" size="sm">
                 <Calendar className="mr-2 h-4 w-4" />
                 {common("dateRange")}
               </Button>
@@ -305,19 +381,20 @@ export default function SalesPage() {
             <TableCaption>Recent sales transactions</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Sale ID</TableHead>
+                <TableHead>Sale #</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>{t("customer")}</TableHead>
                 <TableHead>{common("date")}</TableHead>
-                <TableHead>{common("items")}</TableHead>
                 <TableHead>{common("amount")}</TableHead>
                 <TableHead>{common("status")}</TableHead>
+                <TableHead>Details</TableHead>
                 <TableHead className="text-right">{common("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSales.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     {searchTerm
                       ? "No sales found matching your search."
                       : "No sales found."}
@@ -327,7 +404,20 @@ export default function SalesPage() {
                 filteredSales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">
-                      <Badge>#{sale.id.slice(0, 8)}</Badge>
+                      <Badge variant="outline">{sale.saleNumber}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {sale.type === "DOOR_TO_DOOR" ? (
+                        <div className="flex items-center gap-1">
+                          <Truck className="h-4 w-4" />
+                          <span>Van</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <FileText className="h-4 w-4" />
+                          <span>Classic</span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div>
@@ -343,28 +433,59 @@ export default function SalesPage() {
                       {formatDate(new Date(sale.createdAt))}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center">
-                        <span className="font-medium">{sale.totalItems}</span>
-                        <span className="text-sm text-muted-foreground ml-1">
-                          {sale.totalItems === 1 ? "item" : "items"}
-                        </span>
+                      <div>
+                        <div className="font-medium">
+                          {formatCurrency(sale.totalAmount)}
+                        </div>
+                        {sale.type === "CLASSIC" && sale.tva > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            TVA: {formatCurrency(sale.tva)}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(sale.totalAmount)}
+                    <TableCell>
+                      <Badge variant={getStatusVariant(sale.status, sale.type, sale)}>
+                        {getStatusLabel(sale.status, sale)}
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge>{getStatusLabel(sale.status)}</Badge>
+                      {sale.type === "DOOR_TO_DOOR" ? (
+                        <div className="text-sm">
+                          {sale.vanOperation && (
+                            <>
+                              <div>Driver: {sale.vanOperation.driverName || "N/A"}</div>
+                              {sale.exitSlipNumber && (
+                                <div className="text-muted-foreground">
+                                  Exit: {sale.exitSlipNumber}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-sm">
+                          {sale.items.length} items
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
                         <Link href={`/sales/${sale.id}`}>
-                          <Button className="h-8 w-8 p-0">
+                          <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
+                        {sale.type === "DOOR_TO_DOOR" && 
+                         sale.vanOperation?.status === "IN_PROGRESS" && (
+                          <Link href={`/sales/${sale.id}/returns`}>
+                            <Button variant="ghost" size="sm">
+                              <Package className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
                         <Link href={`/sales/${sale.id}/edit`}>
-                          <Button className="h-8 w-8 p-0">
+                          <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
