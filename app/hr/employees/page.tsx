@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "@/lib/language-context";
@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Employee } from "@prisma/client"; // Assuming prisma generate has run
+import { useGetEmployees } from "./data/use-get-employees/use-get-employees";
 
 export default function EmployeesListPage() {
   const router = useRouter();
@@ -25,36 +26,7 @@ export default function EmployeesListPage() {
   const common = useTranslations("common");
   const { toast } = useToast();
 
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchEmployees = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/hr/employees");
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || `Failed to fetch employees: ${res.statusText}`);
-      }
-      setEmployees(await res.json());
-    } catch (err: any) {
-      setError(err.message);
-      toast({
-        variant: "destructive",
-        title: t("errorFetchingEmployeesTitle") || "Error Fetching Employees",
-        description: err.message,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchEmployees();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: employees = [], isLoading: loading, error, refetch: fetchEmployees } = useGetEmployees();
 
   const handleDelete = async (employeeId: string) => {
     if (!confirm(t("confirmDeleteEmployee") || "Are you sure you want to delete this employee?")) {
@@ -85,7 +57,7 @@ export default function EmployeesListPage() {
   };
 
   if (loading) return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
-  if (error && employees.length === 0) return <div className="text-red-500 text-center p-4">{error}</div>;
+  if (error && employees.length === 0) return <div className="text-red-500 text-center p-4">{error instanceof Error ? error.message : 'An error occurred'}</div>;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -101,7 +73,7 @@ export default function EmployeesListPage() {
         </Link>
       </div>
 
-      {error && employees.length > 0 && <p className="text-sm font-medium text-destructive text-center py-2">{error}</p>}
+      {error && employees.length > 0 && <p className="text-sm font-medium text-destructive text-center py-2">{error instanceof Error ? error.message : 'An error occurred'}</p>}
 
       <Card>
         <CardContent className="mt-4">

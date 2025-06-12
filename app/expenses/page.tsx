@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "@/lib/language-context";
@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PrismaExpense } from "@/types/expenses";
+import { useGetExpenses } from "./data/use-get-expenses/use-get-expenses";
 
 export default function ExpensesPage() {
   const t = useTranslations("expenses");
@@ -37,32 +38,7 @@ export default function ExpensesPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const [expenses, setExpenses] = useState<PrismaExpense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchExpenses = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/expenses");
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || t("errorFetchingExpenses"));
-      }
-      setExpenses(await res.json());
-    } catch (err: any) {
-      setError(err.message);
-      toast({ variant: "destructive", title: t("errorFetchingExpensesTitle"), description: err.message });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchExpenses();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: expenses = [], isLoading: loading, error, refetch: fetchExpenses } = useGetExpenses();
 
   const handleDelete = async (expenseId: string) => {
     if (!confirm(t("confirmDeleteExpense") || "Are you sure you want to delete this expense?")) {
@@ -165,7 +141,7 @@ export default function ExpensesPage() {
         </CardHeader>
         <CardContent>
           {loading && <p className="text-center py-4">{common("loading")}</p>}
-          {error && !loading && <p className="text-destructive text-center py-4">{error}</p>}
+          {error && !loading && <p className="text-destructive text-center py-4">{error instanceof Error ? error.message : 'An error occurred'}</p>}
           {!loading && !error && (
             <Table>
               <TableHeader>
