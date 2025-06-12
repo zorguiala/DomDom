@@ -57,30 +57,47 @@ export function DashboardKPIs() {
     {
       title: dashboardT("kpi.totalRevenue"),
       value: formatCurrency(kpiData.totalRevenue),
-      change: dashboardT("kpi.revenueChange", { change: kpiData.revenueChange }),
+      change: dashboardT("kpi.revenueChange").replace(
+        "{change}",
+        String(kpiData.revenueChange),
+      ),
       icon: DollarSign,
       trend: kpiData.revenueChange >= 0 ? "up" : "down",
     },
     {
       title: dashboardT("kpi.orders"),
       value: formatNumber(kpiData.totalOrders),
-      change: dashboardT("kpi.ordersChange", { change: kpiData.ordersChange }),
+      change: dashboardT("kpi.ordersChange").replace(
+        "{change}",
+        String(kpiData.ordersChange),
+      ),
       icon: ShoppingCart,
       trend: kpiData.ordersChange >= 0 ? "up" : "down",
     },
     {
       title: dashboardT("kpi.products"),
       value: formatNumber(kpiData.totalProducts),
-      change: dashboardT("kpi.lowStockAlert", { count: kpiData.lowStockCount }),
+      change: dashboardT("kpi.lowStockAlert").replace(
+        "{count}",
+        String(kpiData.lowStockCount),
+      ),
       icon: Package,
       trend: kpiData.lowStockCount > 0 ? "warning" : "neutral",
     },
     {
       title: dashboardT("kpi.employees"),
       value: formatNumber(kpiData.totalEmployees),
-      change: dashboardT("kpi.newEmployees", { count: kpiData.employeesChange }),
+      change: dashboardT("kpi.newEmployees").replace(
+        "{count}",
+        String(kpiData.employeesChange),
+      ),
       icon: Users,
-      trend: kpiData.employeesChange === 0 ? "neutral" : (kpiData.employeesChange > 0 ? "up" : "down"),
+      trend:
+        kpiData.employeesChange === 0
+          ? "neutral"
+          : kpiData.employeesChange > 0
+            ? "up"
+            : "down",
     },
   ];
 
@@ -106,7 +123,9 @@ export function DashboardKPIs() {
               }`}
             >
               {kpi.trend === "up" && <TrendingUp className="h-3 w-3 mr-1" />}
-              {kpi.trend === "down" && <TrendingDown className="h-3 w-3 mr-1" />}
+              {kpi.trend === "down" && (
+                <TrendingDown className="h-3 w-3 mr-1" />
+              )}
               {kpi.trend === "warning" && (
                 <AlertCircle className="h-3 w-3 mr-1" />
               )}

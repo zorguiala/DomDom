@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "@/lib/language-context";
 import { NavigationItem } from "@/types";
 import { Factory, Menu, X } from "lucide-react"; // Kept only used icons here
 import { useState, useMemo } from "react";
@@ -21,7 +21,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const t = useTranslations("common");
   const { data: session, status } = useSession();
-  const userRole = session?.user?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
   const allNavigationItems = useMemo(() => getNavigationItems(t), [t]);
 
@@ -32,27 +32,32 @@ export function Sidebar({ className }: SidebarProps) {
 
     const filterItems = (items: NavigationItem[]): NavigationItem[] => {
       return items
-        .filter(item => {
+        .filter((item) => {
           if (!item.roles || item.roles.length === 0) {
             return true;
           }
           return item.roles.includes(userRole);
         })
-        .map(item => {
+        .map((item) => {
           if (item.children && item.children.length > 0) {
             const filteredChildren = filterItems(item.children);
             if (filteredChildren.length > 0) {
               return { ...item, children: filteredChildren };
             }
             // Keep parent if it's a direct link even if children are filtered out
-            if (item.href && (!item.children || item.children.length === 0 || filteredChildren.length === 0)) {
-               return { ...item, children: [] };
+            if (
+              item.href &&
+              (!item.children ||
+                item.children.length === 0 ||
+                filteredChildren.length === 0)
+            ) {
+              return { ...item, children: [] };
             }
             return null; // Parent has no href and all children filtered out OR (no href and no children initially)
           }
           return item;
         })
-        .filter(item => item !== null) as NavigationItem[];
+        .filter((item) => item !== null) as NavigationItem[];
     };
 
     return filterItems(allNavigationItems);
@@ -83,7 +88,11 @@ export function Sidebar({ className }: SidebarProps) {
             "hover:bg-accent hover:text-accent-foreground",
           )}
         >
-          {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+          {isCollapsed ? (
+            <Menu className="h-4 w-4" />
+          ) : (
+            <X className="h-4 w-4" />
+          )}
         </button>
       </div>
 
@@ -94,23 +103,33 @@ export function Sidebar({ className }: SidebarProps) {
 
           // Skip rendering if item has no href and no visible children
           if (!item.href && (!item.children || item.children.length === 0)) {
-              return null;
+            return null;
           }
 
           return (
             <div key={item.title}>
               <Link
                 href={item.href || "#"}
-                onClick={(e) => { if (!item.href && item.children && item.children.length > 0) e.preventDefault(); }}
+                onClick={(e) => {
+                  if (!item.href && item.children && item.children.length > 0)
+                    e.preventDefault();
+                }}
                 className={cn(
                   "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   "hover:bg-accent hover:text-accent-foreground",
-                  isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground",
                   isCollapsed && "justify-center px-2",
-                  (!item.href && item.children && item.children.length > 0) && "cursor-default"
+                  !item.href &&
+                    item.children &&
+                    item.children.length > 0 &&
+                    "cursor-default",
                 )}
               >
-                {Icon && <Icon className={cn("h-4 w-4", isCollapsed && "mx-auto")} />}
+                {Icon && (
+                  <Icon className={cn("h-4 w-4", isCollapsed && "mx-auto")} />
+                )}
                 {!isCollapsed && <span className="ml-3">{item.title}</span>}
                 {item.badge && !isCollapsed && (
                   <span className="ml-auto rounded-full bg-primary px-2 py-1 text-xs text-primary-foreground">
@@ -122,7 +141,8 @@ export function Sidebar({ className }: SidebarProps) {
                 <div className="ml-4 mt-1 space-y-1 border-l border-border pl-4">
                   {item.children.map((child) => {
                     const ChildIcon = child.icon; // Icon component for child
-                    const isChildActive = child.href && pathname.startsWith(child.href);
+                    const isChildActive =
+                      child.href && pathname.startsWith(child.href);
                     return (
                       <Link
                         key={child.title}
@@ -130,7 +150,9 @@ export function Sidebar({ className }: SidebarProps) {
                         className={cn(
                           "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                           "hover:bg-accent hover:text-accent-foreground",
-                          isChildActive ? "text-foreground" : "text-muted-foreground",
+                          isChildActive
+                            ? "text-foreground"
+                            : "text-muted-foreground",
                         )}
                       >
                         {ChildIcon && <ChildIcon className="h-4 w-4" />}

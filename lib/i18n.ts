@@ -1,15 +1,5 @@
-import { notFound } from "next/navigation";
-import { getRequestConfig } from "next-intl/server";
+// This file is now obsolete after migration to client-side language context.
+// If you need to keep the Locale type, export it from language-context.tsx instead.
+// You can safely delete this file if there are no imports left.
 
-// Can be imported from a shared config
-export const locales = ["en", "fr"] as const;
-export type Locale = (typeof locales)[number];
-
-export default getRequestConfig(async ({ locale }) => {
-  // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as Locale)) notFound();
-  return {
-    locale: locale as string,
-    messages: (await import(`../messages/${locale}.json`)).default,
-  };
-});
+// export type Locale = "en" | "fr";

@@ -69,7 +69,6 @@
     "email": "Email",
     "password": "Mot de passe",
     "rememberMe": "Se souvenir de moi",
-    "forgotPassword": "Mot de passe oublié ?",
     "createAccount": "Créer un compte",
     "welcome": "Bon retour",
     "signInToContinue": "Connectez-vous pour accéder à votre tableau de bord",
@@ -127,8 +126,7 @@
       "errorTitle": "Erreur",
       "unexpectedError": "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
       "backToSignIn": "Retour à la Connexion"
-    }
-    "signInErrorUnexpected": "Une erreur inattendue s'est produite lors de la connexion.",
+    },
     "ariaHidePassword": "TRANSLATE_ME: Hide password",
     "ariaShowPassword": "TRANSLATE_ME: Show password"
   },
@@ -148,27 +146,35 @@
     "inStock": "En stock",
     "lowStock": "Stock faible",
     "kpi": {
-      "totalRevenue": "TRANSLATE_ME: Total Revenue",
-      "orders": "TRANSLATE_ME: Orders",
-      "products": "TRANSLATE_ME: Products",
-      "employees": "TRANSLATE_ME: Employees",
-      "revenueChange": "TRANSLATE_ME: +{change}% from last month",
-      "ordersChange": "TRANSLATE_ME: +{change}% from last month",
-      "lowStockAlert": "TRANSLATE_ME: {count} low stock alerts",
-      "newEmployees": "TRANSLATE_ME: +{count} new this month"
+      "totalRevenue": "Chiffre d'affaires total",
+      "orders": "Commandes",
+      "products": "Produits",
+      "employees": "Employés",
+      "revenueChange": "+{change}% par rapport au mois dernier",
+      "ordersChange": "+{change}% par rapport au mois dernier",
+      "lowStockAlert": "{count} alertes de stock faible",
+      "newEmployees": "+{count} nouveaux ce mois-ci"
+    },
+    "inventory": {
+      "totalProducts": "Produits totaux",
+      "lowStock": "Stock faible",
+      "outOfStock": "Rupture de stock",
+      "recentlyUpdated": "Récemment mis à jour",
+      "lowStockAlertsTitle": "Alertes de stock faible",
+      "currentMinLabel": "Actuel / Min"
     },
     "production": {
-      "activeOrders": "TRANSLATE_ME: Active Orders",
-      "completedToday": "TRANSLATE_ME: Completed Today",
-      "recentOrdersTitle": "TRANSLATE_ME: Recent Production Orders",
-      "quantityPrefix": "TRANSLATE_ME: Qty: ",
-      "progressSuffix": "TRANSLATE_ME: % complete",
-      "completedPrefix": "TRANSLATE_ME: Completed ",
-      "duePrefix": "TRANSLATE_ME: Due ",
-      "statusInProgress": "TRANSLATE_ME: In Progress",
-      "statusCompleted": "TRANSLATE_ME: Completed",
-      "statusPending": "TRANSLATE_ME: Pending",
-      "statusDelayed": "TRANSLATE_ME: Delayed"
+      "activeOrders": "Ordres actifs",
+      "completedToday": "Terminés aujourd'hui",
+      "recentOrdersTitle": "Ordres de production récents",
+      "quantityPrefix": "Qté : ",
+      "progressSuffix": "% terminé",
+      "completedPrefix": "Terminé ",
+      "duePrefix": "À rendre ",
+      "statusInProgress": "En cours",
+      "statusCompleted": "Terminé",
+      "statusPending": "En attente",
+      "statusDelayed": "Retardé"
     }
   },
   "inventory": {
