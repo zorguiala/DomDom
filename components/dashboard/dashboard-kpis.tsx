@@ -10,49 +10,13 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useTranslations } from "@/lib/language-context";
-
-interface ApiKpiData {
-  totalRevenue: number;
-  revenueChange: number;
-  totalOrders: number;
-  ordersChange: number;
-  totalProducts: number;
-  lowStockCount: number;
-  totalEmployees: number;
-  employeesChange: number;
-}
+import { useDashboardKpi } from "./data/use-get-kpi/use-get-kpi";
 
 export function DashboardKPIs() {
-  const [kpiData, setKpiData] = useState<ApiKpiData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: kpiData, isLoading, error } = useDashboardKpi();
   const common = useTranslations("common");
   const dashboardT = useTranslations("dashboard"); // For dashboard specific translations
-
-  useEffect(() => {
-    const fetchKpiData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch("/api/dashboard");
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard KPIs");
-        }
-        const data = await response.json();
-        setKpiData(data.kpis);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchKpiData();
-  }, []);
 
   if (isLoading) {
     return (
@@ -76,7 +40,7 @@ export function DashboardKPIs() {
   if (error) {
     return (
       <div className="col-span-full text-red-500 p-4 border border-red-200 bg-red-50 rounded-md">
-        Failed to load KPIs: {error}
+        Failed to load KPIs: {error instanceof Error ? error.message : error}
       </div>
     );
   }

@@ -63,7 +63,8 @@
     "placeholderZeroAmount": "0.00",
     "optional": "Optional",
     "placeholderZero": "0",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "tryAgain": "Try Again"
   },
   "auth": {
     "signIn": "Sign In",
