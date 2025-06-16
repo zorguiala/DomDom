@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
+import { LanguageProvider } from "@/lib/language-context";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -11,7 +12,7 @@ interface ProvidersProps {
 
 /**
  * Global providers component that wraps the application with necessary context providers
- * Includes React Query, Next Auth, and Theme providers
+ * Includes React Query, Next Auth, Theme, and Language providers
  */
 export default function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(
@@ -46,7 +47,9 @@ export default function Providers({ children }: ProvidersProps) {
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </SessionProvider>

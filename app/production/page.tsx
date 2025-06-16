@@ -190,7 +190,7 @@ function ProductionOrdersTable() {
 }
 
 export default function ProductionPage() {
-  const t = useTranslations("production");
+  const t = useTranslations("");
   // const common = useTranslations("common"); // Not used directly here, but available if needed
   const dashboardT = useTranslations("dashboard"); // For dashboard.production keys
 
@@ -247,7 +247,7 @@ export default function ProductionPage() {
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("common.production")}</h2>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>{" "}
         <div className="flex items-center space-x-2">
