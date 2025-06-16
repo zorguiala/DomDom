@@ -49,10 +49,11 @@ interface Sale {
   totalItems: number;
   createdAt: string;
   updatedAt: string;
-  saleItems: Array<{
+  items: Array<{
     id: string;
-    quantity: number;
-    price: number;
+    qty: number;
+    unitPrice: number;
+    totalPrice: number;
     product: {
       id: string;
       name: string;

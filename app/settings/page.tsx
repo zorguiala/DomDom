@@ -20,14 +20,14 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const t = useTranslations("settings");
+  const t = useTranslations("");
   const common = useTranslations("common");
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("common.settings")}</h2>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
       </div>

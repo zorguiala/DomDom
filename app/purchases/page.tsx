@@ -13,7 +13,7 @@ import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Plus, ShoppingCart, Package, Truck, DollarSign } from "lucide-react";
 
 export default function PurchasesPage() {
-  const t = useTranslations("purchases");
+  const t = useTranslations("");
   const common = useTranslations("common");
 
   return (

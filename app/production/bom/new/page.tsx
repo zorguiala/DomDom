@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function BOMCreatePage() {
-  const t = useTranslations("production");
+  const t = useTranslations("");
   const common = useTranslations("common");
   const router = useRouter();
   const [bom, setBOM] = useState({
