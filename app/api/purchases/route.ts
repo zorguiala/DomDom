@@ -132,20 +132,22 @@ export async function POST(request: NextRequest) {
     }
 
     const purchase = await prisma.$transaction(async (tx) => {
-      const newPurchase = await tx.purchase.create({
-        data: {
-          poNumber,
-          supplierId,
-          supplierName: supplierId ? undefined : supplierName, // Only save supplierName if no ID
-          status,
-          orderDate: new Date(orderDate),
-          expectedDate: expectedDate ? new Date(expectedDate) : undefined,
-          totalAmount,
-          notes,
-          items: {
-            create: [], // Will be populated below
-          },
+      const purchaseCreateData: any = {
+        poNumber,
+        status,
+        orderDate: new Date(orderDate),
+        expectedDate: expectedDate ? new Date(expectedDate) : undefined,
+        totalAmount,
+        notes,
+        items: {
+          create: [], // Will be populated below
         },
+      };
+      if (supplierId) purchaseCreateData.supplierId = supplierId;
+      if (!supplierId && supplierName) purchaseCreateData.supplierName = supplierName;
+
+      const newPurchase = await tx.purchase.create({
+        data: purchaseCreateData,
       });
 
       // Process each item: find/create product, then create purchase item linking to it
@@ -200,20 +202,30 @@ export async function POST(request: NextRequest) {
           const currentProduct = await tx.product.findUnique({ where: { id: productRecord.id } });
           if (!currentProduct) throw new Error(`Product ${productRecord.id} vanished mid-transaction`);
 
-          const newQtyOnHand = currentProduct.qtyOnHand + (item.qtyReceived || 0);
+          const receivedQty = item.qtyReceived || 0;
+          const receivedCost = item.unitCost;
+          const prevQty = currentProduct.qtyOnHand;
+          const prevCost = currentProduct.priceCost;
+
+          // Weighted average cost calculation
+          const newQtyOnHand = prevQty + receivedQty;
+          let newPriceCost = receivedCost;
+          if (prevQty > 0) {
+            newPriceCost = ((prevQty * prevCost) + (receivedQty * receivedCost)) / newQtyOnHand;
+          }
 
           await tx.product.update({
             where: { id: productRecord.id },
             data: {
               qtyOnHand: newQtyOnHand,
-              priceCost: item.unitCost, // Update cost to this purchase's unit cost
+              priceCost: newPriceCost,
             },
           });
 
           await tx.stockMovement.create({
             data: {
               productId: productRecord.id,
-              qty: item.qtyReceived || 0,
+              qty: receivedQty,
               movementType: "IN",
               movementDate: new Date(),
               reference: `PO: ${newPurchase.poNumber}`,

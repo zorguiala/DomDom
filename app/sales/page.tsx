@@ -29,10 +29,11 @@ export default function SalesPage() {
   const filteredSales = sales.filter(
     (sale) =>
       (filterType === "ALL" || sale.type === filterType) &&
-      (sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (
+        sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sale.saleNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (sale.customerEmail &&
-          sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())))
+        (sale.customerEmail && sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
   );
 
   if (error) {
@@ -42,7 +43,6 @@ export default function SalesPage() {
           <div className="text-center">
             <p className="text-red-500 mb-4">{common("error")}</p>
             <Button onClick={() => refetch()}>
-
               <RefreshCw className="mr-2 h-4 w-4" />
               {common("tryAgain")}
             </Button>
@@ -51,14 +51,6 @@ export default function SalesPage() {
       </div>
     );
   }
-
-  const filteredSales = sales.filter(
-    (sale) =>
-      sale.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sale.customerEmail &&
-        sale.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())),
-  );
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">

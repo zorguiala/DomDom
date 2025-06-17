@@ -24,6 +24,7 @@ import Link from "next/link";
 import type { Product } from "@/types";
 import { useGetProduct } from "../data/use-get-product/use-get-product";
 import { useDeleteProduct } from "../data/use-delete-product/use-delete-product";
+import { formatCurrency } from "@/lib/utils";
 
 export default function ProductViewPage() {
   const params = useParams();
@@ -124,47 +125,32 @@ export default function ProductViewPage() {
         {/* Basic Information */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Product Information</CardTitle>
-            <CardDescription>Basic details about this product</CardDescription>
+            <CardTitle>{t("addProductTitle")}</CardTitle>
+            <CardDescription>{t("addProductDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium flex items-center">
                   <Tag className="mr-2 h-4 w-4" />
-                  Product Name
+                  {t("productName")}
                 </label>
                 <p className="text-lg">{product.name}</p>
               </div>
               <div>
                 <label className="text-sm font-medium flex items-center">
                   <Hash className="mr-2 h-4 w-4" />
-                  SKU
+                  {t("sku")}
                 </label>
                 <p className="text-lg font-mono">{product.sku}</p>
               </div>
               <div>
                 <label className="text-sm font-medium">{t("category")}</label>
-                <p className="text-lg">{product.category || "No category"}</p>
+                <p className="text-lg">{product.category || t("noCategory")}</p>
               </div>
               <div>
-                <label className="text-sm font-medium">{common("unit")}</label>
+                <label className="text-sm font-medium">{t("unit")}</label>
                 <p className="text-lg">{product.unit}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">{common("type")}</label>
-                <div className="flex gap-2">
-                  {product.isRawMaterial && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                      Raw Material
-                    </span>
-                  )}
-                  {product.isFinishedGood && (
-                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                      Finished Good
-                    </span>
-                  )}
-                </div>
               </div>
             </div>
           </CardContent>
@@ -175,12 +161,12 @@ export default function ProductViewPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Package className="mr-2 h-4 w-4" />
-              Stock Information
+              {t("stockLevel")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Current Stock</label>
+              <label className="text-sm font-medium">{t("qtyOnHand")}</label>
               <p
                 className={`text-2xl font-bold ${
                   getStockStatus(product) === "in_stock"
@@ -195,7 +181,7 @@ export default function ProductViewPage() {
             </div>
             {product.minQty && (
               <div>
-                <label className="text-sm font-medium">Minimum Stock</label>
+                <label className="text-sm font-medium">{t("minQty")}</label>
                 <p className="text-lg">{product.minQty}</p>
               </div>
             )}
@@ -217,56 +203,37 @@ export default function ProductViewPage() {
         </Card>
 
         {/* Pricing Information */}
-        <Card>
+        <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <DollarSign className="mr-2 h-4 w-4" />
-              Pricing
-            </CardTitle>
+            <CardTitle>{t("pricingInfo")}</CardTitle>
+            <CardDescription>{t("pricingInfoDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Selling Price</label>
-              <p className="text-2xl font-bold text-green-600">
-                ${product.priceSell.toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Cost Price</label>
-              <p className="text-lg">${product.priceCost.toFixed(2)}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium">{common("margin")}</label>
-              <p className="text-lg font-semibold">
-                ${(product.priceSell - product.priceCost).toFixed(2)}
-                <span className="text-sm text-muted-foreground ml-2">
-                  (
-                  {(
-                    ((product.priceSell - product.priceCost) /
-                      product.priceSell) *
-                    100
-                  ).toFixed(1)}
-                  %)
-                </span>
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">{t("priceSell")}</label>
+                <p className="text-lg">{formatCurrency(product.priceSell)}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("priceCost")}</label>
+                <p className="text-lg">{formatCurrency(product.priceCost)}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("margin")}</label>
+                <p className="text-lg">{formatCurrency(product.priceSell - product.priceCost)} ({((product.priceSell - product.priceCost) / product.priceSell * 100).toFixed(1)}%)</p>
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Recent Activity */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest transactions and stock movements
-            </CardDescription>
+            <CardTitle>{t("recentActivity")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                No recent stock movements
-              </p>
-            </div>
+            <div className="text-muted-foreground text-sm mb-2">{t("recentActivityDesc")}</div>
+            <div className="text-muted-foreground text-xs">{t("noRecentStockMovements")}</div>
           </CardContent>
         </Card>
       </div>

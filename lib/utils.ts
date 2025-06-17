@@ -15,12 +15,13 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function formatCurrency(
   amount: number,
-  currency: string = "USD",
-  locale: string = "en-US",
+  currency: string = "TND",
+  locale: string = "fr-TN",
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
+    minimumFractionDigits: 3, // TND is usually shown with 3 decimals
   }).format(amount);
 }
 

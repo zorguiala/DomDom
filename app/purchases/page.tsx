@@ -11,10 +11,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { ShimmerButton } from "@/components/ui/shimmer-button";
 import { Plus, ShoppingCart, Package, Truck, DollarSign } from "lucide-react";
+import { useState, useMemo } from "react";
+import { formatCurrency } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
+import { addDays, isWithinInterval } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { useGetPurchases } from "./data/use-get-purchases/use-get-purchases";
+import Link from "next/link";
 
 export default function PurchasesPage() {
   const t = useTranslations("");
   const common = useTranslations("common");
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
+  const { data: purchases = [], isLoading, error } = useGetPurchases();
+
+  // Filter purchases by date range
+  const filteredPurchases = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return purchases;
+    return purchases.filter((purchase: any) => {
+      const orderDate = new Date(purchase.orderDate);
+      return isWithinInterval(orderDate, { start: dateRange.from, end: dateRange.to });
+    });
+  }, [purchases, dateRange]);
+
+  // KPIs
+  const totalSpent = filteredPurchases.reduce((sum: number, p: any) => sum + (p.totalAmount || 0), 0);
+  const pendingOrders = filteredPurchases.filter((p: any) => p.status === "DRAFT").length;
+  const deliveredOrders = filteredPurchases.filter((p: any) => p.status === "RECEIVED").length;
+  const inTransitOrders = filteredPurchases.filter((p: any) => p.status === "CONFIRMED").length;
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -24,12 +51,34 @@ export default function PurchasesPage() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <ShimmerButton>
-            <Plus className="mr-2 h-4 w-4" />
-            {t("newOrder")}
-          </ShimmerButton>
+          <Link href="/purchases/purchases/new">
+            <ShimmerButton>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("newOrder")}
+            </ShimmerButton>
+          </Link>
         </div>
       </div>
+
+      {/* Date Range Picker */}
+      <Card className="mb-4 p-4">
+        <label className="block text-sm font-medium mb-1">{common("dateRange")}</label>
+        <div className="flex items-center">
+          <input
+            type="date"
+            value={dateRange.from && !isNaN(dateRange.from.getTime()) ? dateRange.from.toISOString().slice(0, 10) : ""}
+            onChange={e => setDateRange(r => ({ ...r, from: e.target.value ? new Date(e.target.value) : undefined }))}
+            className="mr-2 border rounded px-2 py-1"
+          />
+          <span className="mx-2">-</span>
+          <input
+            type="date"
+            value={dateRange.to && !isNaN(dateRange.to.getTime()) ? dateRange.to.toISOString().slice(0, 10) : ""}
+            onChange={e => setDateRange(r => ({ ...r, to: e.target.value ? new Date(e.target.value) : undefined }))}
+            className="border rounded px-2 py-1"
+          />
+        </div>
+      </Card>
 
       {/* Purchase Overview Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -41,11 +90,10 @@ export default function PurchasesPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231</div>
+            <div className="text-2xl font-bold">{formatCurrency(totalSpent)}</div>
             <p className="text-xs text-muted-foreground">{t("kpiThisMonth")}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -54,11 +102,10 @@ export default function PurchasesPage() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">18</div>
+            <div className="text-2xl font-bold">{pendingOrders}</div>
             <p className="text-xs text-muted-foreground">{t("kpiAwaitingApproval")}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -67,11 +114,10 @@ export default function PurchasesPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-2xl font-bold">{deliveredOrders}</div>
             <p className="text-xs text-muted-foreground">{t("kpiThisMonth")}</p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -80,7 +126,7 @@ export default function PurchasesPage() {
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7</div>
+            <div className="text-2xl font-bold">{inTransitOrders}</div>
             <p className="text-xs text-muted-foreground">{t("kpiExpectedThisWeek")}</p>
           </CardContent>
         </Card>
@@ -93,11 +139,54 @@ export default function PurchasesPage() {
           <CardDescription>{t("recentOrdersDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground">
-            {t("managementComingSoon")}
-          </div>
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground">{common("loading")}</div>
+          ) : error ? (
+            <div className="text-sm text-red-600">{common("error")}</div>
+          ) : (
+            <PurchaseTable purchases={filteredPurchases} />
+          )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function PurchaseTable({ purchases }: { purchases: any[] }) {
+  const t = useTranslations("");
+  const common = useTranslations("common");
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-sm">
+        <thead>
+          <tr>
+            <th className="px-4 py-2 text-left">{t("poNumber")}</th>
+            <th className="px-4 py-2 text-left">{t("supplier")}</th>
+            <th className="px-4 py-2 text-left">{common("date")}</th>
+            <th className="px-4 py-2 text-left">{t("status")}</th>
+            <th className="px-4 py-2 text-left">{t("totalAmount")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {purchases.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                {t("noPOsFound")}
+              </td>
+            </tr>
+          ) : (
+            purchases.map((purchase) => (
+              <tr key={purchase.id}>
+                <td className="px-4 py-2 font-mono">{purchase.poNumber}</td>
+                <td className="px-4 py-2">{purchase.supplier?.companyName || purchase.supplierName || "-"}</td>
+                <td className="px-4 py-2">{new Date(purchase.orderDate).toLocaleDateString()}</td>
+                <td className="px-4 py-2">{purchase.status}</td>
+                <td className="px-4 py-2">{formatCurrency(purchase.totalAmount)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

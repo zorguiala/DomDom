@@ -16,6 +16,7 @@ import { Plus, Search, Filter, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { Product } from "@/types";
 import { useGetProducts } from "./data/use-get-products/use-get-products";
+import { formatCurrency } from "@/lib/utils";
 
 export default function InventoryPage() {
   const t = useTranslations("inventory");
@@ -158,7 +159,7 @@ function ProductList({ products }: { products: Product[] }) {
               )}
             </div>
           </div>
-          <div className="font-medium">${product.priceSell.toFixed(2)}</div>{" "}
+          <div className="font-medium">{formatCurrency(product.priceSell)}</div>{" "}
           <div className="flex items-center space-x-2">
             <Link href={`/inventory/${product.id}`}>
               <Button className="h-8 px-3 text-sm">{common("view")}</Button>
