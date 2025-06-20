@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox"; // For 'Paid' status
+import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PayrollData, PayrollAdjustmentItem, UpdatePayrollRequest } from "@/types/hr";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -162,10 +163,6 @@ export default function PayrollDetailPage() {
     }
   };
 
-  const formatCurrency = (amount?: number | null) => {
-    if (amount === null || amount === undefined) return common("na");
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount); // TODO: Use dynamic currency
-  };
 
   if (isLoading) return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
   if (!payrollData) return <div className="text-center py-10">{t("payrollRecordNotFound")}</div>;

@@ -50,10 +50,10 @@ async function calculateAndRecordBomCost(bomId: string, finalProductId: string, 
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const bomId = params.id;
+    const { id: bomId } = await params;
 
     const bom = await prisma.billOfMaterials.findUnique({
       where: { id: bomId },
@@ -101,10 +101,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const bomId = params.id;
+    const { id: bomId } = await params;
     const body = await request.json();
     // finalProductId cannot be changed in PUT, so we fetch it.
     // Components can change, name and description can change.
@@ -231,10 +231,10 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
+  const { id: bomId } = await params;
   try {
-    const bomId = params.id;
 
     const existingBom = await prisma.billOfMaterials.findUnique({
       where: { id: bomId },
@@ -267,7 +267,7 @@ export async function DELETE(
       message: "BOM deleted successfully",
     });
   } catch (error: any) {
-    console.error(`Error deleting BOM ${params.id}:`, error);
+    console.error(`Error deleting BOM ${bomId}:`, error);
      if (error.code === 'P2025') { // Record to delete not found (should be caught by findUnique check earlier)
         return NextResponse.json({ error: "BOM not found for deletion." }, { status: 404 });
     }

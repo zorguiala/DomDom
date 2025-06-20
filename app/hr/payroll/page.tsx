@@ -137,7 +137,7 @@ export default function PayrollPage() {
 
   const formatCurrency = (amount?: number | null) => {
     if (amount === null || amount === undefined) return common("na");
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount); // TODO: Use dynamic currency
+    return new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(amount);
   };
 
   const clearFilters = () => {

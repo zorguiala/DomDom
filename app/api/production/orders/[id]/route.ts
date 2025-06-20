@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 // GET /api/production/orders/[id] - Fetch a single production order
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const productionOrder = await prisma.productionOrder.findUnique({
       where: { id },
       include: {
@@ -43,12 +43,18 @@ export async function GET(
 // PUT /api/production/orders/[id] - Update a production order
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { status, qtyProduced, ...updateData } = body;
+    
+    console.log(`[PRODUCTION] PUT Request for order ${id}:`, {
+      status,
+      qtyProduced,
+      ...updateData
+    });
 
     const currentOrder = await prisma.productionOrder.findUnique({
       where: { id },
@@ -70,6 +76,8 @@ export async function PUT(
         { status: 404 }
       );
     }
+    
+    console.log(`[PRODUCTION] Current order status: ${currentOrder.status}, requested status: ${status}`);
 
     // If status is not changing, just update other fields
     if (!status || status === currentOrder.status) {
@@ -100,32 +108,42 @@ export async function PUT(
       updatedOrderWithStatusChange = await prisma.$transaction(async (tx) => {
         // 1. Check stock for all components
         for (const component of currentOrder.bom!.components) {
-          const requiredQty = component.quantity * currentOrder.qtyOrdered;
+          // Calculate required quantity: (component_qty / bom_output_qty) * production_order_qty
+          const bomOutputQty = (currentOrder.bom as any)?.outputQuantity || 1;
+          const requiredQty = (component.quantity / bomOutputQty) * currentOrder.qtyOrdered;
+          
           const rawMaterialProduct = await tx.product.findUnique({
             where: { id: component.productId },
           });
           if (!rawMaterialProduct || rawMaterialProduct.qtyOnHand < requiredQty) {
             throw new Error(
-              `Insufficient stock for component ${component.product.name} (SKU: ${component.product.sku}). Required: ${requiredQty}, Available: ${rawMaterialProduct?.qtyOnHand || 0}`
+              `Insufficient stock for component ${component.product.name} (SKU: ${component.product.sku}). Required: ${requiredQty.toFixed(3)} ${component.unit}, Available: ${rawMaterialProduct?.qtyOnHand || 0} ${rawMaterialProduct?.unit || ''}`
             );
           }
         }
 
         // 2. Deduct stock for all components
+        console.log(`[PRODUCTION] Starting material consumption for ${currentOrder.bom!.components.length} components`);
         for (const component of currentOrder.bom!.components) {
-          const requiredQty = component.quantity * currentOrder.qtyOrdered;
+          // Calculate required quantity: (component_qty / bom_output_qty) * production_order_qty
+          const bomOutputQty = (currentOrder.bom as any)?.outputQuantity || 1;
+          const requiredQty = (component.quantity / bomOutputQty) * currentOrder.qtyOrdered;
+          
+          console.log(`[PRODUCTION] Consuming ${requiredQty} units of ${component.product.name} (Product ID: ${component.productId})`);
           await tx.product.update({
             where: { id: component.productId },
             data: { qtyOnHand: { decrement: requiredQty } },
           });
-          // Optional: Create StockMovement record
+          
+          // Create stock movement record for traceability
           await tx.stockMovement.create({
             data: {
               productId: component.productId,
               qty: -requiredQty,
-              movementType: "PRODUCTION_RAW_OUT",
-              reference: `PO:${currentOrder.orderNumber}`,
-              notes: `Raw material for Production Order ${currentOrder.orderNumber}`,
+              movementType: "OUT",
+              movementDate: new Date(),
+              reference: `PO-${currentOrder.orderNumber}`,
+              reason: `Production consumption for ${currentOrder.qtyOrdered} units of ${currentOrder.product.name}`,
             }
           });
         }
@@ -158,22 +176,28 @@ export async function PUT(
         if (currentOrder.status === "PLANNED") {
             await prisma.$transaction(async (tx) => {
                 for (const component of currentOrder.bom!.components) {
-                    const requiredQty = component.quantity * currentOrder.qtyOrdered;
+                    const bomOutputQty = (currentOrder.bom as any)?.outputQuantity || 1;
+                    const requiredQty = (component.quantity / bomOutputQty) * currentOrder.qtyOrdered;
                     const rawMaterialProduct = await tx.product.findUnique({ where: { id: component.productId } });
                     if (!rawMaterialProduct || rawMaterialProduct.qtyOnHand < requiredQty) {
                         throw new Error(`Insufficient stock for ${component.product.name}. Required: ${requiredQty}, Available: ${rawMaterialProduct?.qtyOnHand || 0}`);
                     }
                 }
                 for (const component of currentOrder.bom!.components) {
-                    const requiredQty = component.quantity * currentOrder.qtyOrdered;
+                    const bomOutputQty = (currentOrder.bom as any)?.outputQuantity || 1;
+                    const requiredQty = (component.quantity / bomOutputQty) * currentOrder.qtyOrdered;
                     await tx.product.update({
                         where: { id: component.productId },
                         data: { qtyOnHand: { decrement: requiredQty } },
                     });
                     await tx.stockMovement.create({
                         data: {
-                            productId: component.productId, qty: -requiredQty, movementType: "PRODUCTION_RAW_OUT",
-                            reference: `PO:${currentOrder.orderNumber}`, notes: `Raw material for PO ${currentOrder.orderNumber} (skipped IN_PROGRESS)`,
+                            productId: component.productId, 
+                            qty: -requiredQty, 
+                            movementType: "OUT",
+                            movementDate: new Date(),
+                            reference: `PO-${currentOrder.orderNumber}`, 
+                            reason: `Production consumption (direct to DONE) for ${currentOrder.qtyOrdered} units of ${currentOrder.product.name}`,
                         }
                     });
                 }
@@ -189,24 +213,31 @@ export async function PUT(
         );
       }
 
+      console.log(`[PRODUCTION] Completing order ${currentOrder.orderNumber}: ${finalQtyProduced} units of product ${currentOrder.productId}`);
+      
       updatedOrderWithStatusChange = await prisma.$transaction(async (tx) => {
         // 1. Increment stock for the finished good
+        console.log(`[PRODUCTION] Adding ${finalQtyProduced} units to product ${currentOrder.productId}`);
         await tx.product.update({
           where: { id: currentOrder.productId },
           data: { qtyOnHand: { increment: finalQtyProduced } },
         });
-         // Optional: Create StockMovement record
+        
+         // Create stock movement record for finished goods
+         console.log(`[PRODUCTION] Creating stock movement record for ${finalQtyProduced} units`);
          await tx.stockMovement.create({
           data: {
             productId: currentOrder.productId,
             qty: finalQtyProduced,
-            movementType: "PRODUCTION_FG_IN",
-            reference: `PO:${currentOrder.orderNumber}`,
-            notes: `Finished good from Production Order ${currentOrder.orderNumber}`,
+            movementType: "IN",
+            movementDate: new Date(),
+            reference: `PO-${currentOrder.orderNumber}`,
+            reason: `Production output: ${finalQtyProduced} units of ${currentOrder.product.name}`,
           }
         });
 
         // 2. Update order status and qtyProduced
+        console.log(`[PRODUCTION] Updating order status to DONE`);
         return tx.productionOrder.update({
           where: { id },
           data: { ...updateData, status, qtyProduced: finalQtyProduced, finishedAt: new Date(), actualEndDate: new Date() },
@@ -220,15 +251,20 @@ export async function PUT(
         } else {
             updatedOrderWithStatusChange = await prisma.$transaction(async (tx) => {
                 for (const component of currentOrder.bom!.components) {
-                    const deductedQty = component.quantity * currentOrder.qtyOrdered;
+                    const bomOutputQty = (currentOrder.bom as any)?.outputQuantity || 1;
+                    const deductedQty = (component.quantity / bomOutputQty) * currentOrder.qtyOrdered;
                     await tx.product.update({
                         where: { id: component.productId },
                         data: { qtyOnHand: { increment: deductedQty } },
                     });
                     await tx.stockMovement.create({
                         data: {
-                            productId: component.productId, qty: deductedQty, movementType: "PRODUCTION_RAW_REVERSAL",
-                            reference: `PO:${currentOrder.orderNumber}`, notes: `Reversal for PO ${currentOrder.orderNumber} (IN_PROGRESS -> PLANNED)`,
+                            productId: component.productId, 
+                            qty: deductedQty, 
+                            movementType: "IN",
+                            movementDate: new Date(),
+                            reference: `PO-${currentOrder.orderNumber}`, 
+                            reason: `Production reversal: returned raw materials from ${currentOrder.product.name} production`,
                         }
                     });
                 }
@@ -275,10 +311,10 @@ export async function PUT(
 // DELETE /api/production/orders/[id] - Delete a production order
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const order = await prisma.productionOrder.findUnique({ where: { id } });
     if (!order) {

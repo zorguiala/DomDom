@@ -3,7 +3,9 @@
 import { useTranslations } from "@/lib/language-context";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input, Textarea, Table, TableHead, TableRow, TableCell, TableBody } from "@magicuidesign/mcp";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableHead, TableRow, TableCell, TableBody } from "@/components/ui/table";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 
@@ -21,9 +23,9 @@ export default function BOMEditPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/production/bom?id=${bomId}`)
+    fetch(`/api/bom/${bomId}`)
       .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
-      .then(setBOM)
+      .then(data => setBOM(data.bom))
       .catch(e => setError(e.toString()))
       .finally(() => setLoading(false));
   }, [bomId]);
@@ -37,7 +39,7 @@ export default function BOMEditPage() {
     setLoading(true);
     setError(null);
     try {
-      await fetch("/api/production/bom", {
+      await fetch(`/api/bom/${bomId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bom),
@@ -86,9 +88,9 @@ export default function BOMEditPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {bom.components.map((comp: any) => (
+                  {(bom.components || []).map((comp: any) => (
                     <TableRow key={comp.id}>
-                      <TableCell>{comp.product}</TableCell>
+                      <TableCell>{comp.product?.name || 'Unknown Product'}</TableCell>
                       <TableCell>{comp.quantity}</TableCell>
                       <TableCell>{comp.unit}</TableCell>
                       <TableCell>

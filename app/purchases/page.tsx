@@ -18,9 +18,10 @@ import { addDays, isWithinInterval } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { useGetPurchases } from "./data/use-get-purchases/use-get-purchases";
 import Link from "next/link";
+import { InputMagic } from "@/components/ui/select-magic";
 
 export default function PurchasesPage() {
-  const t = useTranslations("");
+  const t = useTranslations("purchases");
   const common = useTranslations("common");
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
     from: addDays(new Date(), -30),
@@ -30,9 +31,19 @@ export default function PurchasesPage() {
 
   // Filter purchases by date range
   const filteredPurchases = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return purchases;
+    if (!dateRange.from || !dateRange.to) return purchases;
     return purchases.filter((purchase: any) => {
       const orderDate = new Date(purchase.orderDate);
+      if (
+        !orderDate ||
+        isNaN(orderDate.getTime()) ||
+        !dateRange.from ||
+        isNaN(dateRange.from.getTime()) ||
+        !dateRange.to ||
+        isNaN(dateRange.to.getTime())
+      ) {
+        return true; // or false, depending on whether you want to show or hide invalid dates
+      }
       return isWithinInterval(orderDate, { start: dateRange.from, end: dateRange.to });
     });
   }, [purchases, dateRange]);
@@ -51,7 +62,7 @@ export default function PurchasesPage() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Link href="/purchases/purchases/new">
+          <Link href="/purchases/new">
             <ShimmerButton>
               <Plus className="mr-2 h-4 w-4" />
               {t("newOrder")}
@@ -63,19 +74,18 @@ export default function PurchasesPage() {
       {/* Date Range Picker */}
       <Card className="mb-4 p-4">
         <label className="block text-sm font-medium mb-1">{common("dateRange")}</label>
-        <div className="flex items-center">
-          <input
+        <div className="flex items-center gap-2">
+          <InputMagic
             type="date"
             value={dateRange.from && !isNaN(dateRange.from.getTime()) ? dateRange.from.toISOString().slice(0, 10) : ""}
             onChange={e => setDateRange(r => ({ ...r, from: e.target.value ? new Date(e.target.value) : undefined }))}
-            className="mr-2 border rounded px-2 py-1"
+            className="mr-2"
           />
           <span className="mx-2">-</span>
-          <input
+          <InputMagic
             type="date"
             value={dateRange.to && !isNaN(dateRange.to.getTime()) ? dateRange.to.toISOString().slice(0, 10) : ""}
             onChange={e => setDateRange(r => ({ ...r, to: e.target.value ? new Date(e.target.value) : undefined }))}
-            className="border rounded px-2 py-1"
           />
         </div>
       </Card>
@@ -153,7 +163,7 @@ export default function PurchasesPage() {
 }
 
 function PurchaseTable({ purchases }: { purchases: any[] }) {
-  const t = useTranslations("");
+  const t = useTranslations("purchases");
   const common = useTranslations("common");
   return (
     <div className="overflow-x-auto">
@@ -177,10 +187,23 @@ function PurchaseTable({ purchases }: { purchases: any[] }) {
           ) : (
             purchases.map((purchase) => (
               <tr key={purchase.id}>
-                <td className="px-4 py-2 font-mono">{purchase.poNumber}</td>
+                <td className="px-4 py-2 font-mono">
+                  <Link href={`/purchases/${purchase.id}/edit`} className="text-primary hover:underline">
+                    {purchase.poNumber}
+                  </Link>
+                </td>
                 <td className="px-4 py-2">{purchase.supplier?.companyName || purchase.supplierName || "-"}</td>
                 <td className="px-4 py-2">{new Date(purchase.orderDate).toLocaleDateString()}</td>
-                <td className="px-4 py-2">{purchase.status}</td>
+                <td className="px-4 py-2">
+                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
+                    purchase.status === "DRAFT" ? "bg-yellow-100 text-yellow-800" :
+                    purchase.status === "CONFIRMED" ? "bg-blue-100 text-blue-800" :
+                    purchase.status === "RECEIVED" ? "bg-green-100 text-green-800" :
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                    {purchase.status}
+                  </span>
+                </td>
                 <td className="px-4 py-2">{formatCurrency(purchase.totalAmount)}</td>
               </tr>
             ))

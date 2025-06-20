@@ -33,44 +33,30 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      name,
+    
+    // Generate SKU automatically
+    const sku = `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    
+    // Convert string numbers to proper types
+    const productData = {
+      name: body.name,
       sku,
-      category,
-      unit,
-      priceSell,
-      priceCost,
-      qtyOnHand,
-      minQty,
-      isRawMaterial,
-      isFinishedGood,
-    } = body;
-
-    // Validate required fields
-    if (!name || !sku || !unit || !priceSell || !priceCost) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 },
-      );
-    }
-
+      unit: body.unit,
+      priceCost: body.priceCost ? parseFloat(body.priceCost) : 0,
+      priceSell: body.priceSell ? parseFloat(body.priceSell) : 0,
+      qtyOnHand: body.qtyOnHand ? parseFloat(body.qtyOnHand) : 0,
+      minQty: body.minQty ? parseFloat(body.minQty) : null,
+      isRawMaterial: body.isRawMaterial === true || body.isRawMaterial === "true",
+      isFinishedGood: body.isFinishedGood === true || body.isFinishedGood === "true",
+      category: body.category || null,
+    };
+    
     const product = await prisma.product.create({
-      data: {
-        name,
-        sku,
-        category,
-        unit,
-        priceSell: parseFloat(priceSell),
-        priceCost: parseFloat(priceCost),
-        qtyOnHand: parseFloat(qtyOnHand) || 0,
-        minQty: minQty ? parseFloat(minQty) : null,
-        isRawMaterial: Boolean(isRawMaterial),
-        isFinishedGood: Boolean(isFinishedGood),
-      },
+      data: productData,
     });
 
-    return NextResponse.json({ product }, { status: 201 });
-  } catch (error) {
+    return NextResponse.json({ product });
+  } catch (error: any) {
     console.error("Error creating product:", error);
     if (error instanceof Error && error.message.includes("Unique constraint")) {
       return NextResponse.json(
@@ -79,8 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 },
+      { error: error.message || "Failed to create product" },
+      { status: 500 }
     );
   }
 }

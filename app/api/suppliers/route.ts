@@ -1,15 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/suppliers - Get all suppliers
+// GET /api/suppliers - Get all suppliers with purchase order statistics
 export async function GET() {
   try {
     const suppliers = await prisma.supplier.findMany({
+      include: {
+        purchases: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          include: {
+            items: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: {
         companyName: "asc",
       },
     });
-    return NextResponse.json({ suppliers });
+
+    // Transform data to include statistics
+    const suppliersWithStats = suppliers.map(supplier => {
+      const totalOrders = supplier.purchases.length;
+      const lastOrder = supplier.purchases[0] || null;
+      
+      // Calculate average cost per unit from last order
+      let avgCostPerUnit = 0;
+      if (lastOrder && lastOrder.items.length > 0) {
+        const totalItems = lastOrder.items.reduce((sum, item) => sum + item.qtyOrdered, 0);
+        const totalCost = lastOrder.items.reduce((sum, item) => sum + (item.qtyOrdered * item.unitCost), 0);
+        avgCostPerUnit = totalItems > 0 ? totalCost / totalItems : 0;
+      }
+
+      return {
+        id: supplier.id,
+        companyName: supplier.companyName,
+        email: supplier.email,
+        phone: supplier.phone,
+        address: supplier.address,
+        mf: supplier.mf,
+        createdAt: supplier.createdAt,
+        updatedAt: supplier.updatedAt,
+        statistics: {
+          totalOrders,
+          lastOrderDate: lastOrder?.createdAt || null,
+          lastOrderNumber: lastOrder?.orderNumber || null,
+          lastOrderTotal: lastOrder?.totalAmount || 0,
+          avgCostPerUnit: avgCostPerUnit,
+          lastOrderItemsCount: lastOrder?.items.length || 0,
+        },
+      };
+    });
+
+    return NextResponse.json({ suppliers: suppliersWithStats });
   } catch (error) {
     console.error("Error fetching suppliers:", error);
     return NextResponse.json(

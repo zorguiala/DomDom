@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/suppliers/[id] - Get a single supplier by ID
 export async function GET(_request: NextRequest, { params }: Params) {
+  const { id } = await params;
   try {
     const supplier = await prisma.supplier.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!supplier) {
@@ -20,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ supplier });
   } catch (error) {
-    console.error(`Error fetching supplier ${params.id}:`, error);
+    console.error(`Error fetching supplier ${id}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch supplier" },
       { status: 500 }
@@ -30,6 +31,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 // PUT /api/suppliers/[id] - Update a supplier by ID
 export async function PUT(request: NextRequest, { params }: Params) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const { companyName, email, address, phone, mf } = body;
@@ -40,7 +42,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     // For this implementation, an empty string will be saved if provided.
 
     const supplier = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         companyName,
         email,
@@ -52,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ supplier });
   } catch (error) {
-    console.error(`Error updating supplier ${params.id}:`, error);
+    console.error(`Error updating supplier ${id}:`, error);
     if (error instanceof Error && error.message.includes("Record to update not found")) {
       return NextResponse.json({ error: "Supplier not found" }, { status: 404 });
     }
@@ -71,14 +73,15 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // DELETE /api/suppliers/[id] - Delete a supplier by ID
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const { id } = await params;
   try {
     await prisma.supplier.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Supplier deleted successfully" });
   } catch (error) {
-    console.error(`Error deleting supplier ${params.id}:`, error);
+    console.error(`Error deleting supplier ${id}:`, error);
     if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
       return NextResponse.json({ error: "Supplier not found" }, { status: 404 });
     }

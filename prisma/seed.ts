@@ -192,6 +192,9 @@ async function main() {
         name: "Industrial Widget BOM",
         description: "Bill of materials for Industrial Widget Type A",
         finalProductId: finishedProducts[0].id,
+        outputQuantity: 100,
+        outputUnit: "pcs",
+        unitCost: 0.95, // Will be calculated: (2.5*3.2 + 1*9.5) / 100
         components: {
           create: [
             {
@@ -214,6 +217,9 @@ async function main() {
         name: "Custom Assembly BOM",
         description: "Bill of materials for Custom Assembly B",
         finalProductId: finishedProducts[1].id,
+        outputQuantity: 50,
+        outputUnit: "pcs",
+        unitCost: 1.81, // Will be calculated: (3.0*8.5 + 1*65.0) / 50
         components: {
           create: [
             {

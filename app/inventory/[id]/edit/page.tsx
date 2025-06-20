@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SelectMagic } from "@/components/ui/select-magic";
 import { useTranslations } from "@/lib/language-context";
 import { ArrowLeft, Save, Package } from "lucide-react";
 import Link from "next/link";
@@ -94,9 +95,9 @@ export default function EditProductPage() {
 
   const handleInputChange =
     (field: keyof ProductFormData) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       const value =
-        e.target.type === "checkbox" ? e.target.checked : e.target.value;
+        e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
       setFormData((prev) => ({
         ...prev,
         [field]: value,
@@ -106,14 +107,9 @@ export default function EditProductPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
-    if (
-      !formData.name ||
-      !formData.sku ||
-      !formData.priceSell ||
-      !formData.priceCost
-    ) {
-      setError("Please fill in all required fields");
+    // Basic validation - only name is required, prices can be 0
+    if (!formData.name) {
+      setError("Please fill in the product name");
       return;
     }
 
@@ -201,23 +197,30 @@ export default function EditProductPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU *</Label>
+                <Label htmlFor="sku">SKU</Label>
                 <Input
                   id="sku"
                   value={formData.sku}
-                  onChange={handleInputChange("sku")}
-                  placeholder={t("placeholderSku")}
-                  required
+                  readOnly
+                  className="bg-gray-50 text-gray-600"
+                  title="SKU cannot be modified"
                 />
+                <span className="text-xs text-gray-500">SKU is auto-generated and cannot be changed</span>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  value={formData.category}
+                <SelectMagic 
+                  value={formData.category} 
                   onChange={handleInputChange("category")}
-                  placeholder={t("placeholderCategory")}
-                />
+                >
+                  <option value="">{t("selectCategory")}</option>
+                  <option value="raw-material">{t("rawMaterial")}</option>
+                  <option value="finished-good">{t("finishedGood")}</option>
+                  <option value="semi-finished">{t("semiFinished")}</option>
+                  <option value="consumable">{t("consumable")}</option>
+                  <option value="packaging">{t("packaging")}</option>
+                  <option value="maintenance">{t("maintenance")}</option>
+                </SelectMagic>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit">Unit</Label>
@@ -233,28 +236,34 @@ export default function EditProductPage() {
             {/* Pricing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="priceSell">Selling Price *</Label>
+                <Label htmlFor="priceSell">Selling Price</Label>
                 <Input
                   id="priceSell"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.priceSell}
                   onChange={handleInputChange("priceSell")}
                   placeholder="0.00"
-                  required
                 />
+                <p className="text-xs text-muted-foreground">
+                  Price can be 0 and updated later
+                </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="priceCost">Cost Price *</Label>
+                <Label htmlFor="priceCost">Cost Price</Label>
                 <Input
                   id="priceCost"
                   type="number"
                   step="0.01"
+                  min="0"
                   value={formData.priceCost}
                   onChange={handleInputChange("priceCost")}
-                  placeholder={common("placeholderZeroAmount")}
-                  required
+                  placeholder="0.00"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Price can be 0 and updated later
+                </p>
               </div>
             </div>
 

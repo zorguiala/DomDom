@@ -3,43 +3,33 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectMagic } from "@/components/ui/select-magic";
 import { useToast } from "@/hooks/use-toast";
-import { ProductionOrderWithDetails } from "@/types/production"; // Using the main detailed type
-import { DatePicker } from "@/components/ui/date-picker";
 
-// Zod schema for validation - include all fields that can be edited
-const editProductionOrderSchema = z.object({
-  // Fields not typically editable but needed for context or if schema requires them
-  orderNumber: z.string().optional().nullable(),
-  productId: z.string().min(1, "Product is required"),
-  bomId: z.string().optional().nullable(),
-  qtyOrdered: z.number(),
-
-  // Editable fields
-  qtyProduced: z.preprocess(
-    val => Number(String(val).replace(/[^0-9.-]+/g, "")), // Clean input
-    z.number({invalid_type_error: "Quantity produced must be a number"}).min(0, "Quantity produced must be non-negative")
-  ),
-  status: z.enum(["PLANNED", "IN_PROGRESS", "DONE", "CANCELLED"]),
-  priority: z.string().optional().nullable(),
-  startDate: z.date().optional().nullable(),
-  expectedEndDate: z.date().optional().nullable(),
-  notes: z.string().optional().nullable(),
-}).refine(data => !data.expectedEndDate || !data.startDate || data.expectedEndDate >= data.startDate, {
-  message: "Expected end date must be after start date",
-  path: ["expectedEndDate"],
-});
-
-type FormValues = z.infer<typeof editProductionOrderSchema>;
+interface ProductionOrderData {
+  id: string;
+  orderNumber: string;
+  productId: string;
+  qtyOrdered: number;
+  qtyProduced: number;
+  status: string;
+  priority?: string;
+  notes?: string;
+  product?: {
+    id: string;
+    name: string;
+    sku: string;
+  };
+  bom?: {
+    id: string;
+    name: string;
+    outputQuantity: number;
+  };
+}
 
 export default function ProductionOrderEditPage() {
   const router = useRouter();
@@ -48,243 +38,156 @@ export default function ProductionOrderEditPage() {
   const common = useTranslations("common");
   const { toast } = useToast();
 
-  const [displayOrderData, setDisplayOrderData] = useState<ProductionOrderWithDetails | null>(null);
+  const [orderData, setOrderData] = useState<ProductionOrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    status: "PLANNED",
+    qtyProduced: 0,
+    priority: "MEDIUM",
+    notes: ""
+  });
 
   const orderId = params?.id as string;
-
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
-    resolver: zodResolver(editProductionOrderSchema),
-    defaultValues: {
-      orderNumber: "",
-      productId: "",
-      bomId: "",
-      qtyOrdered: 0,
-      qtyProduced: 0,
-      status: "PLANNED",
-      priority: "MEDIUM",
-      startDate: null,
-      expectedEndDate: null,
-      notes: "",
-    }
-  });
 
   useEffect(() => {
     if (orderId) {
       setIsLoading(true);
       fetch(`/api/production/orders/${orderId}`)
-        .then(async (res) => {
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || `Failed to fetch order: ${res.statusText}`);
-          }
-          return res.json();
+        .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+        .then((data: ProductionOrderData) => {
+          setOrderData(data);
+          setFormData({
+            status: data.status,
+            qtyProduced: data.qtyProduced || 0,
+            priority: data.priority || "MEDIUM",
+            notes: data.notes || ""
+          });
         })
-        .then((data: ProductionOrderWithDetails) => {
-          setDisplayOrderData(data);
-
-          const formDefaultValues: FormValues = {
-            orderNumber: data.orderNumber,
-            productId: data.productId,
-            bomId: data.bomId ?? "",
-            qtyOrdered: data.qtyOrdered,
-            qtyProduced: data.qtyProduced ?? 0,
-            status: data.status as FormValues['status'],
-            priority: data.priority ?? "MEDIUM",
-            startDate: data.startDate ? new Date(data.startDate) : null,
-            expectedEndDate: data.expectedEndDate ? new Date(data.expectedEndDate) : null,
-            notes: data.notes ?? "",
-          };
-          reset(formDefaultValues);
-          setApiError(null);
-        })
-        .catch((err) => {
+        .catch(err => {
           console.error(err);
-          setApiError(err.message);
           toast({
             variant: "destructive",
-            title: t("errorFetchingOrderTitle") || "Error",
-            description: err.message || t("errorFetchingOrderDesc"),
+            title: "Error",
+            description: "Failed to load production order"
           });
         })
         .finally(() => setIsLoading(false));
     }
-  }, [orderId, reset, t, toast]);
+  }, [orderId, toast]);
 
-  const onSubmit = async (data: FormValues) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!orderId) return;
-    setApiError(null);
-
-    // API expects only fields that are meant to be updated by this form
-    const payload: Partial<FormValues> = {
-        status: data.status,
-        qtyProduced: Number(data.qtyProduced),
-        priority: data.priority,
-        notes: data.notes,
-        startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : null,
-        expectedEndDate: data.expectedEndDate ? data.expectedEndDate.toISOString().split('T')[0] : null,
-        // Do not send orderNumber, productId, bomId, qtyOrdered unless they are editable by this form
-        // and the API supports updating them. The current API PUT focuses on status and progress.
-    };
-
+    
+    setIsSubmitting(true);
+    
     try {
       const res = await fetch(`/api/production/orders/${orderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
-        const errorMessage = Array.isArray(errorData.details)
-          ? errorData.details.map((d: any) => `${d.path?.join('.') || 'error'}: ${d.message}`).join(', ')
-          : (errorData.details || errorData.error);
-        throw new Error(errorMessage || t("errorUpdatingOrderTitle"));
+        throw new Error(errorData.details || errorData.error || "Failed to update order");
       }
 
       toast({
-        title: t("orderUpdatedTitle") || "Order Updated",
-        description: t("orderUpdatedDesc") || "The production order has been successfully updated.",
+        title: "Success",
+        description: "Production order updated successfully"
       });
+      
       router.push(`/production/orders/${orderId}`);
     } catch (err: any) {
       console.error("Update error:", err);
-      setApiError(err.message);
       toast({
         variant: "destructive",
-        title: t("errorUpdatingOrderTitle") || "Update Failed",
-        description: err.message,
+        title: "Error",
+        description: err.message
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
-  if (apiError && !displayOrderData) return <div className="text-red-500 text-center p-4">{apiError}</div>;
-  if (!displayOrderData && !loading) return <div className="text-red-500 text-center p-4">{t("orderNotFoundOrError", { error: apiError || "" })}</div>;
-  if (!displayOrderData) return null;
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
+  }
 
+  if (!orderData) {
+    return <div className="text-red-500 text-center p-4">Order not found</div>;
+  }
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">{t("editProductionOrderTitle")} - {displayOrderData.orderNumber}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">
+          {t("editProductionOrderTitle")} - {orderData.orderNumber}
+        </h2>
         <Link href={`/production/orders/${orderId}`}>
-            <Button variant="outline">{common("cancel")}</Button>
+          <Button variant="outline">{common("cancel")}</Button>
         </Link>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>{t("orderDetails")}</CardTitle>
-          <CardDescription>
-            {common("orderNumber")}: {displayOrderData.orderNumber} | {common("product")}: {displayOrderData.product?.name} | {common("bom")}: {displayOrderData.bom?.name || common("na")} | {t("qtyOrdered")}: {displayOrderData.qtyOrdered}
-          </CardDescription>
+          <div className="text-sm text-gray-600">
+            <p><strong>Product:</strong> {orderData.product?.name} ({orderData.product?.sku})</p>
+            <p><strong>Quantity Ordered:</strong> {orderData.qtyOrdered}</p>
+            <p><strong>BOM:</strong> {orderData.bom?.name} (Output: {orderData.bom?.outputQuantity} units)</p>
+          </div>
         </CardHeader>
-        <CardContent className="mt-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {apiError && Object.keys(errors).length === 0 && <p className="text-sm font-medium text-destructive text-center p-2 bg-destructive/10 rounded-md">{apiError}</p>}
-
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="status" className="block text-sm font-medium mb-1">{t("status")}</label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger id="status">
-                        <SelectValue placeholder={t("selectStatus")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PLANNED">{t("planned") || "PLANNED"}</SelectItem>
-                        <SelectItem value="IN_PROGRESS">{t("inProgress") || "IN_PROGRESS"}</SelectItem>
-                        <SelectItem value="DONE">{t("done") || "DONE"}</SelectItem>
-                        <SelectItem value="CANCELLED">{t("cancelled") || "CANCELLED"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.status && <p className="text-sm text-destructive mt-1">{errors.status.message}</p>}
+                <label className="block text-sm font-medium mb-2">{t("status")}</label>
+                <SelectMagic 
+                  value={formData.status} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
+                >
+                  <option value="PLANNED">{t("planned") || "PLANNED"}</option>
+                  <option value="IN_PROGRESS">{t("inProgress") || "IN_PROGRESS"}</option>
+                  <option value="DONE">{t("done") || "COMPLETED"}</option>
+                  <option value="CANCELLED">{t("cancelled") || "CANCELLED"}</option>
+                </SelectMagic>
               </div>
 
               <div>
-                <label htmlFor="qtyProduced" className="block text-sm font-medium mb-1">{t("qtyProduced")}</label>
-                <Controller
-                  name="qtyProduced"
-                  control={control}
-                  render={({ field }) => <Input id="qtyProduced" type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />}
+                <label className="block text-sm font-medium mb-2">{t("qtyProduced")}</label>
+                <Input
+                  type="number"
+                  value={formData.qtyProduced}
+                  onChange={(e) => setFormData(prev => ({ ...prev, qtyProduced: parseFloat(e.target.value) || 0 }))}
+                  min="0"
+                  step="0.01"
                 />
-                {errors.qtyProduced && <p className="text-sm text-destructive mt-1">{errors.qtyProduced.message}</p>}
+                <p className="text-xs text-gray-500 mt-1">
+                  Maximum: {orderData.qtyOrdered} (ordered quantity)
+                </p>
               </div>
 
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium mb-1">{t("priority")}</label>
-                <Controller
-                  name="priority"
-                  control={control}
-                  render={({ field }) => (
-                     <Select onValueChange={field.onChange} value={field.value ?? "MEDIUM"}>
-                      <SelectTrigger id="priority">
-                        <SelectValue placeholder={t("selectPriority")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LOW">{t("low") || "LOW"}</SelectItem>
-                        <SelectItem value="MEDIUM">{t("medium") || "MEDIUM"}</SelectItem>
-                        <SelectItem value="HIGH">{t("high") || "HIGH"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                 {errors.priority && <p className="text-sm text-destructive mt-1">{errors.priority.message}</p>}
+                <label className="block text-sm font-medium mb-2">{t("priority")}</label>
+                <SelectMagic 
+                  value={formData.priority} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+                >
+                  <option value="LOW">{t("low") || "LOW"}</option>
+                  <option value="MEDIUM">{t("medium") || "MEDIUM"}</option>
+                  <option value="HIGH">{t("high") || "HIGH"}</option>
+                </SelectMagic>
               </div>
-
-              <div>
-                <label htmlFor="startDate" className="block text-sm font-medium mb-1">{t("startDate")} ({common("optional")})</label>
-                <Controller
-                  name="startDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder={common("selectPlaceholder") || "Select start date"}
-                    />
-                  )}
-                />
-                {errors.startDate && <p className="text-sm text-destructive mt-1">{errors.startDate.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="expectedEndDate" className="block text-sm font-medium mb-1">{t("expectedEndDate")} ({common("optional")})</label>
-                <Controller
-                  name="expectedEndDate"
-                  control={control}
-                  render={({ field }) => (
-                     <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder={common("selectPlaceholder") || "Select expected end date"}
-                    />
-                  )}
-                />
-                {errors.expectedEndDate && <p className="text-sm text-destructive mt-1">{errors.expectedEndDate.message}</p>}
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <label htmlFor="notes" className="block text-sm font-medium mb-1">{t("notes")} ({common("optional")})</label>
-              <Controller
-                name="notes"
-                control={control}
-                render={({ field }) => <Textarea id="notes" {...field} value={field.value ?? ""} placeholder={t("placeholderEnterNotes")} rows={3} />}
-              />
-              {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">
               <Link href={`/production/orders/${orderId}`}>
-                <Button type="button" variant="outline" disabled={isSubmitting}>{common("cancel")}</Button>
+                <Button type="button" variant="outline" disabled={isSubmitting}>
+                  {common("cancel")}
+                </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? common("saving") : common("saveChanges")}
@@ -293,6 +196,32 @@ export default function ProductionOrderEditPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* BOM Scaling Information */}
+      {orderData.bom && (
+        <Card>
+          <CardHeader>
+            <CardTitle>BOM Scaling Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm space-y-2">
+              <p><strong>BOM Recipe:</strong> {orderData.bom.name}</p>
+              <p><strong>BOM Output:</strong> {orderData.bom.outputQuantity} units per recipe</p>
+              <p><strong>Production Quantity:</strong> {orderData.qtyOrdered} units</p>
+              <p><strong>Scaling Factor:</strong> {(orderData.qtyOrdered / orderData.bom.outputQuantity).toFixed(3)}x</p>
+              <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                <p className="text-blue-800 font-medium">
+                  📌 Material consumption will be automatically calculated based on the scaling factor
+                </p>
+                <p className="text-blue-600 text-xs mt-1">
+                  Example: If BOM needs 20kg for {orderData.bom.outputQuantity} units, 
+                  for {orderData.qtyOrdered} units it will consume {((20 * orderData.qtyOrdered) / orderData.bom.outputQuantity).toFixed(2)}kg
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

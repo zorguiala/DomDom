@@ -4,40 +4,51 @@ import { useTranslations } from "@/lib/language-context";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SelectMagic } from "@/components/ui/select-magic";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle } from "lucide-react";
+import { Factory, Package, Calendar } from "lucide-react";
 import Link from "next/link";
+import { formatTND } from "@/lib/currency";
 
-interface Product { id: string; name: string; }
-interface BillOfMaterial { id: string; name: string; }
+interface BillOfMaterial {
+  id: string;
+  name: string;
+  description?: string;
+  finalProduct: {
+    id: string;
+    name: string;
+    sku: string;
+    unit: string;
+  };
+  outputQuantity: number;
+  outputUnit: string;
+  unitCost?: number;
+  components: Array<{
+    id: string;
+    quantity: number;
+    unit: string;
+    product: {
+      id: string;
+      name: string;
+      sku: string;
+      unit: string;
+      qtyOnHand: number;
+    };
+  }>;
+}
 
-const productionOrderSchema = z.object({
-  orderNumber: z.string().optional().nullable(),
-  productId: z.string().min(1, "Product is required"),
-  bomId: z.string().optional().nullable(),
-  qtyOrdered: z.preprocess(
-    val => Number(String(val).replace(/[^0-9.-]+/g, "")),
-    z.number({invalid_type_error: "Quantity must be a number"}).min(1, "Quantity must be at least 1")
-  ),
-  status: z.string().default("PLANNED"),
-  priority: z.string().default("MEDIUM"),
-  startDate: z.date().optional().nullable(),
-  expectedEndDate: z.date().optional().nullable(),
-  notes: z.string().optional().nullable(),
-}).refine(data => !data.expectedEndDate || !data.startDate || data.expectedEndDate >= data.startDate, {
-  message: "Expected end date must be after start date",
-  path: ["expectedEndDate"],
-});
-
-export type ProductionOrderFormData = z.infer<typeof productionOrderSchema>;
+interface FormData {
+  bomId: string;
+  qtyOrdered: number;
+  priority: string;
+  startDate: string;
+  expectedEndDate: string;
+  notes: string;
+}
 
 export default function ProductionOrderCreatePage() {
   const t = useTranslations("production");
@@ -45,44 +56,101 @@ export default function ProductionOrderCreatePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [products, setProducts] = useState<Product[]>([]);
   const [boms, setBOMs] = useState<BillOfMaterial[]>([]);
-
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<ProductionOrderFormData>({
-    resolver: zodResolver(productionOrderSchema),
-    defaultValues: {
-      orderNumber: "",
-      productId: "",
-      bomId: "",
-      qtyOrdered: 1,
-      status: "PLANNED",
-      priority: "MEDIUM",
-      startDate: null,
-      expectedEndDate: null,
-      notes: "",
-    },
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  
+  const [formData, setFormData] = useState<FormData>({
+    bomId: "",
+    qtyOrdered: 1,
+    priority: "MEDIUM",
+    startDate: "",
+    expectedEndDate: "",
+    notes: "",
   });
 
   useEffect(() => {
-    fetch("/api/products")
-      .then((res) => res.json())
-      .then(setProducts)
-      .catch(() => toast({ variant: "destructive", title: common("error"), description: t("errorFetchingProducts") || "Failed to fetch products."}));
+    fetchBOMs();
+  }, []);
 
-    fetch("/api/production/bom")
-      .then((res) => res.json())
-      .then(setBOMs)
-      .catch(() => toast({ variant: "destructive", title: common("error"), description: t("errorFetchingBOMs") || "Failed to fetch BOMs."}));
-  }, [toast, common, t]);
+  const fetchBOMs = async () => {
+    try {
+      const res = await fetch("/api/production/bom");
+      if (!res.ok) throw new Error("Failed to fetch BOMs");
+      const data = await res.json();
+      setBOMs(data.boms || []);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: common("error"),
+        description: t("errorFetchingBOMs") || "Failed to fetch BOMs",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const onSubmit = async (data: ProductionOrderFormData) => {
+  const selectedBOM = boms.find(bom => bom.id === formData.bomId);
+
+  // Calculate total units that will be produced (this is just qtyOrdered)
+  const totalUnitsToProduced = formData.qtyOrdered;
+
+  // Calculate scaling factor for material requirements
+  const scalingFactor = selectedBOM 
+    ? formData.qtyOrdered / selectedBOM.outputQuantity 
+    : 0;
+
+  // Calculate total cost (quantity × unit cost)
+  const totalCost = selectedBOM && selectedBOM.unitCost
+    ? formData.qtyOrdered * selectedBOM.unitCost
+    : 0;
+
+  // Check if we have enough stock for all components (with proper scaling)
+  const canProduce = selectedBOM ? 
+    selectedBOM.components.every(component => {
+      const requiredQty = component.quantity * scalingFactor;
+      return component.product.qtyOnHand >= requiredQty;
+    }) : false;
+
+  const stockWarnings = selectedBOM 
+    ? selectedBOM.components.filter(component => {
+        const requiredQty = component.quantity * scalingFactor;
+        return component.product.qtyOnHand < requiredQty;
+      })
+    : [];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.bomId) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("selectBOMRequired") || "Please select a BOM",
+      });
+      return;
+    }
+
+    if (!canProduce) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("insufficientStock") || "Insufficient stock for production",
+      });
+      return;
+    }
+
+    setCreating(true);
     try {
       const payload = {
-        ...data,
-        startDate: data.startDate ? data.startDate.toISOString().split('T')[0] : null,
-        expectedEndDate: data.expectedEndDate ? data.expectedEndDate.toISOString().split('T')[0] : null,
-        qtyOrdered: Number(data.qtyOrdered)
+        bomId: formData.bomId,
+        qtyOrdered: formData.qtyOrdered,
+        priority: formData.priority,
+        startDate: formData.startDate || null,
+        expectedEndDate: formData.expectedEndDate || null,
+        notes: formData.notes,
       };
+
       const res = await fetch("/api/production/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,173 +158,219 @@ export default function ProductionOrderCreatePage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        // Assuming errorData.details might be an array of Zod issues
-        const errorMessage = Array.isArray(errorData.details)
-          ? errorData.details.map((d: any) => `${d.path?.join('.') || 'error'}: ${d.message}`).join(', ')
-          : errorData.error;
-        throw new Error(errorMessage || t("errorCreatingOrder"));
+        const error = await res.json();
+        throw new Error(error.error || "Failed to create production order");
       }
-      toast({ title: t("orderCreatedTitle") || "Order Created", description: t("orderCreatedDesc") || "Production order successfully created."});
+
+      toast({
+        title: common("success"),
+        description: t("orderCreatedSuccessfully") || "Production order created successfully",
+      });
+      
       router.push("/production/orders");
-    } catch (err: any) {
-      toast({ variant: "destructive", title: common("error"), description: err.message });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: common("error"),
+        description: error.message,
+      });
+    } finally {
+      setCreating(false);
     }
   };
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">{common("loading")}</div>;
+  }
+
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">{t("createOrder")}</h2>
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">{t("createProductionOrder")}</h1>
         <Link href="/production/orders">
           <Button variant="outline">{common("backToList")}</Button>
         </Link>
       </div>
-      <Card>
-        <CardContent className="mt-6"> {/* Added mt-6 for padding, assuming CardHeader might be removed or not used */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"> {/* Responsive grid layout */}
-              <div>
-                <label htmlFor="orderNumber" className="block text-sm font-medium mb-1">{t("orderNumber")} ({common("optional")})</label>
-                <Controller name="orderNumber" control={control} render={({ field }) => <Input id="orderNumber" {...field} value={field.value ?? ""} />} />
-                {errors.orderNumber && <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>}
-              </div>
 
-              <div>
-                <label htmlFor="productId" className="block text-sm font-medium mb-1">{t("product")}</label>
-                <Controller
-                  name="productId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger><SelectValue placeholder={t("selectProduct")} /></SelectTrigger>
-                      <SelectContent>
-                        {products.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.productId && <p className="text-sm text-destructive mt-1">{errors.productId.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="bomId" className="block text-sm font-medium mb-1">{t("bom")} ({common("optional")})</label>
-                <Controller
-                  name="bomId"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                      <SelectTrigger><SelectValue placeholder={t("selectBOM")} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">{common("none") || "None"}</SelectItem>
-                        {boms.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.bomId && <p className="text-sm text-destructive mt-1">{errors.bomId.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="qtyOrdered" className="block text-sm font-medium mb-1">{t("qtyOrdered")}</label>
-                <Controller
-                  name="qtyOrdered"
-                  control={control}
-                  render={({ field }) => <Input id="qtyOrdered" type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} />}
-                />
-                {errors.qtyOrdered && <p className="text-sm text-destructive mt-1">{errors.qtyOrdered.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium mb-1">{t("status")}</label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger><SelectValue placeholder={t("selectStatus")} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PLANNED">{t("planned")}</SelectItem>
-                        <SelectItem value="IN_PROGRESS" disabled>{t("inProgress")}</SelectItem> {/* Typically not set at creation */}
-                        <SelectItem value="DONE" disabled>{t("done")}</SelectItem> {/* Typically not set at creation */}
-                        <SelectItem value="CANCELLED" disabled>{t("cancelled")}</SelectItem> {/* Typically not set at creation */}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.status && <p className="text-sm text-destructive mt-1">{errors.status.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="priority" className="block text-sm font-medium mb-1">{t("priority")}</label>
-                <Controller
-                  name="priority"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger><SelectValue placeholder={t("selectPriority")} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="LOW">{t("low")}</SelectItem>
-                        <SelectItem value="MEDIUM">{t("medium")}</SelectItem>
-                        <SelectItem value="HIGH">{t("high")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.priority && <p className="text-sm text-destructive mt-1">{errors.priority.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="startDate" className="block text-sm font-medium mb-1">{t("startDate")} ({common("optional")})</label>
-                <Controller
-                  name="startDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder={common("selectPlaceholder") || "Select start date"}
-                    />
-                  )}
-                />
-                {errors.startDate && <p className="text-sm text-destructive mt-1">{errors.startDate.message}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="expectedEndDate" className="block text-sm font-medium mb-1">{t("expectedEndDate")} ({common("optional")})</label>
-                <Controller
-                  name="expectedEndDate"
-                  control={control}
-                  render={({ field }) => (
-                     <DatePicker
-                      date={field.value}
-                      setDate={field.onChange}
-                      placeholder={common("selectPlaceholder") || "Select expected end date"}
-                    />
-                  )}
-                />
-                {errors.expectedEndDate && <p className="text-sm text-destructive mt-1">{errors.expectedEndDate.message}</p>}
-              </div>
-            </div> {/* End of grid */}
-
-            <div className="col-span-full"> {/* This should be outside the grid to span full width */}
-              <label htmlFor="notes" className="block text-sm font-medium mb-1">{t("notes")} ({common("optional")})</label>
-              <Controller name="notes" control={control} render={({ field }) => <Textarea id="notes" {...field} value={field.value ?? ""} />} />
-              {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Factory className="h-5 w-5" />
+              {t("productionOrderDetails")}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {t("selectBOMToCreateOrder")}
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* BOM Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="bomId">{t("selectBOM")} *</Label>
+              <SelectMagic
+                value={formData.bomId}
+                onChange={(e) => setFormData(prev => ({ ...prev, bomId: e.target.value }))}
+              >
+                <option value="">{t("selectBOM")}</option>
+                {boms.map(bom => (
+                  <option key={bom.id} value={bom.id}>
+                    {bom.name} → {bom.finalProduct.name} ({bom.outputQuantity} {bom.outputUnit})
+                  </option>
+                ))}
+              </SelectMagic>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
-               <Link href="/production/orders">
-                <Button type="button" variant="outline" disabled={isSubmitting}>{common("cancel")}</Button>
-              </Link>
-              <Button type="submit" disabled={isSubmitting}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                {isSubmitting ? common("creating") : t("createOrder")}
-              </Button>
+            {/* Quantity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="qtyOrdered">{t("quantityToOrder")} *</Label>
+                <Input
+                  id="qtyOrdered"
+                  type="number"
+                  value={formData.qtyOrdered}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    qtyOrdered: parseInt(e.target.value) || 1 
+                  }))}
+                  min="1"
+                  placeholder="1"
+                />
+                {selectedBOM && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("willProduce")}: {totalUnitsToProduced} {selectedBOM.finalProduct.unit} of {selectedBOM.finalProduct.name}
+                    <br />
+                    <span className="text-blue-600">
+                      Scaling factor: {scalingFactor.toFixed(3)}x (BOM recipe: {selectedBOM.outputQuantity} {selectedBOM.outputUnit})
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority">{t("priority")}</Label>
+                <SelectMagic
+                  value={formData.priority}
+                  onChange={(e) => setFormData(prev => ({ ...prev, priority: e.target.value }))}
+                >
+                  <option value="LOW">{t("low")}</option>
+                  <option value="MEDIUM">{t("medium")}</option>
+                  <option value="HIGH">{t("high")}</option>
+                </SelectMagic>
+              </div>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">{t("startDate")}</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.startDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="expectedEndDate">{t("expectedEndDate")}</Label>
+                <Input
+                  id="expectedEndDate"
+                  type="date"
+                  value={formData.expectedEndDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, expectedEndDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">{common("notes")}</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder={t("enterNotes")}
+                rows={3}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* BOM Details & Stock Check */}
+        {selectedBOM && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                {t("bomDetails")} & {t("stockCheck")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">{t("totalCost")}</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {formatTND(totalCost)}
+                  </p>
+                </div>
+                
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">{t("outputQuantity")}</p>
+                  <p className="text-lg font-bold text-green-600">
+                    {totalUnitsToProduced} {selectedBOM.finalProduct.unit}
+                  </p>
+                </div>
+
+                <div className={`text-center p-3 rounded-lg ${canProduce ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className="text-sm text-muted-foreground">{t("stockStatus")}</p>
+                  <p className={`text-lg font-bold ${canProduce ? 'text-green-600' : 'text-red-600'}`}>
+                    {canProduce ? t("available") : t("insufficient")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Component Requirements */}
+              <div className="space-y-2">
+                <h4 className="font-medium">{t("materialRequirements")}:</h4>
+                {selectedBOM.components.map((component, index) => {
+                  const needed = component.quantity * scalingFactor;
+                  const available = component.product.qtyOnHand;
+                  const hasEnough = available >= needed;
+
+                  return (
+                    <div key={index} className={`p-2 rounded text-sm ${
+                      hasEnough ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      <span className="font-medium">{component.product.name}</span>: 
+                      Need {needed.toFixed(3)} {component.unit}, 
+                      Available {available} {component.unit}
+                      {!hasEnough && ` (Short by ${(needed - available).toFixed(3)} ${component.unit})`}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Submit Button */}
+        <div className="flex gap-4">
+          <Button 
+            type="submit" 
+            disabled={creating || !canProduce || !formData.bomId}
+            className="flex items-center gap-2"
+          >
+            <Factory className="h-4 w-4" />
+            {creating ? t("creating") : t("createProductionOrder")}
+          </Button>
+          
+          <Link href="/production/orders">
+            <Button type="button" variant="outline">
+              {common("cancel")}
+            </Button>
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }

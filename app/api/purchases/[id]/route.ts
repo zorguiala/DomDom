@@ -3,33 +3,66 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-// GET /api/purchases/[id] - Get a single purchase order by ID
-export async function GET(_request: NextRequest, { params }: Params) {
+// GET /api/purchases/[id] - Get a specific purchase order
+export async function GET(request: NextRequest, { params }: Params) {
+  const { id } = await params;
   try {
     const purchase = await prisma.purchase.findUnique({
-      where: { id: params.id },
-      include: {
-        supplier: true,
-        items: {
-          include: {
-            product: true,
-          },
+      where: { id },
+      select: {
+        id: true,
+        poNumber: true,
+        orderNumber: true,
+        status: true,
+        orderDate: true,
+        expectedDate: true,
+        totalAmount: true,
+        notes: true,
+        supplier: {
+          select: {
+            id: true,
+            companyName: true,
+            email: true,
+            phone: true,
+          }
         },
-      },
+        items: {
+          select: {
+            id: true,
+            qtyOrdered: true,
+            qtyReceived: true,
+            unitCost: true,
+            totalCost: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                unit: true,
+                priceCost: true,
+                qtyOnHand: true,
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!purchase) {
-      return NextResponse.json({ error: "Purchase order not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Purchase order not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ purchase });
   } catch (error) {
-    console.error(`Error fetching purchase order ${params.id}:`, error);
+    console.error("Error fetching purchase:", error);
     return NextResponse.json(
       { error: "Failed to fetch purchase order" },
       { status: 500 }
@@ -67,9 +100,9 @@ interface PurchaseUpdateInput {
 
 // PUT /api/purchases/[id] - Update a purchase order by ID
 export async function PUT(request: NextRequest, { params }: Params) {
+  const { id: purchaseId } = await params;
   try {
     const body = await request.json() as PurchaseUpdateInput;
-    const purchaseId = params.id;
 
     const {
       supplierId,
@@ -223,24 +256,25 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
       // Update the purchase header
       const updatedPurchaseData: Prisma.PurchaseUpdateInput = {
-        supplierId,
-        supplierName: supplierId ? undefined : supplierName,
+        supplier: supplierId ? { connect: { id: supplierId } } : undefined,
+        supplierName: !supplierId ? supplierName : undefined,
         poNumber,
         status,
         orderDate: orderDate ? new Date(orderDate) : undefined,
         expectedDate: expectedDate ? new Date(expectedDate) : undefined,
         receivedDate: (status?.toUpperCase() === "RECEIVED") ? new Date(receivedDate || Date.now()) : (receivedDate ? new Date(receivedDate) : undefined),
-        totalAmount: (items && items.length > 0) ? totalAmount : undefined, // only update if items were processed
+        totalAmount: (items && items.length > 0) ? totalAmount : undefined,
         notes,
       };
 
-      // Remove undefined fields from updatedPurchaseData
-      Object.keys(updatedPurchaseData).forEach(key => updatedPurchaseData[key] === undefined && delete updatedPurchaseData[key]);
-
+      // Remove undefined fields using type-safe approach
+      const cleanedData = Object.fromEntries(
+        Object.entries(updatedPurchaseData).filter(([_, value]) => value !== undefined)
+      ) as Prisma.PurchaseUpdateInput;
 
       return tx.purchase.update({
         where: { id: purchaseId },
-        data: updatedPurchaseData,
+        data: cleanedData,
         include: {
           supplier: true,
           items: { include: { product: true } },
@@ -250,7 +284,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ purchase: updatedPurchase });
   } catch (error: any) {
-    console.error(`Error updating purchase order ${params.id}:`, error);
+    console.error(`Error updating purchase order ${purchaseId}:`, error);
     if (error.code === 'P2025') { // Prisma error code for record not found
         return NextResponse.json({ error: "Purchase order or related entity not found" }, { status: 404 });
     }
@@ -266,8 +300,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // DELETE /api/purchases/[id] - Delete a purchase order by ID
 export async function DELETE(_request: NextRequest, { params }: Params) {
+  const { id: purchaseId } = await params;
   try {
-    const purchaseId = params.id;
 
     // Before deleting a purchase, consider if stock movements should be reversed.
     // This can be complex (e.g., if the stock has since been used).
@@ -293,13 +327,163 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ message: "Purchase order deleted successfully" });
   } catch (error: any) {
-    console.error(`Error deleting purchase order ${params.id}:`, error);
+    console.error(`Error deleting purchase order ${purchaseId}:`, error);
     if (error.code === 'P2025') {
         return NextResponse.json({ error: "Purchase order not found for deletion" }, { status: 404 });
     }
     // Handle other potential errors, e.g., relational constraints if not set to cascade.
     return NextResponse.json(
       { error: "Failed to delete purchase order" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/purchases/[id] - Update a purchase order
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  try {
+    const body = await request.json();
+    const { status } = body;
+
+    if (!status) {
+      return NextResponse.json(
+        { error: "Status is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate status
+    const validStatuses = ["DRAFT", "CONFIRMED", "RECEIVED"];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400 }
+      );
+    }
+
+    // Get current purchase to check if status change is valid
+    const currentPurchase = await prisma.purchase.findUnique({
+      where: { id },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    if (!currentPurchase) {
+      return NextResponse.json(
+        { error: "Purchase order not found" },
+        { status: 404 }
+      );
+    }
+
+    // Validate status transition
+    const isValidTransition = (
+      (currentPurchase.status === "DRAFT" && ["CONFIRMED", "RECEIVED"].includes(status)) ||
+      (currentPurchase.status === "CONFIRMED" && status === "RECEIVED") ||
+      status === currentPurchase.status
+    );
+
+    if (!isValidTransition) {
+      return NextResponse.json(
+        { error: "Invalid status transition" },
+        { status: 400 }
+      );
+    }
+
+    // If transitioning to RECEIVED, validate that all items have qtyReceived set
+    if (status === "RECEIVED") {
+      const invalidItems = currentPurchase.items.filter(
+        item => !item.qtyReceived || item.qtyReceived <= 0
+      );
+
+      if (invalidItems.length > 0) {
+        return NextResponse.json(
+          { 
+            error: "Cannot mark as received: some items have no received quantity",
+            invalidItems: invalidItems.map(item => ({
+              productName: item.product.name,
+              sku: item.product.sku
+            }))
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Use transaction to ensure all updates are atomic
+    const updatedPurchase = await prisma.$transaction(async (tx) => {
+      // If transitioning to CONFIRMED, set qtyReceived equal to qtyOrdered for all items
+      if (status === "CONFIRMED" && currentPurchase.status === "DRAFT") {
+        for (const item of currentPurchase.items) {
+          await tx.purchaseItem.update({
+            where: { id: item.id },
+            data: {
+              qtyReceived: item.qtyOrdered
+            }
+          });
+        }
+      }
+
+      // If transitioning to RECEIVED, update inventory
+      if (status === "RECEIVED" && currentPurchase.status !== "RECEIVED") {
+        for (const item of currentPurchase.items) {
+          const qtyToReceive = item.qtyReceived;
+          const product = item.product;
+          const newQtyOnHand = product.qtyOnHand + qtyToReceive;
+
+          // Update product quantity and cost
+          await tx.product.update({
+            where: { id: product.id },
+            data: {
+              qtyOnHand: newQtyOnHand,
+              priceCost: item.unitCost, // Update cost at the time of receiving
+            },
+          });
+
+          // Create stock movement record
+          await tx.stockMovement.create({
+            data: {
+              productId: product.id,
+              qty: qtyToReceive,
+              movementType: "IN",
+              movementDate: new Date(),
+              reference: `PO: ${currentPurchase.poNumber}`,
+              reason: "Purchase Order Item Received",
+            },
+          });
+        }
+      }
+
+      // Update purchase status
+      return tx.purchase.update({
+        where: { id },
+        data: {
+          status,
+          receivedDate: status === "RECEIVED" ? new Date() : undefined
+        },
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          }
+        }
+      });
+    });
+
+    return NextResponse.json({ purchase: updatedPurchase });
+  } catch (error) {
+    console.error("Error updating purchase:", error);
+    return NextResponse.json(
+      { error: "Failed to update purchase order" },
       { status: 500 }
     );
   }

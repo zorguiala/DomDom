@@ -14,6 +14,7 @@ import {
   Briefcase,
   CalendarCheck,
   DollarSign,
+  Building,
 } from "lucide-react";
 
 // Define a type for the translation function if not already globally available
@@ -51,6 +52,13 @@ export const getNavigationItems = (t: TFunction): NavigationItem[] => [
     title: t("purchases"),
     href: "/purchases",
     icon: ShoppingCart,
+    children: [
+      {
+        title: t("suppliers") || "Suppliers",
+        href: "/suppliers",
+        icon: Building,
+      },
+    ],
   },
   {
     title: t("sales"),

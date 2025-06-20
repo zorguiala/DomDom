@@ -52,8 +52,8 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher to apply middleware to all paths except for static files and all API auth routes
+  // Matcher to apply middleware to all paths except for static files and ALL API routes
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|images|static|assets/|favicon.ico|sw.js|robots.txt|sitemap.xml|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|images|static|assets/|favicon.ico|sw.js|robots.txt|sitemap.xml|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -9,14 +9,43 @@ export async function GET() {
       orderBy: {
         orderDate: "desc",
       },
-      include: {
-        supplier: true,
-        items: {
-          include: {
-            product: true,
-          },
+      select: {
+        id: true,
+        poNumber: true,
+        orderNumber: true,
+        status: true,
+        orderDate: true,
+        expectedDate: true,
+        totalAmount: true,
+        notes: true,
+        supplier: {
+          select: {
+            id: true,
+            companyName: true,
+            email: true,
+            phone: true,
+          }
         },
-      },
+        items: {
+          select: {
+            id: true,
+            qtyOrdered: true,
+            qtyReceived: true,
+            unitCost: true,
+            totalCost: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                unit: true,
+                priceCost: true,
+                qtyOnHand: true,
+              }
+            }
+          }
+        }
+      }
     });
     return NextResponse.json({ purchases });
   } catch (error) {
@@ -43,6 +72,7 @@ interface PurchaseInput {
   supplierId?: string;
   supplierName?: string; // Kept for flexibility if supplierId not provided
   poNumber: string;
+  orderNumber?: string; // Optional as it will be auto-generated
   status?: string; // DRAFT, CONFIRMED, RECEIVED
   orderDate: string; // ISO Date string
   expectedDate?: string; // ISO Date string
@@ -106,17 +136,19 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+      // Check if we have either productId or sku
       if (!item.productId && !item.sku) {
         return NextResponse.json(
-          { error: "Each item must have a productId or an SKU." },
+          { error: "Each item must have either a productId or SKU." },
           { status: 400 }
         );
       }
+      // Only require name and unit if we're creating a new product
       if (!item.productId && item.sku && (!item.name || !item.unit)) {
         return NextResponse.json(
-          { error: `New product (SKU: ${item.sku}) requires name and unit.`},
+          { error: `New product with SKU ${item.sku} requires name and unit.`},
           { status: 400}
-        )
+        );
       }
 
       purchaseItemsData.push({
@@ -132,80 +164,86 @@ export async function POST(request: NextRequest) {
     }
 
     const purchase = await prisma.$transaction(async (tx) => {
-      const purchaseCreateData: any = {
-        poNumber,
-        status,
-        orderDate: new Date(orderDate),
-        expectedDate: expectedDate ? new Date(expectedDate) : undefined,
-        totalAmount,
-        notes,
-        items: {
-          create: [], // Will be populated below
-        },
-      };
-      if (supplierId) purchaseCreateData.supplierId = supplierId;
-      if (!supplierId && supplierName) purchaseCreateData.supplierName = supplierName;
-
+      // Create the purchase header first
       const newPurchase = await tx.purchase.create({
-        data: purchaseCreateData,
+        data: {
+          poNumber,
+          orderNumber: `PO-${Date.now()}`, // Simple order number generation
+          status,
+          orderDate: new Date(orderDate),
+          expectedDate: expectedDate ? new Date(expectedDate) : null,
+          notes,
+          totalAmount,
+          supplier: supplierId ? { connect: { id: supplierId } } : undefined,
+          supplierName: !supplierId ? supplierName : undefined,
+        },
       });
 
-      // Process each item: find/create product, then create purchase item linking to it
       const finalPurchaseItemsData = [];
+
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         let productRecord;
 
+        // First try to find by productId
         if (item.productId) {
           productRecord = await tx.product.findUnique({ where: { id: item.productId } });
           if (!productRecord) {
             throw new Error(`Product with ID ${item.productId} not found.`);
           }
-        } else if (item.sku) {
+        } 
+        // Then try to find by SKU
+        else if (item.sku) {
           productRecord = await tx.product.findUnique({ where: { sku: item.sku } });
+          // Only create new product if SKU doesn't exist
           if (!productRecord) {
-            // Product does not exist, create it
-            if (!item.name || !item.unit) throw new Error(`SKU ${item.sku} needs name and unit to be created.`);
+            if (!item.name || !item.unit) {
+              throw new Error(`SKU ${item.sku} needs name and unit to be created.`);
+            }
             productRecord = await tx.product.create({
               data: {
                 name: item.name,
                 sku: item.sku,
                 category: item.category || 'Default',
                 unit: item.unit,
-                priceSell: 0, // Default sell price, can be updated later
-                priceCost: item.unitCost, // Initial cost price from this purchase
-                qtyOnHand: 0, // Initial qty
-                isRawMaterial: true, // Assume items bought are raw materials
+                priceSell: 0,
+                priceCost: item.unitCost,
+                qtyOnHand: 0,
+                minQty: 0,
+                isRawMaterial: true,
                 isFinishedGood: false,
               },
             });
           }
         } else {
-            throw new Error("Item must have productId or SKU.");
+          throw new Error("Item must have productId or SKU.");
         }
 
-        // Now create the purchase item and link it to the product
+        // Always update the product's cost price with the latest purchase cost
+        await tx.product.update({
+          where: { id: productRecord.id },
+          data: { priceCost: item.unitCost }
+        });
+
+        // Create purchase item
         const createdPurchaseItem = await tx.purchaseItem.create({
-            data: {
-                purchaseId: newPurchase.id,
-                productId: productRecord.id,
-                qtyOrdered: item.qtyOrdered,
-                qtyReceived: item.qtyReceived || 0,
-                unitCost: item.unitCost,
-                totalCost: item.qtyOrdered * item.unitCost,
-            }
+          data: {
+            purchaseId: newPurchase.id,
+            productId: productRecord.id,
+            qtyOrdered: item.qtyOrdered,
+            qtyReceived: item.qtyReceived || 0,
+            unitCost: item.unitCost,
+            totalCost: item.qtyOrdered * item.unitCost,
+          }
         });
         finalPurchaseItemsData.push(createdPurchaseItem);
 
         // If status is 'RECEIVED' and qtyReceived > 0, update inventory and product cost
         if (status.toUpperCase() === "RECEIVED" && (item.qtyReceived || 0) > 0) {
-          const currentProduct = await tx.product.findUnique({ where: { id: productRecord.id } });
-          if (!currentProduct) throw new Error(`Product ${productRecord.id} vanished mid-transaction`);
-
           const receivedQty = item.qtyReceived || 0;
           const receivedCost = item.unitCost;
-          const prevQty = currentProduct.qtyOnHand;
-          const prevCost = currentProduct.priceCost;
+          const prevQty = productRecord.qtyOnHand;
+          const prevCost = productRecord.priceCost;
 
           // Weighted average cost calculation
           const newQtyOnHand = prevQty + receivedQty;
@@ -234,19 +272,21 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-      // Return the purchase with its items by querying it again
-      // This ensures all relations are correctly populated
+
       return tx.purchase.findUnique({
         where: { id: newPurchase.id },
         include: {
-            supplier: true,
-            items: { include: { product: true }}
+          supplier: true,
+          items: {
+            include: {
+              product: true
+            }
+          }
         }
       });
     });
 
-
-    return NextResponse.json({ purchase }, { status: 201 });
+    return NextResponse.json({ purchase });
   } catch (error: any) {
     console.error("Error creating purchase:", error);
     if (error.code === 'P2002' && error.meta?.target?.includes('poNumber')) {

@@ -62,7 +62,7 @@ export default function ExpensesPage() {
 
   // Function to format currency, can be moved to a utils file
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(amount);
   };
 
 

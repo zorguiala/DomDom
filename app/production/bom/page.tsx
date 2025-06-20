@@ -4,8 +4,11 @@ import { useTranslations } from "@/lib/language-context";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHead, TableRow, TableCell, TableBody, TableHeader } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { formatTND } from "@/lib/currency";
+import { Package, Factory } from "lucide-react";
 
 export default function BOMListPage() {
   const t = useTranslations("production");
@@ -20,7 +23,8 @@ export default function BOMListPage() {
     try {
       const res = await fetch("/api/production/bom");
       if (!res.ok) throw new Error(await res.text());
-      setBOMs(await res.json());
+      const data = await res.json();
+      setBOMs(data.boms || []); // Extract boms array from response
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -59,33 +63,82 @@ export default function BOMListPage() {
         <CardContent>
           <Table>
             <TableHeader>
-            
-                <TableHead>{t("bomId")}</TableHead>
+              <TableRow>
                 <TableHead>{t("bomName")}</TableHead>
-                <TableHead>{t("bomDescription")}</TableHead>
-                <TableHead>{t("bomFinalProduct")}</TableHead>
+                <TableHead>{t("finalProduct")}</TableHead>
+                <TableHead>{t("outputQuantity")}</TableHead>
+                <TableHead>{t("unitCost")}</TableHead>
+                <TableHead>{t("components")}</TableHead>
                 <TableHead>{t("createdAt")}</TableHead>
-                <TableHead>{t("updatedAt")}</TableHead>
                 <TableHead>{common("actions")}</TableHead>
-          
+              </TableRow>
             </TableHeader>
             <TableBody>
               {boms.map((bom) => (
                 <TableRow key={bom.id}>
-                  <TableCell>{bom.id}</TableCell>
-                  <TableCell>{bom.name}</TableCell>
-                  <TableCell>{bom.description}</TableCell>
-                  <TableCell>{bom.finalProductId}</TableCell>
-                  <TableCell>{new Date(bom.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(bom.updatedAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Link href={`/production/bom/${bom.id}/edit`}>
-                      <Button size="sm" variant="outline">{common("edit")}</Button>
-                    </Link>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(bom.id)}>{common("delete")}</Button>
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="font-medium">{bom.name}</p>
+                        {bom.description && (
+                          <p className="text-xs text-muted-foreground">{bom.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Factory className="h-4 w-4 text-green-600" />
+                      <div>
+                        <p className="font-medium">{bom.finalProduct?.name || 'Unknown'}</p>
+                        <p className="text-xs text-muted-foreground">{bom.finalProduct?.sku}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {bom.outputQuantity} {bom.outputUnit}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-green-600">
+                      {bom.unitCost ? formatTND(bom.unitCost) : 'N/A'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary">
+                      {bom.components?.length || 0} {t("components")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(bom.createdAt).toLocaleDateString()}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Link href={`/production/bom/${bom.id}/edit`}>
+                        <Button size="sm" variant="outline">{common("edit")}</Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleDelete(bom.id)}
+                      >
+                        {common("delete")}
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
+              {boms.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    {t("noBOMs")}
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

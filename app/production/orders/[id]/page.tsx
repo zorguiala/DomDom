@@ -24,32 +24,35 @@ export default function ProductionOrderDetailPage() {
   const orderId = params?.id as string;
 
   useEffect(() => {
-    if (orderId) {
+    if (!orderId) return;
+
+    const fetchOrder = async () => {
       setLoading(true);
-      fetch(`/api/production/orders/${orderId}`)
-        .then(async (res) => {
-          if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || `Failed to fetch order: ${res.statusText}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          setOrder(data);
-          setError(null);
-        })
-        .catch((err) => {
-          console.error(err);
-          setError(err.message);
-          toast({
-            variant: "destructive",
-            title: t("errorFetchingOrderTitle") || "Error",
-            description: err.message || t("errorFetchingOrderDesc"),
-          });
-        })
-        .finally(() => setLoading(false));
-    }
-  }, [orderId, t, toast]);
+      setError(null);
+      
+      try {
+        const res = await fetch(`/api/production/orders/${orderId}`);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || `Failed to fetch order: ${res.statusText}`);
+        }
+        const data = await res.json();
+        setOrder(data);
+      } catch (err: any) {
+        console.error("Error fetching production order:", err);
+        setError(err.message);
+        toast({
+          variant: "destructive",
+          title: t("errorFetchingOrderTitle") || "Error",
+          description: err.message || t("errorFetchingOrderDesc"),
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
+  }, [orderId]); // Removed t and toast from dependencies
 
   const handleDelete = async () => {
     if (!orderId) return;
@@ -128,7 +131,7 @@ export default function ProductionOrderDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div><strong>{t("product")}:</strong> {order.product?.name} {order.product?.sku ? t("labelSkuSuffix", { sku: order.product.sku }) : ''}</div>
+            <div><strong>{t("product")}:</strong> {order.product?.name} {order.product?.sku ? `(${order.product.sku})` : ''}</div>
             <div><strong>{common("bom")}:</strong> {order.bom?.name || common("na")}</div>
             <div><strong>{common("status")}:</strong> <Badge variant={getStatusBadgeVariant(order.status)}>{translateStatus(order.status)}</Badge></div>
             <div><strong>{common("priority")}:</strong> {order.priority || common("na")}</div>
@@ -148,7 +151,7 @@ export default function ProductionOrderDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t("bomComponents")}</CardTitle>
-            <CardDescription>{t("materialsRequiredForOrder", { qty: order.qtyOrdered })}</CardDescription>
+            <CardDescription>{t("materialsRequiredForOrder")} (Qty: {order.qtyOrdered})</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>

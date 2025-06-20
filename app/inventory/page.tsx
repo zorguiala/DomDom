@@ -86,7 +86,7 @@ export default function InventoryPage() {
               <div>{t("sku")}</div>
               <div>{t("category")}</div>
               <div>{t("stockLevel")}</div>
-              <div>{t("unitPrice")}</div>
+              <div>{t("unitCost")}</div>
               <div>{common("actions")}</div>
             </div>
 
@@ -159,7 +159,7 @@ function ProductList({ products }: { products: Product[] }) {
               )}
             </div>
           </div>
-          <div className="font-medium">{formatCurrency(product.priceSell)}</div>{" "}
+          <div className="font-medium">{formatCurrency(product.priceCost)}</div>{" "}
           <div className="flex items-center space-x-2">
             <Link href={`/inventory/${product.id}`}>
               <Button className="h-8 px-3 text-sm">{common("view")}</Button>

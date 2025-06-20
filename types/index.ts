@@ -22,6 +22,27 @@ export type AttendanceStatus =
   | "SICK_LEAVE"
   | "VACATION";
 
+export interface SupplierStatistics {
+  totalOrders: number;
+  lastOrderDate?: Date;
+  lastOrderNumber?: string;
+  lastOrderTotal: number;
+  avgCostPerUnit: number;
+  lastOrderItemsCount: number;
+}
+
+export interface Supplier {
+  id: string;
+  companyName: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  mf?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  statistics?: SupplierStatistics;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -53,6 +74,10 @@ export interface BillOfMaterials {
   name: string;
   description?: string;
   finalProductId: string;
+  finalProduct?: Product;
+  outputQuantity: number; // How many units this BOM produces (like Odoo)
+  outputUnit: string; // Unit of the output (pieces, kg, etc.)
+  unitCost?: number; // Calculated cost per unit
   components: BomComponent[];
   productionOrders?: ProductionOrder[];
   createdAt: Date;
@@ -265,7 +290,7 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 
 export interface CreateProductForm {
   name: string;
-  sku: string;
+  sku?: string;
   category?: string;
   unit: string;
   priceSell: number;

@@ -52,6 +52,9 @@ model BillOfMaterials {
   description     String?
   finalProductId  String
   finalProduct    Product  @relation("FinalProductForBOM", fields: [finalProductId], references: [id])
+  outputQuantity  Float             // How many units this BOM produces (like Odoo)
+  outputUnit      String            // Unit of the output (pieces, kg, etc.)
+  unitCost        Float?            // Calculated cost per unit
   components      BomComponent[]
   productionOrders ProductionOrder[]
   createdAt       DateTime          @default(now())

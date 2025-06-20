@@ -1,8 +1,9 @@
 "use client";
 
 import { useTranslations } from "@/lib/language-context";
-import { Card, CardContent } from "@/components/ui/card"; // Removed CardHeader, CardTitle
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SelectMagic } from "@/components/ui/select-magic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ProductionOrderWithDetails } from "@/types/production";
 import { useToast } from "@/hooks/use-toast";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Play, CheckCircle, XCircle, Clock, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,7 @@ export default function ProductionOrdersPage() {
   const [orders, setOrders] = useState<ProductionOrderWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -52,8 +54,6 @@ export default function ProductionOrdersPage() {
         );
       }
       const data = await res.json();
-      // Assuming API returns an array directly or an object like { orders: [] }
-      // The previous /api/production/orders/route.ts returns orders directly as an array
       setOrders(Array.isArray(data) ? data : data.orders || []);
     } catch (err: any) {
       setError(err.message);
@@ -69,8 +69,76 @@ export default function ProductionOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    // Validation logic
+    if (order.status === newStatus) return; // No change needed
+    
+    if (newStatus === "IN_PROGRESS" && order.status !== "PLANNED") {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: t("canOnlyStartFromPlanned") || "Can only start production from PLANNED status",
+      });
+      return;
+    }
+
+    if (newStatus === "COMPLETED" && !["PLANNED", "IN_PROGRESS"].includes(order.status)) {
+      toast({
+        variant: "destructive", 
+        title: t("error"),
+        description: t("canOnlyCompleteFromPlannedOrProgress") || "Can only complete from PLANNED or IN_PROGRESS status",
+      });
+      return;
+    }
+
+    // Confirm completion
+    if (newStatus === "COMPLETED") {
+      const confirmed = confirm(
+        t("confirmCompleteOrder") || 
+        `Are you sure you want to mark this production order as completed? This will update inventory automatically.`
+      );
+      if (!confirmed) return;
+    }
+
+    setUpdatingStatus(orderId);
+    try {
+      const res = await fetch(`/api/production/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          status: newStatus,
+          qtyProduced: newStatus === "COMPLETED" ? order.qtyOrdered : order.qtyProduced
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update status");
+      }
+
+      // Show success message
+      toast({
+        title: common("success"),
+        description: t("statusUpdatedSuccessfully") || "Status updated successfully",
+      });
+
+      // Refresh orders
+      fetchOrders();
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: t("error"),
+        description: err.message,
+      });
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const handleDelete = async (orderId: string) => {
     if (
@@ -95,7 +163,7 @@ export default function ProductionOrdersPage() {
           t("orderDeletedDesc") ||
           "The production order has been successfully deleted.",
       });
-      fetchOrders(); // Refresh the list
+      fetchOrders();
     } catch (err: any) {
       toast({
         variant: "destructive",
@@ -110,13 +178,49 @@ export default function ProductionOrdersPage() {
       case "PLANNED":
         return "secondary";
       case "IN_PROGRESS":
-        return "default"; // Blue in shadcn
-      case "DONE":
-        return "success"; // Green
+        return "default";
+      case "COMPLETED":
+        return "success";
       case "CANCELLED":
-        return "destructive"; // Red
+        return "destructive";
       default:
         return "outline";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "PLANNED":
+        return <Clock className="h-3 w-3" />;
+      case "IN_PROGRESS":
+        return <Play className="h-3 w-3" />;
+      case "COMPLETED":
+        return <CheckCircle className="h-3 w-3" />;
+      case "CANCELLED":
+        return <XCircle className="h-3 w-3" />;
+      default:
+        return null;
+    }
+  };
+
+  const getAvailableStatuses = (currentStatus: string) => {
+    switch (currentStatus) {
+      case "PLANNED":
+        return [
+          { value: "IN_PROGRESS", label: t("inProgress") || "In Progress" },
+          { value: "COMPLETED", label: t("completed") || "Completed" },
+          { value: "CANCELLED", label: t("cancelled") || "Cancelled" },
+        ];
+      case "IN_PROGRESS":
+        return [
+          { value: "COMPLETED", label: t("completed") || "Completed" },
+          { value: "CANCELLED", label: t("cancelled") || "Cancelled" },
+        ];
+      case "COMPLETED":
+      case "CANCELLED":
+        return []; // Cannot change from final states
+      default:
+        return [];
     }
   };
 
@@ -126,7 +230,7 @@ export default function ProductionOrdersPage() {
         {common("loading")}
       </div>
     );
-  // Show error message if fetch failed and no orders are loaded
+
   if (error && orders.length === 0)
     return <div className="text-red-500 text-center p-4">{error}</div>;
 
@@ -142,44 +246,37 @@ export default function ProductionOrdersPage() {
           </Link>
         </div>
       </div>
-      {/* Display error message even if some orders are loaded, but less prominently */}
+
       {error && orders.length > 0 && (
         <p className="text-sm font-medium text-destructive text-center">
           {error}
         </p>
       )}
+
       <Card>
         <CardContent className="mt-4">
-          {" "}
-          {/* Added mt-4 for spacing if CardHeader is removed */}
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("orderNumber")}</TableHead>
                 <TableHead>{t("product")}</TableHead>
                 <TableHead>{t("status")}</TableHead>
-                <TableHead>{t("progress")}</TableHead>{" "}
-                {/* New Progress Column */}
+                <TableHead>{t("progress")}</TableHead>
                 <TableHead className="text-right">{t("qtyOrdered")}</TableHead>
                 <TableHead className="text-right">{t("qtyProduced")}</TableHead>
                 <TableHead>{t("priority")}</TableHead>
-                {/* <TableHead>{t("expectedEndDate")}</TableHead> -- Removing to save space, can be on detail page */}
-                <TableHead className="text-center">
-                  {common("actions")}
-                </TableHead>
+                <TableHead className="text-center">{common("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={8} className="h-24 text-center">
-                    {" "}
-                    {/* Adjusted colSpan */}
                     {t("noOrdersFound")}
                   </TableCell>
                 </TableRow>
               )}
-              {/* Animate each table row using AnimatedTableRow (motion.tr) for valid table structure */}
+
               {orders.map((order) => {
                 let progressValue = 0;
                 let progressText = "";
@@ -195,7 +292,7 @@ export default function ProductionOrdersPage() {
                   case "IN_PROGRESS":
                     progressText = `${Math.round(progressValue)}% (${order.qtyProduced}/${order.qtyOrdered})`;
                     break;
-                  case "DONE":
+                  case "COMPLETED":
                     progressText = `${common("completed")} (${order.qtyProduced}/${order.qtyOrdered})`;
                     progressValue = 100;
                     break;
@@ -206,6 +303,8 @@ export default function ProductionOrdersPage() {
                   default:
                     progressText = common("na");
                 }
+
+                const availableStatuses = getAvailableStatuses(order.status);
 
                 return (
                   <AnimatedTableRow
@@ -218,75 +317,121 @@ export default function ProductionOrdersPage() {
                     <TableCell>
                       <Link
                         href={`/production/orders/${order.id}`}
-                        className="hover:underline text-primary"
+                        className="hover:underline text-primary font-medium"
                       >
                         {order.orderNumber}
                       </Link>
                     </TableCell>
-                    <TableCell>{order.product?.name || common("na")}</TableCell>
+                    
                     <TableCell>
-                      <Badge variant={getStatusBadgeVariant(order.status)}>
-                        {order.status}
-                      </Badge>
+                      <div>
+                        <div className="font-medium">{order.product?.name || common("na")}</div>
+                        {order.bom && (
+                          <div className="text-xs text-muted-foreground">
+                            BOM: {order.bom.name}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
+                    
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getStatusBadgeVariant(order.status)} className="flex items-center gap-1">
+                          {getStatusIcon(order.status)}
+                          {order.status}
+                        </Badge>
+                        
+                        {/* Inline Status Changer */}
+                        {availableStatuses.length > 0 && (
+                          <div className="min-w-[120px]">
+                            <SelectMagic
+                              value=""
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  handleStatusChange(order.id, e.target.value);
+                                }
+                              }}
+                              disabled={updatingStatus === order.id}
+                              className="text-xs h-7"
+                            >
+                              <option value="">{t("changeStatus") || "Change..."}</option>
+                              {availableStatuses.map((status) => (
+                                <option key={status.value} value={status.value}>
+                                  {status.label}
+                                </option>
+                              ))}
+                            </SelectMagic>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    
                     <TableCell className="min-w-[150px]">
-                      {" "}
-                      {/* Progress Cell */}
-                      {/* Always show a progress bar for visual consistency and accessibility */}
                       <div className="flex flex-col">
                         <div aria-hidden="true">
                           <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${order.status === "CANCELLED" ? "bg-gray-400" : order.status === "DONE" ? "bg-green-500" : "bg-primary"}`}
+                              className={`h-full transition-all duration-300 ${
+                                order.status === "CANCELLED" 
+                                  ? "bg-gray-400" 
+                                  : order.status === "COMPLETED" 
+                                    ? "bg-green-500" 
+                                    : "bg-primary"
+                              }`}
                               style={{ width: `${progressValue}%` }}
                             />
                           </div>
                         </div>
-                        <span
-                          className="text-xs text-muted-foreground mt-1"
-                          aria-label={progressText}
-                        >
+                        <span className="text-xs text-muted-foreground mt-1">
                           {progressText}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    
+                    <TableCell className="text-right font-medium">
                       {order.qtyOrdered}
                     </TableCell>
-                    <TableCell className="text-right">
+                    
+                    <TableCell className="text-right font-medium">
                       {order.qtyProduced}
                     </TableCell>
-                    <TableCell>{order.priority || common("na")}</TableCell>
+                    
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {order.priority || common("na")}
+                      </Badge>
+                    </TableCell>
+                    
                     <TableCell className="text-center">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">
-                              {common("openMenu")}
-                            </span>
+                            <span className="sr-only">{common("openMenu")}</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>
-                            {common("actions")}
-                          </DropdownMenuLabel>
+                          <DropdownMenuLabel>{common("actions")}</DropdownMenuLabel>
+                          
                           <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/production/orders/${order.id}`)
-                            }
+                            onClick={() => router.push(`/production/orders/${order.id}`)}
+                            className="flex items-center gap-2"
                           >
+                            <Eye className="h-4 w-4" />
                             {common("viewDetails")}
                           </DropdownMenuItem>
+                          
                           <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/production/orders/${order.id}/edit`)
-                            }
+                            onClick={() => router.push(`/production/orders/${order.id}/edit`)}
+                            disabled={order.status === "COMPLETED"}
+                            className="flex items-center gap-2"
                           >
                             {common("edit")}
                           </DropdownMenuItem>
+                          
                           <DropdownMenuItem
                             onClick={() => handleDelete(order.id)}
+                            disabled={["IN_PROGRESS", "COMPLETED"].includes(order.status)}
                             className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-700 dark:focus:text-red-50"
                           >
                             {common("delete")}
