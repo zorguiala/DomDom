@@ -6,7 +6,7 @@ import { z } from "zod";
 // Base schema for an expense's core fields
 const expenseBaseSchema = z.object({
   description: z.string().min(1, "Description is required"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   amount: z.number().positive("Amount must be a positive number"),
   expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format. Expected YYYY-MM-DD or ISO string",

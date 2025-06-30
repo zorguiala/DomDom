@@ -375,3 +375,33 @@ model VanSalesOperation {
 
   @@map("van_sales_operations")
 }
+
+
+model ExpenseCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  expenses    Expense[]
+
+  @@map("expense_categories")
+}
+
+model Expense {
+  id            String   @id @default(uuid())
+  expenseDate   DateTime
+  amount        Float
+  description   String
+  paymentMethod String?
+  receipt       String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("expenses")
+}

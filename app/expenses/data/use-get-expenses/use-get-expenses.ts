@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { Expense } from '@/types';
+import { ExpenseWithCategory } from '@/types/expenses';
 
 interface UseGetExpensesReturn {
-  data: Expense[] | undefined;
+  data: ExpenseWithCategory[] | undefined;
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -15,14 +15,14 @@ interface UseGetExpensesReturn {
 export function useGetExpenses(): UseGetExpensesReturn {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['expenses'],
-    queryFn: async (): Promise<Expense[]> => {
+    queryFn: async (): Promise<ExpenseWithCategory[]> => {
       const response = await fetch('/api/expenses');
       
       if (!response.ok) {
         throw new Error('Failed to fetch expenses');
       }
       
-      const apiData: Expense[] = await response.json();
+      const apiData: ExpenseWithCategory[] = await response.json();
       return apiData;
     },
     staleTime: 60 * 1000, // 1 minute

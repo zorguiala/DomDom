@@ -84,7 +84,7 @@ export default function InventoryPage() {
             <div className="grid grid-cols-6 gap-4 p-4 font-medium border-b bg-muted/50">
               <div>{t("product")}</div>
               <div>{t("sku")}</div>
-              <div>{t("category")}</div>
+              <div>{common("category")}</div>
               <div>{t("stockLevel")}</div>
               <div>{t("unitCost")}</div>
               <div>{common("actions")}</div>

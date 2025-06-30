@@ -7,8 +7,8 @@ global.fetch = jest.fn(() =>
   Promise.resolve({
     ok: true,
     json: () => Promise.resolve([]),
-  })
-as any);
+  }) as any
+);
 
 jest.mock("@/lib/language-context", () => ({
   useTranslations: () => (key: string) => key,

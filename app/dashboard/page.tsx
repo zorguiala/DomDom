@@ -27,7 +27,7 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
         <div className="flex items-center space-x-2">
           <ShimmerButton variant="default" size="default">
-            <FileDown className="mr-2 h-4 w-4" />
+            <FileDown className="mr-2 h-4 w-4" /> 
             {common("export")} Report
           </ShimmerButton>
         </div>

@@ -1,60 +1,82 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useTranslations } from "@/lib/language-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { ExpenseFormData } from "@/types/expenses";
-import { PlusCircle } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker"; // Assuming this component exists
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useTranslations } from '@/lib/language-context';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { ExpenseFormData } from '@/types/expenses';
+import { PlusCircle } from 'lucide-react';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Select } from '@/components/ui/select';
+import { useEffect, useState } from 'react';
 
-// Zod schema for new expense form validation
 const newExpenseFormSchema = z.object({
-  description: z.string().min(1, "Description is required"),
-  category: z.string().min(1, "Category is required"),
+  description: z.string().min(1, 'Description is required'),
+  categoryId: z.string().min(1, 'Category is required'),
   amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")), // Clean input to be just number-like
-    z.number({ invalid_type_error: "Amount must be a number" }).positive("Amount must be positive")
+    (val) => Number(String(val).replace(/[^0-9.-]+/g, '')),
+    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
   ),
-  expenseDate: z.date({ required_error: "Expense date is required" }),
+  expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
+  }),
   paymentMethod: z.string().optional().nullable().or(z.literal('')),
   receipt: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
 });
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function AddExpensePage() {
   const router = useRouter();
-  const t = useTranslations("expenses");
-  const common = useTranslations("common");
+  const t = useTranslations('expenses');
+  const common = useTranslations('common');
   const { toast } = useToast();
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
     resolver: zodResolver(newExpenseFormSchema),
     defaultValues: {
-      description: "",
-      category: "",
+      description: '',
+      categoryId: '',
       amount: 0,
-      expenseDate: new Date().toISOString().split('T')[0], // Default to today
-      paymentMethod: "",
-      receipt: "",
-      notes: "",
+      expenseDate: new Date().toISOString().split('T')[0],
+      paymentMethod: '',
+      receipt: '',
+      notes: '',
     },
   });
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/expenses/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        toast({ title: 'Error', description: 'Could not fetch categories.', variant: 'destructive' });
+      }
+    };
+    fetchCategories();
+  }, [toast]);
+
   const onSubmit = async (data: ExpenseFormData) => {
     try {
-      // Convert date to YYYY-MM-DD string format for API
       const payload = {
         ...data,
         expenseDate: new Date(data.expenseDate).toISOString().split('T')[0],
-        amount: Number(data.amount) // Ensure amount is a number
+        amount: Number(data.amount)
       };
 
       const res = await fetch("/api/expenses", {
@@ -107,9 +129,26 @@ export default function AddExpensePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Category */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-1">{t("categoryField")}</label>
-                <Controller name="category" control={control} render={({ field }) => <Input id="category" {...field} placeholder={t("categoryPlaceholder")} />} />
-                {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                <label htmlFor="categoryId" className="block text-sm font-medium mb-1">{t("categoryField")}</label>
+                <Controller
+                  name="categoryId"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      id="categoryId"
+                      {...field}
+                      className="block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t("categoryPlaceholder")}</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.categoryId && <p className="text-sm text-destructive mt-1">{errors.categoryId.message}</p>}
               </div>
 
               {/* Amount */}

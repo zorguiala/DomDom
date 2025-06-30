@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
-// Zod schema for creating/updating an expense
 const expenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   amount: z.number().positive("Amount must be a positive number"),
   expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
@@ -15,7 +14,6 @@ const expenseSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
-// POST /api/expenses - Create a new expense
 export async function POST(req: NextRequest) {
   try {
     const rawData = await req.json();
@@ -35,7 +33,7 @@ export async function POST(req: NextRequest) {
     const newExpense = await prisma.expense.create({
       data: {
         ...data,
-        expenseDate: new Date(data.expenseDate), // Convert string to DateTime
+        expenseDate: new Date(data.expenseDate),
       },
     });
 
@@ -49,7 +47,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET /api/expenses - Get a list of all expenses
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -59,7 +56,7 @@ export async function GET(req: NextRequest) {
 
     let filters: any = {};
     if (category) {
-      filters.category = category;
+      filters.categoryId = category;
     }
     if (dateFromStr) {
       const dateFrom = new Date(dateFromStr);
@@ -69,13 +66,20 @@ export async function GET(req: NextRequest) {
     if (dateToStr) {
       const dateTo = new Date(dateToStr);
       if (isNaN(dateTo.getTime())) return NextResponse.json({ error: "Invalid dateTo format" }, { status: 400 });
-      // To include the whole day of dateTo:
       dateTo.setHours(23, 59, 59, 999);
       filters.expenseDate = { ...filters.expenseDate, lte: dateTo };
     }
 
     const expenses = await prisma.expense.findMany({
       where: filters,
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
       orderBy: {
         expenseDate: "desc",
       },

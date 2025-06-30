@@ -1,35 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PrismaExpense } from "@/types/expenses"; // Using our defined PrismaExpense type
+import { ExpenseWithCategory } from "@/types/expenses";
 
-// Helper function to escape CSV fields
 const escapeCsvField = (field: any): string => {
   if (field === null || field === undefined) {
     return "";
   }
   const stringField = String(field);
-  // If the field contains a comma, newline, or double quote, enclose it in double quotes
   if (stringField.includes(",") || stringField.includes("\n") || stringField.includes('"')) {
-    // Escape existing double quotes by doubling them
     return `"${stringField.replace(/"/g, '""')}"`;
   }
   return stringField;
 };
 
-// GET /api/expenses/export - Export all expenses to CSV
 export async function GET(req: NextRequest) {
   try {
-    const expenses: PrismaExpense[] = await prisma.expense.findMany({
+    const expenses: ExpenseWithCategory[] = await prisma.expense.findMany({
+      include: {
+        category: true,
+      },
       orderBy: {
-        expenseDate: "asc", // Or any preferred order for export
+        expenseDate: "asc",
       },
     });
-
-    if (!expenses.length) {
-      // Optionally, return an empty CSV or a message, or a 204 No Content
-      // For now, returning an empty CSV with headers.
-      // Or: return new NextResponse("No expenses to export.", { status: 200, headers: { 'Content-Type': 'text/plain'} });
-    }
 
     const headers = [
       "ID",
@@ -44,13 +37,12 @@ export async function GET(req: NextRequest) {
       "UpdatedAt",
     ];
 
-    // Convert data to CSV format
     let csvString = headers.join(",") + "\n";
 
     expenses.forEach((expense) => {
       const expenseDate = expense.expenseDate instanceof Date
-        ? expense.expenseDate.toISOString().split("T")[0] // Format to YYYY-MM-DD
-        : String(expense.expenseDate); // Fallback if it's already a string (though Prisma should give Date)
+        ? expense.expenseDate.toISOString().split("T")[0]
+        : String(expense.expenseDate);
 
       const createdAtDate = expense.createdAt instanceof Date
         ? expense.createdAt.toISOString()
@@ -63,7 +55,7 @@ export async function GET(req: NextRequest) {
       const row = [
         escapeCsvField(expense.id),
         escapeCsvField(expense.description),
-        escapeCsvField(expense.category),
+        escapeCsvField(expense.category.name),
         escapeCsvField(expense.amount),
         escapeCsvField(expenseDate),
         escapeCsvField(expense.paymentMethod),
@@ -75,7 +67,6 @@ export async function GET(req: NextRequest) {
       csvString += row.join(",") + "\n";
     });
 
-    // Set response headers for CSV download
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", "text/csv; charset=utf-8");
     responseHeaders.set("Content-Disposition", `attachment; filename="expenses-${new Date().toISOString().split('T')[0]}.csv"`);

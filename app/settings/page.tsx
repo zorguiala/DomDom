@@ -20,37 +20,37 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const t = useTranslations("");
+  const t = useTranslations("settings");
   const common = useTranslations("common");
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{t("common.settings")}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t("title")}</h2>
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
       </div>
 
       {/* Settings Categories */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6">
         {/* Profile Settings */}
         <Card>
           <CardHeader>
             <div className="flex items-center space-x-2">
               <User className="h-5 w-5" />
-              <CardTitle>{t("profile")}</CardTitle>
+              <CardTitle>{t("profile.title")}</CardTitle>
             </div>
-            <CardDescription>{t("profileDescription")}</CardDescription>
+            <CardDescription>{t("profile.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{t("name")}</Label>
-              <Input id="name" placeholder={t("placeholderEnterName")} />
+              <Label htmlFor="name">{common("name")}</Label>
+              <Input id="name" placeholder={t("profile.namePlaceholder")} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" type="email" placeholder={t("placeholderEnterEmail")} />
+              <Label htmlFor="email">{common("email")}</Label>
+              <Input id="email" type="email" placeholder={t("profile.emailPlaceholder")} />
             </div>
             <Button>{common("save")}</Button>
           </CardContent>
@@ -61,14 +61,13 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Globe className="h-5 w-5" />
-              <CardTitle>{t("language")}</CardTitle>
+              <CardTitle>{t("language.title")}</CardTitle>
             </div>
-            <CardDescription>{t("languageDescription")}</CardDescription>
+            <CardDescription>{t("language.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Use the language switcher in the sidebar to change your preferred
-              language.
+              {t("language.instruction")}
             </div>
           </CardContent>
         </Card>
@@ -78,28 +77,28 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Shield className="h-5 w-5" />
-              <CardTitle>{t("security")}</CardTitle>
+              <CardTitle>{t("security.title")}</CardTitle>
             </div>
-            <CardDescription>{t("securityDescription")}</CardDescription>
+            <CardDescription>{t("security.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">{t("newPassword")}</Label>
+              <Label htmlFor="password">{t("security.newPassword")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder={t("placeholderEnterNewPassword")}
+                placeholder={t("security.newPasswordPlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
+              <Label htmlFor="confirmPassword">{t("security.confirmPassword")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
-                placeholder={t("placeholderConfirmNewPassword")}
+                placeholder={t("security.confirmPasswordPlaceholder")}
               />
             </div>
-            <Button>{t("updatePassword")}</Button>
+            <Button>{t("security.updatePasswordButton")}</Button>
           </CardContent>
         </Card>
 
@@ -108,13 +107,13 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
-              <CardTitle>{t("notifications")}</CardTitle>
+              <CardTitle>{t("notifications.title")}</CardTitle>
             </div>
-            <CardDescription>{t("notificationsDescription")}</CardDescription>
+            <CardDescription>{t("notifications.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Notification preferences coming soon...
+              {t("notifications.comingSoon")}
             </div>
           </CardContent>
         </Card>

@@ -17,6 +17,8 @@ async function main() {
   await prisma.productionOrder.deleteMany();
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.expense.deleteMany();
+  await prisma.expenseCategory.deleteMany();
 
   // Create users
   const hashedPassword = await bcrypt.hash("password123", 10);
@@ -49,6 +51,19 @@ async function main() {
   });
 
   console.log("✅ Users created");
+
+  // Create Expense Categories
+  const expenseCategories = await prisma.expenseCategory.createMany({
+    data: [
+      { name: "Office Supplies", description: "Pens, paper, toner, etc." },
+      { name: "Travel", description: "Flights, hotels, rental cars, etc." },
+      { name: "Food", description: "Team lunches, client dinners, etc." },
+      { name: "Utilities", description: "Electricity, water, internet, etc." },
+      { name: "Software", description: "SaaS subscriptions, licenses, etc." },
+    ],
+  });
+
+  console.log("✅ Expense Categories created");
 
   // Create products
   const products = await prisma.product.createMany({

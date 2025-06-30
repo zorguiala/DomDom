@@ -224,19 +224,8 @@ export interface Employee {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
-  attendance: Attendance[];
+  attendance: any[];
   payrolls: Payroll[];
-}
-
-export interface Attendance {
-  id: string;
-  employeeId: string;
-  employee: Employee;
-  date: Date;
-  status: AttendanceStatus;
-  hoursWorked?: number;
-  notes?: string;
-  createdAt: Date;
 }
 
 export interface Payroll {
@@ -250,18 +239,6 @@ export interface Payroll {
   deductions: number;
   netSalary: number;
   createdAt: Date;
-}
-
-export interface Expense {
-  id: string;
-  description: string;
-  category: string;
-  amount: number;
-  expenseDate: Date;
-  receipt?: string;
-  notes?: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 /**

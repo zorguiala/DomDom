@@ -1,45 +1,49 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useTranslations } from "@/lib/language-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { ExpenseFormData, PrismaExpense } from "@/types/expenses";
-import { DatePicker } from "@/components/ui/date-picker"; // Assuming this component exists
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useTranslations } from '@/lib/language-context';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { ExpenseFormData, Expense } from '@/types/expenses';
+import { DatePicker } from '@/components/ui/date-picker';
 
-// Zod schema for editing expense (similar to create, but all fields technically optional for PUT)
-// However, for a good UX, we might want to enforce some fields if they are being edited.
-// For this example, we'll keep validation similar to creation for edited fields.
 const editExpenseFormSchema = z.object({
-  description: z.string().min(1, "Description is required"),
-  category: z.string().min(1, "Category is required"),
+  description: z.string().min(1, 'Description is required'),
+  categoryId: z.string().min(1, 'Category is required'),
   amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")),
-    z.number({ invalid_type_error: "Amount must be a number" }).positive("Amount must be positive")
+    (val) => Number(String(val).replace(/[^0-9.-]+/g, '')),
+    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
   ),
-  expenseDate: z.date({ required_error: "Expense date is required" }),
+  expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+    message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
+  }),
   paymentMethod: z.string().optional().nullable().or(z.literal('')),
   receipt: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
 });
 
+interface Category {
+  id: string;
+  name: string;
+}
 
 export default function EditExpensePage() {
   const router = useRouter();
   const params = useParams();
-  const t = useTranslations("expenses");
-  const common = useTranslations("common");
+  const t = useTranslations('expenses');
+  const common = useTranslations('common');
   const { toast } = useToast();
 
-  const [expense, setExpense] = useState<PrismaExpense | null>(null);
+  const [expense, setExpense] = useState<Expense | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -48,17 +52,30 @@ export default function EditExpensePage() {
   const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
     resolver: zodResolver(editExpenseFormSchema),
     defaultValues: {
-      description: "",
-      category: "",
+      description: '',
+      categoryId: '',
       amount: 0,
       expenseDate: new Date().toISOString().split('T')[0],
-      paymentMethod: "",
-      receipt: "",
-      notes: "",
+      paymentMethod: '',
+      receipt: '',
+      notes: '',
     }
   });
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/expenses/categories');
+        if (!response.ok) throw new Error('Failed to fetch categories');
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        toast({ title: 'Error', description: 'Could not fetch categories.', variant: 'destructive' });
+      }
+    };
+
+    fetchCategories();
+
     if (expenseId) {
       setLoading(true);
       fetch(`/api/expenses/${expenseId}`)
@@ -69,12 +86,12 @@ export default function EditExpensePage() {
           }
           return res.json();
         })
-        .then((data: PrismaExpense) => {
+        .then((data: Expense) => {
           setExpense(data);
           const formData: ExpenseFormData = {
             ...data,
-            amount: Number(data.amount), // Ensure number type
-            expenseDate: new Date(data.expenseDate).toISOString().split('T')[0], // Format for date input
+            amount: Number(data.amount),
+            expenseDate: new Date(data.expenseDate).toISOString().split('T')[0],
           };
           reset(formData);
           setApiError(null);
@@ -151,9 +168,26 @@ export default function EditExpensePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Category */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-1">{t("categoryField")}</label>
-                <Controller name="category" control={control} render={({ field }) => <Input id="category" {...field} placeholder={t("categoryPlaceholder")} />} />
-                {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
+                <label htmlFor="categoryId" className="block text-sm font-medium mb-1">{t("categoryField")}</label>
+                <Controller
+                  name="categoryId"
+                  control={control}
+                  render={({ field }) => (
+                    <select
+                      id="categoryId"
+                      {...field}
+                      className="block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">{t("categoryPlaceholder")}</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                />
+                {errors.categoryId && <p className="text-sm text-destructive mt-1">{errors.categoryId.message}</p>}
               </div>
 
               {/* Amount */}
