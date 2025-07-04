@@ -18,10 +18,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 const editExpenseFormSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   categoryId: z.string().min(1, 'Category is required'),
-  amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, '')),
-    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
-  ),
+  totalAmount: z.number().positive('Amount must be positive'),
   expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
   }),
@@ -29,6 +26,9 @@ const editExpenseFormSchema = z.object({
   receipt: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
 });
+
+// Use Zod inferred type to ensure perfect alignment
+type EditExpenseFormData = z.infer<typeof editExpenseFormSchema>;
 
 interface Category {
   id: string;
@@ -49,12 +49,12 @@ export default function EditExpensePage() {
 
   const expenseId = params?.id as string;
 
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
+  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EditExpenseFormData>({
     resolver: zodResolver(editExpenseFormSchema),
     defaultValues: {
       description: '',
       categoryId: '',
-      amount: 0,
+      totalAmount: 0,
       expenseDate: new Date().toISOString().split('T')[0],
       paymentMethod: '',
       receipt: '',
@@ -88,10 +88,14 @@ export default function EditExpensePage() {
         })
         .then((data: Expense) => {
           setExpense(data);
-          const formData: ExpenseFormData = {
-            ...data,
-            amount: Number(data.amount),
+          const formData: EditExpenseFormData = {
+            description: data.description,
+            categoryId: data.categoryId,
+            totalAmount: data.totalAmount,
             expenseDate: new Date(data.expenseDate).toISOString().split('T')[0],
+            paymentMethod: data.paymentMethod,
+            receipt: data.receipt,
+            notes: data.notes,
           };
           reset(formData);
           setApiError(null);
@@ -105,14 +109,14 @@ export default function EditExpensePage() {
     }
   }, [expenseId, reset, t, toast]);
 
-  const onSubmit = async (data: ExpenseFormData) => {
+  const onSubmit = async (data: EditExpenseFormData) => {
     if (!expenseId) return;
     setApiError(null);
 
     const payload = {
       ...data,
       expenseDate: new Date(data.expenseDate).toISOString().split('T')[0],
-      amount: Number(data.amount)
+      totalAmount: Number(data.totalAmount)
     };
 
     try {
@@ -129,12 +133,13 @@ export default function EditExpensePage() {
 
       toast({
         title: t("expenseUpdatedTitle") || "Expense Updated",
-        description: t("expenseUpdatedDesc", { description: data.description }) || `Expense "${data.description}" updated.`,
+        description: t("expenseUpdatedDesc") || `Expense "${data.description}" updated.`,
       });
       router.push("/expenses");
-    } catch (err: any) {
-      setApiError(err.message);
-      toast({ variant: "destructive", title: t("errorUpdatingExpenseTitle"), description: err.message });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setApiError(errorMessage);
+      toast({ variant: "destructive", title: t("errorUpdatingExpenseTitle"), description: errorMessage });
     }
   };
 
@@ -147,7 +152,7 @@ export default function EditExpensePage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">{t("editExpenseTitle")}</h2>
-          <p className="text-muted-foreground">{t("editExpenseDescription", { description: expense.description })}</p>
+          <p className="text-muted-foreground">{t("editExpenseDescription") || `Edit expense: ${expense.description}`}</p>
         </div>
         <Link href="/expenses">
           <Button variant="outline">{common("backToList")}</Button>
@@ -194,11 +199,21 @@ export default function EditExpensePage() {
               <div>
                 <label htmlFor="amount" className="block text-sm font-medium mb-1">{t("amountField")}</label>
                 <Controller
-                  name="amount"
+                  name="totalAmount"
                   control={control}
-                  render={({ field }) => <Input id="amount" type="number" step="0.01" {...field} placeholder={common("placeholderZeroAmount")} onChange={e => field.onChange(parseFloat(e.target.value))} />}
+                  render={({ field }) => (
+                    <Input 
+                      id="amount" 
+                      type="number" 
+                      step="0.01" 
+                      {...field} 
+                      value={field.value?.toString() || ''}
+                      placeholder={common("placeholderZeroAmount")} 
+                      onChange={e => field.onChange(parseFloat(e.target.value) || 0)} 
+                    />
+                  )}
                 />
-                {errors.amount && <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>}
+                {errors.totalAmount && <p className="text-sm text-destructive mt-1">{errors.totalAmount.message}</p>}
               </div>
 
               {/* Expense Date */}

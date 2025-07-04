@@ -21,10 +21,7 @@ const attendanceFormSchema = z.object({
   employeeId: z.string().min(1, "Employee is required"),
   date: z.string().min(1, "Date is required"), // Using string for form handling
   status: z.enum(AttendanceStatusValues, { required_error: "Status is required." }),
-  hoursWorked: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
-    z.number().min(0).max(24).nullable().optional()
-  ),
+  hoursWorked: z.number().min(0).max(24).nullable().optional(),
   notes: z.string().optional().nullable(),
 });
 
@@ -63,8 +60,9 @@ export default function AttendancePage() {
         const res = await fetch("/api/hr/employees");
         if (!res.ok) throw new Error("Failed to fetch employees");
         setEmployees(await res.json());
-      } catch (error: any) {
-        toast({ variant: "destructive", title: "Error", description: error.message });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
       }
     };
     fetchEmployees();
@@ -82,8 +80,9 @@ export default function AttendancePage() {
       const res = await fetch(`/api/hr/attendance?${queryParams.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch attendance records");
       setAttendanceRecords(await res.json());
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
       setLoadingRecords(false);
     }
@@ -102,8 +101,9 @@ export default function AttendancePage() {
         const res = await fetch(`/api/hr/attendance?${queryParams.toString()}`);
         if (!res.ok) throw new Error("Failed to fetch attendance records");
         setAttendanceRecords(await res.json());
-      } catch (error: any) {
-        toast({ variant: "destructive", title: "Error", description: error.message });
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
       } finally {
         setLoadingRecords(false);
       }
@@ -141,8 +141,9 @@ export default function AttendancePage() {
       });
       resetFormAndFilters();
       fetchAttendanceRecords(filterEmployeeId || undefined, filterDate); // Refresh list
-    } catch (err: any) {
-      toast({ variant: "destructive", title: t("error"), description: err.message });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      toast({ variant: "destructive", title: t("error"), description: errorMessage });
     }
   };
 

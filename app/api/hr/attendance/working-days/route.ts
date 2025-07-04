@@ -134,7 +134,7 @@ export async function GET(req: NextRequest) {
       // Group records by employee and calculate for each
       const employeeWorkingDaysMap = new Map<string, { employee: any; records: any[] }>();
 
-      attendanceRecords.forEach(record => {
+      attendanceRecords.forEach((record: any) => {
         if (!employeeWorkingDaysMap.has(record.employeeId)) {
           employeeWorkingDaysMap.set(record.employeeId, { employee: record.employee, records: [] });
         }

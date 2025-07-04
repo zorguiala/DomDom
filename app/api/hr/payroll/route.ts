@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Deserialize JSON string fields
-    const formattedRecords: PayrollData[] = payrollRecords.map(record => {
+    const formattedRecords: PayrollData[] = payrollRecords.map((record) => {
       let bonusesOrOvertime: PayrollAdjustmentItem[] = [];
       let deductions: PayrollAdjustmentItem[] = [];
 

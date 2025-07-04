@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const categorySchema = z.object({
@@ -17,7 +17,7 @@ export async function GET(
       return new NextResponse('Category ID is required', { status: 400 });
     }
 
-    const category = await db.expenseCategory.findUnique({
+    const category = await prisma.expenseCategory.findUnique({
       where: {
         id: params.categoryId,
       },
@@ -46,7 +46,7 @@ export async function PATCH(
     const body = await req.json();
     const { name, description } = categorySchema.parse(body);
 
-    const category = await db.expenseCategory.update({
+    const category = await prisma.expenseCategory.update({
       where: {
         id: params.categoryId,
       },
@@ -76,7 +76,7 @@ export async function DELETE(
     }
 
     // Check if any expenses are using this category
-    const existingExpenses = await db.expense.findFirst({
+    const existingExpenses = await prisma.expense.findFirst({
       where: {
         categoryId: params.categoryId,
       },
@@ -89,7 +89,7 @@ export async function DELETE(
       );
     }
 
-    const category = await db.expenseCategory.delete({
+    const category = await prisma.expenseCategory.delete({
       where: {
         id: params.categoryId,
       },

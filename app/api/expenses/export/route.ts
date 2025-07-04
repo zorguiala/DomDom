@@ -15,7 +15,7 @@ const escapeCsvField = (field: any): string => {
 
 export async function GET(req: NextRequest) {
   try {
-    const expenses: ExpenseWithCategory[] = await prisma.expense.findMany({
+    const expenses = await prisma.expense.findMany({
       include: {
         category: true,
       },
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         escapeCsvField(expense.id),
         escapeCsvField(expense.description),
         escapeCsvField(expense.category.name),
-        escapeCsvField(expense.amount),
+        escapeCsvField(expense.totalAmount),
         escapeCsvField(expenseDate),
         escapeCsvField(expense.paymentMethod),
         escapeCsvField(expense.receipt),

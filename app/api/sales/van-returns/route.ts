@@ -121,15 +121,17 @@ export async function POST(request: NextRequest) {
       });
 
       // Update van operation
-      await tx.vanSalesOperation.update({
-        where: { id: sale.vanOperation.id },
-        data: {
-          returnTime: new Date(),
-          totalProductsSold: totalSoldAmount,
-          totalReturned: totalReturnedAmount,
-          status: "COMPLETED",
-        },
-      });
+      if (sale.vanOperation) {
+        await tx.vanSalesOperation.update({
+          where: { id: sale.vanOperation.id },
+          data: {
+            returnTime: new Date(),
+            totalProductsSold: totalSoldAmount,
+            totalReturned: totalReturnedAmount,
+            status: "COMPLETED",
+          },
+        });
+      }
 
       return updatedSale;
     });

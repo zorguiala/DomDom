@@ -24,7 +24,7 @@ async function getEmployeeWorkingDays(employeeId: string, month: number, year: n
   });
 
   let totalDays = 0;
-  records.forEach(record => {
+  records.forEach((record: any) => {
     if (record.status === "PRESENT") totalDays += 1;
     else if (record.status === "HALF_DAY") totalDays += 0.5;
   });
@@ -46,7 +46,7 @@ async function getEmployeeHours(employeeId: string, month: number, year: number)
 
   // Calculate total hours from attendance records
   let totalHours = 0;
-  records.forEach(record => {
+  records.forEach((record: any) => {
     if (record.hoursWorked) {
       totalHours += record.hoursWorked;
     } else {

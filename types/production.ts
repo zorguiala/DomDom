@@ -1,4 +1,4 @@
-import { ProductionOrder, Product, BillOfMaterials, BomComponent } from "@prisma/client";
+import type { ProductionOrder, Product, BillOfMaterials, BomComponent } from "@prisma/client";
 
 // Base types from Prisma
 type BaseProduct = Product;

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { PayrollAdjustmentItem, UpdatePayrollRequest } from "@/types/hr";
+import { PayrollAdjustmentItem, UpdatePayrollRequest, PayrollData } from "@/types/hr";
 
 // Zod schema for a single PayrollAdjustmentItem
 const payrollAdjustmentItemSchema = z.object({
@@ -64,7 +64,7 @@ export async function PUT(
       return NextResponse.json({ error: "Payroll record not found" }, { status: 404 });
     }
 
-    let processedData: Partial<UpdatePayrollRequest> & { netSalary?: number, bonusesOrOvertime?: string, deductions?: string } = {};
+    let processedData: any = {};
 
     if (dataToUpdate.baseSalary !== undefined) {
         processedData.baseSalary = dataToUpdate.baseSalary;

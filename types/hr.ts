@@ -1,4 +1,4 @@
-import { Employee } from "@prisma/client"; // Assuming prisma generate would have run
+import type { Employee } from "@prisma/client";
 
 // For Employee form data - adjust fields as needed for your form
 export interface EmployeeFormData {
@@ -41,7 +41,7 @@ export interface AttendanceFormData {
 
 // For displaying attendance records, potentially with employee details
 // Assuming 'Attendance' is the Prisma model type
-import { Attendance as PrismaAttendance } from "@prisma/client";
+import type { Attendance as PrismaAttendance } from "@prisma/client";
 
 export type AttendanceWithEmployee = PrismaAttendance & {
   employee?: {
@@ -51,7 +51,7 @@ export type AttendanceWithEmployee = PrismaAttendance & {
 };
 
 // --- Payroll Types ---
-import { Payroll as PrismaPayroll, Employee as PrismaEmployee } from "@prisma/client";
+import type { Payroll as PrismaPayroll, Employee as PrismaEmployee } from "@prisma/client";
 
 export interface PayrollGenerationRequest {
   month: number; // 1-12

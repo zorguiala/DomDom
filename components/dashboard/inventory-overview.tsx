@@ -49,7 +49,7 @@ export function InventoryOverview() {
   if (error) {
     return (
       <div className="col-span-full text-red-500 p-4 border border-red-200 bg-red-50 rounded-md">
-        Failed to load inventory overview: {error}
+        Failed to load inventory overview: {error?.message || 'Unknown error'}
       </div>
     );
   }

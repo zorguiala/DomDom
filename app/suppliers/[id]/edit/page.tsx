@@ -46,7 +46,7 @@ export default function EditSupplierPage({ params }: { params: Promise<{ id: str
   }, [params]);
 
   // Use React Query to fetch supplier data
-  const { data: supplier, isLoading, error } = useGetSupplier(supplierId);
+  const { data: supplier, isPending, error } = useGetSupplier(supplierId);
   const updateSupplierMutation = useUpdateSupplier();
 
   // Update form data when supplier data is loaded
@@ -119,7 +119,7 @@ export default function EditSupplierPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="container mx-auto py-8">
         <div className="text-center">{common("loading")}</div>
@@ -207,9 +207,9 @@ export default function EditSupplierPage({ params }: { params: Promise<{ id: str
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={updateSupplierMutation.isLoading}>
+              <Button type="submit" disabled={updateSupplierMutation.isPending}>
                 <Save className="h-4 w-4 mr-2" />
-                {updateSupplierMutation.isLoading ? common("updating") : common("update")}
+                {updateSupplierMutation.isPending ? common("updating") : common("update")}
               </Button>
               <Button 
                 type="button" 

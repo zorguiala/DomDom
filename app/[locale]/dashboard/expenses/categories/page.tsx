@@ -37,7 +37,7 @@ import { useToast } from '@/hooks/use-toast';
 const categorySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -104,14 +104,19 @@ export default function ExpenseCategoriesPage() {
       setIsDialogOpen(false);
       setEditingCategory(null);
       form.reset();
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    form.reset(category);
+    form.reset({
+      id: category.id,
+      name: category.name,
+      description: category.description ?? '',
+    });
     setIsDialogOpen(true);
   };
 
@@ -128,8 +133,9 @@ export default function ExpenseCategoriesPage() {
 
       toast({ title: 'Category Deleted', description: 'Category has been successfully deleted.' });
       fetchCategories();
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
     }
   };
 

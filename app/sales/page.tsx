@@ -23,7 +23,7 @@ export default function SalesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | SaleType>("ALL");
   
-  const { data: sales = [], isLoading, error, refetch } = useSales();
+  const { data: sales = [], isPending, error, refetch } = useSales();
 
   // Filter sales based on search and type
   const filteredSales = sales.filter(
@@ -61,8 +61,8 @@ export default function SalesPage() {
           <p className="text-muted-foreground">{t("description")}</p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button onClick={() => refetch()} variant="outline" disabled={isLoading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  <Button onClick={() => refetch()} variant="outline" disabled={isPending}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
             {common("refresh")}
           </Button>
           <Button variant="outline">
@@ -113,7 +113,7 @@ export default function SalesPage() {
       </div>
 
       {/* KPI Cards */}
-      {isLoading ? (
+              {isPending ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
@@ -141,7 +141,7 @@ export default function SalesPage() {
               <CardDescription>
                 {filteredSales.length === sales.length
                   ? t("allSalesRecords")
-                  : t("filteredFromTotal", { filtered: filteredSales.length, total: sales.length })}
+                  : t("filteredFromTotal")}
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
@@ -157,7 +157,7 @@ export default function SalesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isPending ? (
             <div className="flex items-center justify-center h-[200px]">
               <RefreshCw className="h-8 w-8 animate-spin" />
             </div>

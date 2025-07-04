@@ -1,6 +1,6 @@
 
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const categorySchema = z.object({
@@ -10,7 +10,7 @@ const categorySchema = z.object({
 
 export async function GET() {
   try {
-    const categories = await db.expenseCategory.findMany({
+    const categories = await prisma.expenseCategory.findMany({
       orderBy: {
         name: 'asc',
       },
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, description } = categorySchema.parse(body);
 
-    const category = await db.expenseCategory.create({
+    const category = await prisma.expenseCategory.create({
       data: {
         name,
         description,

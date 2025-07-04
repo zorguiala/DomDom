@@ -20,10 +20,7 @@ import { useEffect, useState } from 'react';
 const newExpenseFormSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   categoryId: z.string().min(1, 'Category is required'),
-  amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, '')),
-    z.number({ invalid_type_error: 'Amount must be a number' }).positive('Amount must be positive')
-  ),
+  totalAmount: z.number().positive('Amount must be positive'),
   expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
   }),
@@ -31,6 +28,8 @@ const newExpenseFormSchema = z.object({
   receipt: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
 });
+
+type NewExpenseFormData = z.infer<typeof newExpenseFormSchema>;
 
 interface Category {
   id: string;
@@ -44,12 +43,12 @@ export default function AddExpensePage() {
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<ExpenseFormData>({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<NewExpenseFormData>({
     resolver: zodResolver(newExpenseFormSchema),
     defaultValues: {
       description: '',
       categoryId: '',
-      amount: 0,
+      totalAmount: 0,
       expenseDate: new Date().toISOString().split('T')[0],
       paymentMethod: '',
       receipt: '',
@@ -71,12 +70,12 @@ export default function AddExpensePage() {
     fetchCategories();
   }, [toast]);
 
-  const onSubmit = async (data: ExpenseFormData) => {
+  const onSubmit = async (data: NewExpenseFormData) => {
     try {
       const payload = {
         ...data,
         expenseDate: new Date(data.expenseDate).toISOString().split('T')[0],
-        amount: Number(data.amount)
+        totalAmount: Number(data.totalAmount)
       };
 
       const res = await fetch("/api/expenses", {
@@ -92,14 +91,15 @@ export default function AddExpensePage() {
 
       toast({
         title: t("expenseCreatedTitle") || "Expense Created",
-        description: t("expenseCreatedDesc", { description: data.description }) || `Expense "${data.description}" created.`,
+        description: t("expenseCreatedDesc") || `Expense "${data.description}" created.`,
       });
       router.push("/expenses");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       toast({
         variant: "destructive",
         title: t("errorCreatingExpenseTitle") || "Creation Failed",
-        description: err.message,
+        description: errorMessage,
       });
     }
   };
@@ -155,11 +155,11 @@ export default function AddExpensePage() {
               <div>
                 <label htmlFor="amount" className="block text-sm font-medium mb-1">{t("amountField")}</label>
                 <Controller
-                  name="amount"
+                  name="totalAmount"
                   control={control}
                   render={({ field }) => <Input id="amount" type="number" step="0.01" {...field} placeholder={common("placeholderZeroAmount")} onChange={e => field.onChange(parseFloat(e.target.value))} />}
                 />
-                {errors.amount && <p className="text-sm text-destructive mt-1">{errors.amount.message}</p>}
+                {errors.totalAmount && <p className="text-sm text-destructive mt-1">{errors.totalAmount.message}</p>}
               </div>
 
               {/* Expense Date */}

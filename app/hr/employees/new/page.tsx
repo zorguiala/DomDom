@@ -77,7 +77,7 @@ export default function AddEmployeePage() {
 
       toast({
         title: t("employeeCreatedTitle") || "Employee Created",
-        description: t("employeeCreatedDesc", { name: data.name }) || `Employee ${data.name} has been successfully created.`,
+        description: t("employeeCreatedDesc") || `Employee ${data.name} has been successfully created.`,
       });
       router.push("/hr/employees"); // Redirect to employee list
     } catch (err: any) {

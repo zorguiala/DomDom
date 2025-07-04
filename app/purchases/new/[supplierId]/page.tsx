@@ -21,7 +21,7 @@ interface OrderItem {
 }
 
 function OrderForm({ supplierId }: { supplierId: string }) {
-  const { data: supplier, isLoading: loadingSupplier } = useGetSupplier(supplierId);
+  const { data: supplier, isPending: loadingSupplier } = useGetSupplier(supplierId);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [notes, setNotes] = useState("");
   const [poNumber] = useState(() => `PO-${Date.now()}`);

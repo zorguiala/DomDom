@@ -27,7 +27,7 @@ export default function PurchasesPage() {
     from: addDays(new Date(), -30),
     to: new Date(),
   });
-  const { data: purchases = [], isLoading, error } = useGetPurchases();
+  const { data: purchases = [], isPending, error } = useGetPurchases();
 
   // Filter purchases by date range
   const filteredPurchases = useMemo(() => {
@@ -149,7 +149,7 @@ export default function PurchasesPage() {
           <CardDescription>{t("recentOrdersDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {isPending ? (
             <div className="text-sm text-muted-foreground">{common("loading")}</div>
           ) : error ? (
             <div className="text-sm text-red-600">{common("error")}</div>

@@ -10,7 +10,7 @@ export async function GET() {
     });
 
     // Calculate stock status for each product
-    const productsWithStatus = products.map((product) => ({
+    const productsWithStatus = products.map((product: any) => ({
       ...product,
       status:
         product.qtyOnHand === 0

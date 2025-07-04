@@ -10,7 +10,7 @@ import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-radix";
 import { useToast } from "@/hooks/use-toast";
 import { EmployeeFormData } from "@/types/hr"; // Using the shared type
 import { Employee } from "@prisma/client"; // For fetching data
@@ -18,8 +18,9 @@ import { DatePicker } from "@/components/ui/date-picker"; // Import DatePicker
 
 // Zod schema for editing employee form validation
 const editEmployeeFormSchema = z.object({
-  employeeId: z.string().min(1, "Employee ID is required").optional(),
-  name: z.string().min(2, "Name must be at least 2 characters").optional(),
+  id: z.string().optional(),
+  employeeId: z.string().min(1, "Employee ID is required"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable().or(z.literal('')),
   department: z.string().optional().nullable().or(z.literal('')),
@@ -28,10 +29,11 @@ const editEmployeeFormSchema = z.object({
     (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
     z.number().positive("Salary must be a positive number").nullable().optional()
   ),
-  hireDate: z.date({ required_error: "Hire date is required." }).optional(), // Changed to z.date()
+  hireDate: z.string().min(1, "Hire date is required"),
   isActive: z.boolean().optional(),
 });
 
+type EditEmployeeFormData = z.infer<typeof editEmployeeFormSchema>;
 
 export default function EditEmployeePage() {
   const router = useRouter();
@@ -46,7 +48,7 @@ export default function EditEmployeePage() {
 
   const employeeIdParam = params?.id as string;
 
-  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EmployeeFormData>({
+  const { control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EditEmployeeFormData>({
     resolver: zodResolver(editEmployeeFormSchema),
     defaultValues: { // Default values will be overridden by fetched data
       employeeId: "",
@@ -75,7 +77,7 @@ export default function EditEmployeePage() {
         .then((data: Employee) => {
           setEmployee(data);
           // Pre-fill form with fetched data
-          const formData: EmployeeFormData = {
+          const formData: EditEmployeeFormData = {
             ...data,
             salary: data.salary ?? null,
             // Format date for input type="date" which expects "YYYY-MM-DD"
@@ -97,11 +99,11 @@ export default function EditEmployeePage() {
     }
   }, [employeeIdParam, reset, t, toast]);
 
-  const onSubmit = async (data: EmployeeFormData) => {
+  const onSubmit = async (data: EditEmployeeFormData) => {
     if (!employeeIdParam) return;
     setApiError(null);
 
-    const payload: Partial<EmployeeFormData> = {
+    const payload: Partial<EditEmployeeFormData> = {
         ...data,
         salary: data.salary ? Number(data.salary) : null,
         // Convert hireDate from Date object (from react-hook-form with DatePicker) to string for API
@@ -122,7 +124,7 @@ export default function EditEmployeePage() {
 
       toast({
         title: t("employeeUpdatedTitle") || "Employee Updated",
-        description: t("employeeUpdatedDesc", { name: data.name || employee?.name }) || `Employee ${data.name || employee?.name} has been updated.`,
+        description: t("employeeUpdatedDesc") || `Employee ${data.name || employee?.name} has been updated.`,
       });
       router.push("/hr/employees"); // Redirect to employee list
     } catch (err: any) {

@@ -159,6 +159,8 @@ export async function POST(request: NextRequest) {
           name,
           description: description || null,
           finalProductId,
+          outputQuantity: 1, // Default to 1 if not provided
+          outputUnit: "unit", // Default unit if not provided
           // finalProduct: { connect: { id: finalProductId }} // This is how you'd connect if relation was setup this way.
                                                           // But it's usually finalProductId field and then separate query for product.
         },

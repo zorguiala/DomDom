@@ -19,7 +19,7 @@ export default function SuppliersPage() {
   const t = useTranslations("suppliers");
   const common = useTranslations("common");
   
-  const { data: suppliers = [], isLoading, refetch } = useGetSuppliers();
+  const { data: suppliers = [], isPending, refetch } = useGetSuppliers();
 
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -62,7 +62,7 @@ export default function SuppliersPage() {
     }
   };
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="container mx-auto py-8">
         <div className="text-center">{common("loading")}</div>

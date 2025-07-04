@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select } from "@/components/ui/select-radix";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
@@ -152,15 +152,15 @@ export default function EditPurchasePage({ params }: { params: { id: string } })
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Select 
-                    className="mt-1 bg-white"
+                  <select 
+                    className="mt-1 bg-white px-3 py-2 border border-gray-300 rounded-md"
                     value={status}
                     onChange={(e) => handleStatusChange(e.target.value)}
                   >
                     <option value="DRAFT" disabled={!isDraft}>Draft</option>
                     <option value="CONFIRMED" disabled={isReceived}>Confirmed</option>
                     <option value="RECEIVED" disabled={!canReceive && !isReceived}>Received</option>
-                  </Select>
+                  </select>
                   {status === "CONFIRMED" && isDraft && (
                     <p className="text-sm text-muted-foreground mt-1">
                       Confirming will automatically set received quantities equal to ordered quantities

@@ -31,9 +31,8 @@ export default function ProfilePage() {
       setCurrentName(session.user.name || "");
       setEmail(session.user.email || "");
       // Fallback: try to get role from session.user or from localStorage/session
-      // @ts-ignore
       setRole(
-        (session.user.role as string) ||
+        (session.user as any)?.role ||
           localStorage.getItem("userRole") ||
           "user",
       );

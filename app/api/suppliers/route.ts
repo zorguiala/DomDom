@@ -25,15 +25,15 @@ export async function GET() {
     });
 
     // Transform data to include statistics
-    const suppliersWithStats = suppliers.map(supplier => {
+    const suppliersWithStats = suppliers.map((supplier: any) => {
       const totalOrders = supplier.purchases.length;
       const lastOrder = supplier.purchases[0] || null;
       
       // Calculate average cost per unit from last order
       let avgCostPerUnit = 0;
       if (lastOrder && lastOrder.items.length > 0) {
-        const totalItems = lastOrder.items.reduce((sum, item) => sum + item.qtyOrdered, 0);
-        const totalCost = lastOrder.items.reduce((sum, item) => sum + (item.qtyOrdered * item.unitCost), 0);
+        const totalItems = lastOrder.items.reduce((sum: number, item: any) => sum + item.qtyOrdered, 0);
+        const totalCost = lastOrder.items.reduce((sum: number, item: any) => sum + (item.qtyOrdered * item.unitCost), 0);
         avgCostPerUnit = totalItems > 0 ? totalCost / totalItems : 0;
       }
 

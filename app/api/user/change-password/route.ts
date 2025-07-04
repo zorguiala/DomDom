@@ -1,12 +1,12 @@
 // app/api/user/change-password/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
     return NextResponse.json({ message: 'Authentication secret is not configured.' }, { status: 500 });

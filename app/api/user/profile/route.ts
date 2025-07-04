@@ -1,11 +1,11 @@
 // app/api/user/profile/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
     return NextResponse.json({ message: 'Authentication secret is not configured.' }, { status: 500 });

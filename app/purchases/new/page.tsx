@@ -15,7 +15,7 @@ function SupplierSelector() {
   const t = useTranslations("purchases");
   const common = useTranslations("common");
   
-  const { data: suppliers = [], isLoading } = useGetSuppliers();
+  const { data: suppliers = [], isPending } = useGetSuppliers();
 
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,7 +26,7 @@ function SupplierSelector() {
     router.push(`/purchases/new/${supplierId}`);
   };
 
-  if (isLoading) {
+  if (isPending) {
     return <div>{common("loading")}</div>;
   }
 

@@ -32,11 +32,19 @@ export function SaleForm({ type }: SaleFormProps) {
   const { data: products = [] } = useProducts({ finishedGoodsOnly: true });
   
   // Form state
-  const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [driverName, setDriverName] = useState("");
-  const [vehicleNumber, setVehicleNumber] = useState("");
+  const [customerInfo, setCustomerInfo] = useState({
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    customerAddress: "",
+    notes: "",
+  });
+  const [vanInfo, setVanInfo] = useState({
+    driverName: "",
+    route: "",
+    vanId: "",
+    isVanOperation: type === "DOOR_TO_DOOR",
+  });
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<any[]>([]);
   
@@ -45,11 +53,11 @@ export function SaleForm({ type }: SaleFormProps) {
   const handleSubmit = () => {
     const input: CreateSaleInput = {
       type,
-      customerName: customerName || (type === "DOOR_TO_DOOR" ? "Van Sale" : ""),
-      customerEmail,
-      customerPhone,
-      driverName,
-      vehicleNumber,
+      customerName: customerInfo.customerName || (type === "DOOR_TO_DOOR" ? "Van Sale" : ""),
+      customerEmail: customerInfo.customerEmail,
+      customerPhone: customerInfo.customerPhone,
+      driverName: vanInfo.driverName,
+      vehicleNumber: vanInfo.vanId,
       notes,
       items: items.map(item => ({
         productId: item.productId,
@@ -66,8 +74,8 @@ export function SaleForm({ type }: SaleFormProps) {
   };
   
   const isValid = () => {
-    if (type === "CLASSIC" && !customerName) return false;
-    if (type === "DOOR_TO_DOOR" && (!driverName || !vehicleNumber)) return false;
+    if (type === "CLASSIC" && !customerInfo.customerName) return false;
+    if (type === "DOOR_TO_DOOR" && (!vanInfo.driverName || !vanInfo.route)) return false;
     return items.length > 0;
   };
   
@@ -96,19 +104,14 @@ export function SaleForm({ type }: SaleFormProps) {
         {/* Customer/Driver Information */}
         {type === "DOOR_TO_DOOR" ? (
           <VanInfoForm
-            driverName={driverName}
-            vehicleNumber={vehicleNumber}
-            onDriverNameChange={setDriverName}
-            onVehicleNumberChange={setVehicleNumber}
+            vanInfo={vanInfo}
+            onVanInfoChange={setVanInfo}
+            showVanFields={true}
           />
         ) : (
           <CustomerInfoForm
-            customerName={customerName}
-            customerEmail={customerEmail}
-            customerPhone={customerPhone}
-            onNameChange={setCustomerName}
-            onEmailChange={setCustomerEmail}
-            onPhoneChange={setCustomerPhone}
+            customerInfo={customerInfo}
+            onCustomerInfoChange={setCustomerInfo}
           />
         )}
 
@@ -117,7 +120,6 @@ export function SaleForm({ type }: SaleFormProps) {
           products={products}
           items={items}
           onItemsChange={setItems}
-          saleType={type}
         />
       </div>
 
@@ -138,7 +140,7 @@ export function SaleForm({ type }: SaleFormProps) {
         </Card>
 
         <SaleSummary
-          totals={totals}
+          totals={{...totals, itemCount: items.length}}
           saleType={type}
           onSubmit={handleSubmit}
           isSubmitting={createSale.isPending}
