@@ -6,475 +6,407 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting database seed...");
 
-  // Clear existing data
-  await prisma.stockMovement.deleteMany();
-  await prisma.bomComponent.deleteMany();
-  await prisma.billOfMaterials.deleteMany();
-  await prisma.saleItem.deleteMany();
-  await prisma.sale.deleteMany();
-  await prisma.purchaseItem.deleteMany();
-  await prisma.purchase.deleteMany();
-  await prisma.productionOrder.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.expenseCategory.deleteMany();
+  try {
+    // Check if database is already seeded
+    const existingUsers = await prisma.user.count();
+    if (existingUsers > 0) {
+      console.log("ℹ️ Database already contains data. Skipping seed to prevent duplicates.");
+      console.log(`Found ${existingUsers} existing users.`);
+      return;
+    }
 
-  // Create users
-  const hashedPassword = await bcrypt.hash("password123", 10);
+    console.log("🔄 Database is empty. Starting fresh seed...");
 
-  const adminUser = await prisma.user.create({
-    data: {
-      email: "admin@domdom.com",
-      passwordHash: hashedPassword,
-      name: "Admin User",
-      role: "ADMIN",
-    },
-  });
+    // Clear existing data in the correct order (respecting foreign key constraints)
+    console.log("🧹 Clearing existing data...");
+    
+    // Delete in reverse dependency order to avoid foreign key constraint violations
+    await prisma.stockMovement.deleteMany().catch(() => console.log("- No stock movements to delete"));
+    await prisma.bomComponent.deleteMany().catch(() => console.log("- No BOM components to delete"));
+    await prisma.billOfMaterials.deleteMany().catch(() => console.log("- No BOMs to delete"));
+    await prisma.saleItem.deleteMany().catch(() => console.log("- No sale items to delete"));
+    await prisma.sale.deleteMany().catch(() => console.log("- No sales to delete"));
+    await prisma.purchaseItem.deleteMany().catch(() => console.log("- No purchase items to delete"));
+    await prisma.purchase.deleteMany().catch(() => console.log("- No purchases to delete"));
+    await prisma.productionOrder.deleteMany().catch(() => console.log("- No production orders to delete"));
+    await prisma.product.deleteMany().catch(() => console.log("- No products to delete"));
+    await prisma.expense.deleteMany().catch(() => console.log("- No expenses to delete"));
+    await prisma.expenseCategory.deleteMany().catch(() => console.log("- No expense categories to delete"));
+    await prisma.user.deleteMany().catch(() => console.log("- No users to delete"));
 
-  const salesUser = await prisma.user.create({
-    data: {
-      email: "sales@domdom.com",
-      passwordHash: hashedPassword,
-      name: "Sales Manager",
-      role: "SALES",
-    },
-  });
+    console.log("✅ Cleanup completed");
 
-  const inventoryUser = await prisma.user.create({
-    data: {
-      email: "inventory@domdom.com",
-      passwordHash: hashedPassword,
-      name: "Inventory Manager",
-      role: "INVENTORY",
-    },
-  });
+    // Create users
+    console.log("👤 Creating users...");
+    const hashedPassword = await bcrypt.hash("password123", 10);
 
-  console.log("✅ Users created");
-
-  // Create Expense Categories
-  const expenseCategories = await prisma.expenseCategory.createMany({
-    data: [
-      { name: "Office Supplies", description: "Pens, paper, toner, etc." },
-      { name: "Travel", description: "Flights, hotels, rental cars, etc." },
-      { name: "Food", description: "Team lunches, client dinners, etc." },
-      { name: "Utilities", description: "Electricity, water, internet, etc." },
-      { name: "Software", description: "SaaS subscriptions, licenses, etc." },
-    ],
-  });
-
-  console.log("✅ Expense Categories created");
-
-  // Create products
-  const products = await prisma.product.createMany({
-    data: [
-      // Raw Materials
-      {
-        name: "Steel Sheet 1mm",
-        sku: "STL-001",
-        category: "Raw Materials",
-        unit: "kg",
-        priceSell: 5.5,
-        priceCost: 3.2,
-        qtyOnHand: 500,
-        minQty: 100,
-        isRawMaterial: true,
-        isFinishedGood: false,
+    const adminUser = await prisma.user.create({
+      data: {
+        email: "admin@domdom.com",
+        passwordHash: hashedPassword,
+        name: "Admin User",
+        role: "ADMIN",
       },
-      {
-        name: "Aluminum Rod 10mm",
-        sku: "ALU-001",
-        category: "Raw Materials",
-        unit: "m",
-        priceSell: 12.3,
-        priceCost: 8.5,
-        qtyOnHand: 200,
-        minQty: 50,
-        isRawMaterial: true,
-        isFinishedGood: false,
-      },
-      {
-        name: "Plastic Granules PP",
-        sku: "PLA-001",
-        category: "Raw Materials",
-        unit: "kg",
-        priceSell: 2.8,
-        priceCost: 1.9,
-        qtyOnHand: 1000,
-        minQty: 200,
-        isRawMaterial: true,
-        isFinishedGood: false,
-      },
-      {
-        name: "Electronic Component A",
-        sku: "ELE-001",
-        category: "Components",
-        unit: "pcs",
-        priceSell: 15.0,
-        priceCost: 9.5,
-        qtyOnHand: 150,
-        minQty: 30,
-        isRawMaterial: true,
-        isFinishedGood: false,
-      },
-      {
-        name: "Motor Assembly 12V",
-        sku: "MOT-001",
-        category: "Components",
-        unit: "pcs",
-        priceSell: 85.0,
-        priceCost: 65.0,
-        qtyOnHand: 25,
-        minQty: 10,
-        isRawMaterial: true,
-        isFinishedGood: false,
-      },
-      // Finished Goods
-      {
-        name: "Industrial Widget Type A",
-        sku: "WID-A001",
-        category: "Finished Goods",
-        unit: "pcs",
-        priceSell: 125.0,
-        priceCost: 75.0,
-        qtyOnHand: 45,
-        minQty: 20,
-        isRawMaterial: false,
-        isFinishedGood: true,
-      },
-      {
-        name: "Custom Assembly B",
-        sku: "ASM-B001",
-        category: "Finished Goods",
-        unit: "pcs",
-        priceSell: 250.0,
-        priceCost: 180.0,
-        qtyOnHand: 12,
-        minQty: 5,
-        isRawMaterial: false,
-        isFinishedGood: true,
-      },
-      {
-        name: "Electronic Device C",
-        sku: "DEV-C001",
-        category: "Finished Goods",
-        unit: "pcs",
-        priceSell: 450.0,
-        priceCost: 320.0,
-        qtyOnHand: 8,
-        minQty: 3,
-        isRawMaterial: false,
-        isFinishedGood: true,
-      },
-      {
-        name: "Premium Tool Kit",
-        sku: "TOO-001",
-        category: "Finished Goods",
-        unit: "set",
-        priceSell: 180.0,
-        priceCost: 120.0,
-        qtyOnHand: 22,
-        minQty: 10,
-        isRawMaterial: false,
-        isFinishedGood: true,
-      },
-      {
-        name: "Precision Instrument D",
-        sku: "INS-D001",
-        category: "Finished Goods",
-        unit: "pcs",
-        priceSell: 680.0,
-        priceCost: 480.0,
-        qtyOnHand: 5,
-        minQty: 2,
-        isRawMaterial: false,
-        isFinishedGood: true,
-      },
-    ],
-  });
+    });
 
-  console.log("✅ Products created");
+    const salesUser = await prisma.user.create({
+      data: {
+        email: "sales@domdom.com",
+        passwordHash: hashedPassword,
+        name: "Sales Manager",
+        role: "SALES",
+      },
+    });
 
-  // Get product IDs for relations
-  const allProducts = await prisma.product.findMany();
-  const finishedProducts = allProducts.filter((p) => p.isFinishedGood);
-  const rawMaterials = allProducts.filter((p) => p.isRawMaterial);
+    const inventoryUser = await prisma.user.create({
+      data: {
+        email: "inventory@domdom.com",
+        passwordHash: hashedPassword,
+        name: "Inventory Manager",
+        role: "INVENTORY",
+      },
+    });
 
-  // Create Bill of Materials
-  if (finishedProducts.length > 0 && rawMaterials.length > 2) {
-    const bom1 = await prisma.billOfMaterials.create({
+    console.log("✅ Users created");
+
+    // Create Expense Categories
+    console.log("💰 Creating expense categories...");
+    await prisma.expenseCategory.createMany({
+      data: [
+        { name: "Office Supplies", description: "Pens, paper, toner, etc." },
+        { name: "Travel", description: "Flights, hotels, rental cars, etc." },
+        { name: "Food", description: "Team lunches, client dinners, etc." },
+        { name: "Utilities", description: "Electricity, water, internet, etc." },
+        { name: "Software", description: "SaaS subscriptions, licenses, etc." },
+      ],
+    });
+
+    console.log("✅ Expense Categories created");
+
+    // Create products
+    console.log("📦 Creating products...");
+    await prisma.product.createMany({
+      data: [
+        // Raw Materials
+        {
+          name: "Steel Sheet 1mm",
+          sku: "STL-001",
+          category: "Raw Materials",
+          unit: "kg",
+          priceSell: 5.5,
+          priceCost: 3.2,
+          qtyOnHand: 500,
+          minQty: 100,
+          isRawMaterial: true,
+          isFinishedGood: false,
+        },
+        {
+          name: "Aluminum Rod 10mm",
+          sku: "ALU-001",
+          category: "Raw Materials",
+          unit: "m",
+          priceSell: 12.3,
+          priceCost: 8.5,
+          qtyOnHand: 200,
+          minQty: 50,
+          isRawMaterial: true,
+          isFinishedGood: false,
+        },
+        {
+          name: "Plastic Granules PP",
+          sku: "PLA-001",
+          category: "Raw Materials",
+          unit: "kg",
+          priceSell: 2.8,
+          priceCost: 1.9,
+          qtyOnHand: 1000,
+          minQty: 200,
+          isRawMaterial: true,
+          isFinishedGood: false,
+        },
+        {
+          name: "Electronic Component A",
+          sku: "ELE-001",
+          category: "Components",
+          unit: "pcs",
+          priceSell: 15.0,
+          priceCost: 9.5,
+          qtyOnHand: 150,
+          minQty: 30,
+          isRawMaterial: true,
+          isFinishedGood: false,
+        },
+        {
+          name: "Motor Assembly 12V",
+          sku: "MOT-001",
+          category: "Components",
+          unit: "pcs",
+          priceSell: 85.0,
+          priceCost: 65.0,
+          qtyOnHand: 25,
+          minQty: 10,
+          isRawMaterial: true,
+          isFinishedGood: false,
+        },
+        // Finished Goods
+        {
+          name: "Industrial Widget Type A",
+          sku: "WID-A001",
+          category: "Finished Goods",
+          unit: "pcs",
+          priceSell: 125.0,
+          priceCost: 75.0,
+          qtyOnHand: 45,
+          minQty: 20,
+          isRawMaterial: false,
+          isFinishedGood: true,
+        },
+        {
+          name: "Custom Assembly B",
+          sku: "ASM-B001",
+          category: "Finished Goods",
+          unit: "pcs",
+          priceSell: 250.0,
+          priceCost: 180.0,
+          qtyOnHand: 12,
+          minQty: 5,
+          isRawMaterial: false,
+          isFinishedGood: true,
+        },
+        {
+          name: "Electronic Device C",
+          sku: "DEV-C001",
+          category: "Finished Goods",
+          unit: "pcs",
+          priceSell: 450.0,
+          priceCost: 320.0,
+          qtyOnHand: 8,
+          minQty: 3,
+          isRawMaterial: false,
+          isFinishedGood: true,
+        },
+        {
+          name: "Premium Tool Kit",
+          sku: "TOO-001",
+          category: "Finished Goods",
+          unit: "set",
+          priceSell: 180.0,
+          priceCost: 120.0,
+          qtyOnHand: 22,
+          minQty: 10,
+          isRawMaterial: false,
+          isFinishedGood: true,
+        },
+        {
+          name: "Precision Instrument D",
+          sku: "INS-D001",
+          category: "Finished Goods",
+          unit: "pcs",
+          priceSell: 680.0,
+          priceCost: 480.0,
+          qtyOnHand: 5,
+          minQty: 2,
+          isRawMaterial: false,
+          isFinishedGood: true,
+        },
+      ],
+    });
+
+    console.log("✅ Products created");
+
+    // Get product IDs for relations
+    const allProducts = await prisma.product.findMany();
+    const finishedProducts = allProducts.filter((p) => p.isFinishedGood);
+    const rawMaterials = allProducts.filter((p) => p.isRawMaterial);
+
+    if (finishedProducts.length === 0 || rawMaterials.length === 0) {
+      console.log("⚠️ Warning: Not enough products created for BOM relationships");
+      return;
+    }
+
+    // Create Bill of Materials
+    console.log("🔧 Creating Bill of Materials...");
+    
+    // BOM for Industrial Widget Type A
+    const widgetBom = await prisma.billOfMaterials.create({
       data: {
         name: "Industrial Widget BOM",
         description: "Bill of materials for Industrial Widget Type A",
         finalProductId: finishedProducts[0].id,
         outputQuantity: 100,
         outputUnit: "pcs",
-        unitCost: 0.95, // Will be calculated: (2.5*3.2 + 1*9.5) / 100
-        components: {
-          create: [
-            {
-              productId: rawMaterials[0].id, // Steel Sheet
-              quantity: 2.5,
-              unit: "kg",
-            },
-            {
-              productId: rawMaterials[3].id, // Electronic Component
-              quantity: 1,
-              unit: "pcs",
-            },
-          ],
-        },
+        unitCost: 0, // Will be calculated
       },
     });
 
-    const bom2 = await prisma.billOfMaterials.create({
-      data: {
-        name: "Custom Assembly BOM",
-        description: "Bill of materials for Custom Assembly B",
-        finalProductId: finishedProducts[1].id,
-        outputQuantity: 50,
-        outputUnit: "pcs",
-        unitCost: 1.81, // Will be calculated: (3.0*8.5 + 1*65.0) / 50
-        components: {
-          create: [
-            {
-              productId: rawMaterials[1].id, // Aluminum Rod
-              quantity: 3.0,
-              unit: "m",
-            },
-            {
-              productId: rawMaterials[4].id, // Motor Assembly
-              quantity: 1,
-              unit: "pcs",
-            },
-          ],
-        },
-      },
-    });
-
-    console.log("✅ Bill of Materials created");
-  }
-
-  // Create Production Orders
-  if (finishedProducts.length > 0) {
-    await prisma.productionOrder.createMany({
+    // Add components to BOM
+    await prisma.bomComponent.createMany({
       data: [
         {
-          orderNumber: "PO-2025-001",
-          productId: finishedProducts[0].id,
-          qtyOrdered: 50,
-          qtyProduced: 35,
-          status: "IN_PROGRESS",
-          priority: "HIGH",
-          startDate: new Date("2025-05-28"),
-          expectedEndDate: new Date("2025-06-05"),
+          bomId: widgetBom.id,
+          productId: rawMaterials[0].id, // Steel Sheet
+          quantity: 2.5,
+          unit: "kg",
         },
         {
-          orderNumber: "PO-2025-002",
-          productId: finishedProducts[1].id,
-          qtyOrdered: 25,
-          qtyProduced: 25,
-          status: "DONE",
-          priority: "MEDIUM",
-          startDate: new Date("2025-05-20"),
-          expectedEndDate: new Date("2025-05-30"),
-          actualEndDate: new Date("2025-05-29"),
-        },
-        {
-          orderNumber: "PO-2025-003",
-          productId: finishedProducts[2].id,
-          qtyOrdered: 10,
-          qtyProduced: 0,
-          status: "PLANNED",
-          priority: "LOW",
-          startDate: new Date("2025-06-10"),
-          expectedEndDate: new Date("2025-06-20"),
+          bomId: widgetBom.id,
+          productId: rawMaterials[3].id, // Electronic Component
+          quantity: 1,
+          unit: "pcs",
         },
       ],
     });
 
-    console.log("✅ Production Orders created");
-  }
+    // Update BOM unit cost
+    const bomTotalCost = 2.5 * rawMaterials[0].priceCost + 1 * rawMaterials[3].priceCost;
+    const bomUnitCost = bomTotalCost / 100; // Cost per unit
+    await prisma.billOfMaterials.update({
+      where: { id: widgetBom.id },
+      data: { unitCost: bomUnitCost },
+    });
 
-  // Create Sales
-  if (finishedProducts.length > 0) {
-    const sale1 = await prisma.sale.create({
+    console.log("✅ Bill of Materials created");
+
+    // Create Production Orders
+    console.log("🏭 Creating production orders...");
+    await prisma.productionOrder.create({
       data: {
-        saleNumber: "SO-2025-001",
-        customerName: "ABC Manufacturing Ltd",
-        customerEmail: "orders@abcmfg.com",
-        customerPhone: "+1-555-0123",
-        orderDate: new Date("2025-06-01"),
-        status: "CONFIRMED",
-        totalAmount: 875.0,
-        items: {
-          create: [
-            {
-              productId: finishedProducts[0].id,
-              qty: 5,
-              unitPrice: 125.0,
-              totalPrice: 625.0,
-            },
-            {
-              productId: finishedProducts[1].id,
-              qty: 1,
-              unitPrice: 250.0,
-              totalPrice: 250.0,
-            },
-          ],
-        },
+        orderNumber: "PO-2024-001",
+        bomId: widgetBom.id,
+        productId: finishedProducts[0].id,
+        qtyOrdered: 10,
+        status: "PLANNED",
+        startDate: new Date(),
+        expectedEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       },
     });
 
-    const sale2 = await prisma.sale.create({
+    console.log("✅ Production Orders created");
+
+    // Create sample sales
+    console.log("💵 Creating sample sales...");
+    const sale = await prisma.sale.create({
       data: {
-        saleNumber: "SO-2025-002",
-        customerName: "Tech Solutions Inc",
-        customerEmail: "procurement@techsol.com",
-        customerPhone: "+1-555-0456",
-        orderDate: new Date("2025-06-02"),
+        saleNumber: "SAL-2024-001",
+        customerName: "Acme Corporation",
+        customerEmail: "orders@acme.com",
+        customerPhone: "+1-555-0123",
+        saleDate: new Date(),
         status: "DELIVERED",
-        totalAmount: 1360.0,
-        items: {
-          create: [
-            {
-              productId: finishedProducts[2].id,
-              qty: 2,
-              unitPrice: 450.0,
-              totalPrice: 900.0,
-            },
-            {
-              productId: finishedProducts[3].id,
-              qty: 1,
-              unitPrice: 180.0,
-              totalPrice: 180.0,
-            },
-            {
-              productId: finishedProducts[4].id,
-              qty: 1,
-              unitPrice: 680.0,
-              totalPrice: 680.0,
-            },
-          ],
-        },
+        totalAmount: 0, // Will be calculated
       },
+    });
+
+    await prisma.saleItem.create({
+      data: {
+        saleId: sale.id,
+        productId: finishedProducts[0].id,
+        qty: 2,
+        unitPrice: finishedProducts[0].priceSell,
+        totalPrice: 2 * finishedProducts[0].priceSell,
+      },
+    });
+
+    // Update sale total
+    await prisma.sale.update({
+      where: { id: sale.id },
+      data: { totalAmount: 2 * finishedProducts[0].priceSell },
     });
 
     console.log("✅ Sales created");
-  }
 
-  // Create Purchases
-  if (rawMaterials.length > 0) {
-    const purchase1 = await prisma.purchase.create({
+    // Create sample purchases
+    console.log("🛒 Creating sample purchases...");
+    const purchase = await prisma.purchase.create({
       data: {
-        orderNumber: "PU-2025-001",
-        poNumber: "PO-2025-001",
-        supplierName: "Steel & Metal Supply Co",
-        supplierEmail: "orders@steelmetal.com",
-        orderDate: new Date("2025-05-25"),
-        status: "RECEIVED",
-        totalAmount: 1600.0,
-        items: {
-          create: [
-            {
-              productId: rawMaterials[0].id, // Steel Sheet
-              qtyOrdered: 500,
-              qtyReceived: 500,
-              unitCost: 3.2,
-              totalCost: 1600.0,
-            },
-          ],
-        },
+        orderNumber: "PUR-2024-001",
+        poNumber: "PO-PUR-2024-001",
+        supplierName: "Steel Supplies Inc.",
+        supplierEmail: "sales@steelsupplies.com",
+        orderDate: new Date(),
+        expectedDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+        status: "CONFIRMED",
+        totalAmount: 0, // Will be calculated
       },
     });
 
-    const purchase2 = await prisma.purchase.create({
+    await prisma.purchaseItem.create({
       data: {
-        orderNumber: "PU-2025-002",
-        poNumber: "PO-2025-002",
-        supplierName: "Electronic Components Ltd",
-        supplierEmail: "sales@electrocomp.com",
-        orderDate: new Date("2025-06-01"),
-        status: "CONFIRMED",
-        totalAmount: 1425.0,
-        items: {
-          create: [
-            {
-              productId: rawMaterials[3].id, // Electronic Component
-              qtyOrdered: 100,
-              qtyReceived: 0,
-              unitCost: 9.5,
-              totalCost: 950.0,
-            },
-            {
-              productId: rawMaterials[4].id, // Motor Assembly
-              qtyOrdered: 10,
-              qtyReceived: 0,
-              unitCost: 65.0,
-              totalCost: 650.0,
-            },
-          ],
-        },
+        purchaseId: purchase.id,
+        productId: rawMaterials[0].id,
+        qtyOrdered: 100,
+        unitCost: rawMaterials[0].priceCost,
+        totalCost: 100 * rawMaterials[0].priceCost,
       },
+    });
+
+    // Update purchase total
+    await prisma.purchase.update({
+      where: { id: purchase.id },
+      data: { totalAmount: 100 * rawMaterials[0].priceCost },
     });
 
     console.log("✅ Purchases created");
-  }
 
-  // Create Stock Movements
-  if (allProducts.length > 0) {
+    // Create stock movements
+    console.log("📊 Creating stock movements...");
     await prisma.stockMovement.createMany({
       data: [
         {
-          productId: allProducts[0].id,
+          productId: rawMaterials[0].id,
           movementType: "IN",
-          qty: 500,
-          movementDate: new Date("2025-05-25"),
-          reference: "PU-2025-001",
-          reason: "Purchase receipt",
+          qty: 100,
+          reference: "PUR-2024-001",
+          reason: "Purchase Order PUR-2024-001",
+          movementDate: new Date(),
         },
         {
-          productId: allProducts[5].id, // Industrial Widget
-          movementType: "OUT",
-          qty: 5,
-          movementDate: new Date("2025-06-01"),
-          reference: "SO-2025-001",
-          reason: "Sale shipment",
-        },
-        {
-          productId: allProducts[6].id, // Custom Assembly
-          movementType: "OUT",
-          qty: 1,
-          movementDate: new Date("2025-06-01"),
-          reference: "SO-2025-001",
-          reason: "Sale shipment",
-        },
-        {
-          productId: allProducts[7].id, // Electronic Device
+          productId: finishedProducts[0].id,
           movementType: "OUT",
           qty: 2,
-          movementDate: new Date("2025-06-02"),
-          reference: "SO-2025-002",
-          reason: "Sale shipment",
+          reference: "SAL-2024-001",
+          reason: "Sale SAL-2024-001",
+          movementDate: new Date(),
         },
       ],
     });
 
     console.log("✅ Stock Movements created");
-  }
 
-  console.log("🎉 Database seeded successfully!");
-  console.log("👤 Default login credentials:");
-  console.log("   Admin: admin@domdom.com / password123");
-  console.log("   Sales: sales@domdom.com / password123");
-  console.log("   Inventory: inventory@domdom.com / password123");
+    // Success summary
+    const userCount = await prisma.user.count();
+    const productCount = await prisma.product.count();
+    const bomCount = await prisma.billOfMaterials.count();
+    const saleCount = await prisma.sale.count();
+    const purchaseCount = await prisma.purchase.count();
+
+    console.log("\n🎉 Database seeded successfully!");
+    console.log("📊 Summary:");
+    console.log(`   👤 Users: ${userCount}`);
+    console.log(`   📦 Products: ${productCount}`);
+    console.log(`   🔧 BOMs: ${bomCount}`);
+    console.log(`   💵 Sales: ${saleCount}`);
+    console.log(`   🛒 Purchases: ${purchaseCount}`);
+    
+    console.log("\n👤 Default login credentials:");
+    console.log("   Admin: admin@domdom.com / password123");
+    console.log("   Sales: sales@domdom.com / password123");
+    console.log("   Inventory: inventory@domdom.com / password123");
+
+  } catch (error) {
+    console.error("❌ Error during database seeding:");
+    console.error(error);
+    throw error;
+  }
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error seeding database:", e);
+    console.error("💥 Seed script failed:");
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {
     await prisma.$disconnect();
+    console.log("🔌 Database connection closed");
   });
