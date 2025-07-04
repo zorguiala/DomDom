@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations } from "@/lib/language-context";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
