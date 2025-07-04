@@ -122,3 +122,129 @@ Please read `CONTRIBUTING.md` (TBA) before submitting issues or PRs.
 ## 📄 License
 
 MIT © 2025 Your Company
+
+## Features
+
+### Inventory Management
+- Product creation and management
+- Stock tracking and movements
+- Low stock alerts
+- Support for raw materials and finished goods
+
+### Purchase Orders
+- Create purchase orders with suppliers
+- **Create new products directly while placing orders**
+- Track order status (Draft, Confirmed, Received)
+- Automatic inventory updates upon receipt
+
+### Production Management
+- Bill of Materials (BOM) creation
+- Production order management
+- Material requirement planning
+
+### Sales Management
+- Create sales orders
+- Track customer information
+- Monitor delivery status
+
+### Human Resources
+- Employee management
+- Attendance tracking
+- Payroll management
+
+### Expense Management
+- Track business expenses
+- Categorize expenses
+- Export reports
+
+## How to Create Products During Purchase Orders
+
+When creating a purchase order, you can add new products on-the-fly without leaving the page:
+
+### Method 1: Using the Dropdown
+1. **Start a new purchase order** by selecting a supplier
+2. **Click "Add Item"** to add a line item
+3. **Click in the Product field** - a dropdown will appear
+4. **Type the name of a new product** that doesn't exist yet
+5. **Look for the blue "+ Add new product" option** at the bottom of the dropdown
+6. **Click on it** to open the product creation modal
+
+### Method 2: Using the Quick Add Button
+1. **Type a product name** in the product field
+2. **Look for the blue "+" button** that appears on the right side of the input field
+3. **Click the "+" button** to instantly create a new product
+
+### Product Creation Modal
+When the modal opens:
+- **Name**: Pre-filled with what you typed
+- **Unit**: Enter the unit of measurement (kg, pcs, box, etc.)
+- **Product Type**: Automatically set to "Raw Material" for purchase orders
+- **Click "Create Product"** to save
+
+The new product will:
+- Be automatically added to your purchase order line item
+- Be created as a Raw Material (suitable for purchasing)
+- Be available for future use in your inventory
+- Have pricing that can be updated later in inventory management
+
+### Tips for Success
+- ✅ **Type the full product name** you want to create
+- ✅ **Look for the blue text "Add new product"** in the dropdown
+- ✅ **Use the "+" button** for quick access
+- ✅ **Make sure to fill in the Unit field** (required)
+- ❌ Don't select an existing product if you want to create a new one
+
+### Troubleshooting
+If you don't see the "Add new product" option:
+1. Make sure you've typed a product name that doesn't already exist
+2. Check that the dropdown is open (click in the field)
+3. Look for the blue "+" button on the right side of the input
+4. Ensure you're not selecting an existing product from the list
+
+---
+
+## Development
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL
+- npm or pnpm
+
+### Setup
+```bash
+# Install dependencies
+npm install
+
+# Setup database
+npx prisma migrate dev
+
+# Seed database (optional)
+npx prisma db seed
+
+# Start development server
+npm run dev
+```
+
+### Database Schema
+The system uses Prisma ORM with PostgreSQL. Key models include:
+- User (authentication and authorization)
+- Product (inventory items)
+- Purchase/PurchaseItem (purchase orders)
+- Sale/SaleItem (sales orders)
+- BOM/BomComponent (bill of materials)
+- ProductionOrder (manufacturing orders)
+
+### Tech Stack
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Next.js API routes, Prisma ORM
+- **Database**: PostgreSQL
+- **Authentication**: NextAuth.js
+- **UI Components**: Radix UI, Magic UI
+- **State Management**: React Query (TanStack Query)
+
+### Contributing
+1. Follow the coding standards in the workspace rules
+2. Use React Query for all data fetching
+3. Place data hooks in `data/` subfolders
+4. Write unit tests for new features
+5. Use Magic UI components for consistent design

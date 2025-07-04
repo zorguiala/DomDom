@@ -8,7 +8,7 @@ import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-radix";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { AttendanceFormData, AttendanceStatus, AttendanceStatusValues, AttendanceWithEmployee } from "@/types/hr";
@@ -19,7 +19,7 @@ import { DatePicker } from "@/components/ui/date-picker"; // Assuming a DatePick
 // Zod schema for attendance form validation
 const attendanceFormSchema = z.object({
   employeeId: z.string().min(1, "Employee is required"),
-  date: z.date({ required_error: "Date is required." }), // Using react-day-picker so it's a Date object
+  date: z.string().min(1, "Date is required"), // Using string for form handling
   status: z.enum(AttendanceStatusValues, { required_error: "Status is required." }),
   hoursWorked: z.preprocess(
     (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
@@ -27,6 +27,9 @@ const attendanceFormSchema = z.object({
   ),
   notes: z.string().optional().nullable(),
 });
+
+// Local form data type that matches the Zod schema
+type AttendanceFormDataLocal = z.infer<typeof attendanceFormSchema>;
 
 export default function AttendancePage() {
   const t = useTranslations("hr");
@@ -42,7 +45,7 @@ export default function AttendancePage() {
   const [filterDate, setFilterDate] = useState<Date | undefined>(undefined);
 
 
-  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AttendanceFormData>({
+  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AttendanceFormDataLocal>({
     resolver: zodResolver(attendanceFormSchema),
     defaultValues: {
       employeeId: "",
@@ -58,14 +61,14 @@ export default function AttendancePage() {
     const fetchEmployees = async () => {
       try {
         const res = await fetch("/api/hr/employees");
-        if (!res.ok) throw new Error(t("errorFetchingEmployees"));
+        if (!res.ok) throw new Error("Failed to fetch employees");
         setEmployees(await res.json());
       } catch (error: any) {
-        toast({ variant: "destructive", title: t("error"), description: error.message });
+        toast({ variant: "destructive", title: "Error", description: error.message });
       }
     };
     fetchEmployees();
-  }, [t, toast]);
+  }, []); // Remove t and toast from dependencies since this should only run once on mount
 
   // Fetch attendance records
   const fetchAttendanceRecords = async (employeeId?: string, date?: Date) => {
@@ -77,21 +80,40 @@ export default function AttendancePage() {
       if (date) queryParams.append("dateTo", date.toISOString().split('T')[0]); // Filter for specific date
 
       const res = await fetch(`/api/hr/attendance?${queryParams.toString()}`);
-      if (!res.ok) throw new Error(t("errorFetchingAttendance"));
+      if (!res.ok) throw new Error("Failed to fetch attendance records");
       setAttendanceRecords(await res.json());
     } catch (error: any) {
-      toast({ variant: "destructive", title: t("error"), description: error.message });
+      toast({ variant: "destructive", title: "Error", description: error.message });
     } finally {
       setLoadingRecords(false);
     }
   };
 
   useEffect(() => {
-    fetchAttendanceRecords(filterEmployeeId || undefined, filterDate);
-  }, [filterEmployeeId, filterDate]);
+    // Fetch attendance records whenever filters change
+    const loadAttendanceRecords = async () => {
+      setLoadingRecords(true);
+      try {
+        const queryParams = new URLSearchParams();
+        if (filterEmployeeId) queryParams.append("employeeId", filterEmployeeId);
+        if (filterDate) queryParams.append("dateFrom", filterDate.toISOString().split('T')[0]);
+        if (filterDate) queryParams.append("dateTo", filterDate.toISOString().split('T')[0]);
+
+        const res = await fetch(`/api/hr/attendance?${queryParams.toString()}`);
+        if (!res.ok) throw new Error("Failed to fetch attendance records");
+        setAttendanceRecords(await res.json());
+      } catch (error: any) {
+        toast({ variant: "destructive", title: "Error", description: error.message });
+      } finally {
+        setLoadingRecords(false);
+      }
+    };
+    
+    loadAttendanceRecords();
+  }, [filterEmployeeId, filterDate]); // Only depend on the filter values
 
 
-  const onSubmit = async (data: AttendanceFormData) => {
+  const onSubmit = async (data: AttendanceFormDataLocal) => {
     const payload = {
       ...data,
       date: new Date(data.date).toISOString().split('T')[0], // Ensure date is YYYY-MM-DD string
@@ -180,7 +202,7 @@ export default function AttendancePage() {
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value} disabled={!!editingRecord}>
                       <SelectTrigger id="employeeId">
-                        <SelectValue placeholder={t("selectEmployeePlaceholder")} />
+                        <SelectValue placeholder={t("selectEmployeePlaceholder") || "Select employee"} />
                       </SelectTrigger>
                       <SelectContent>
                         {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name} ({emp.employeeId})</SelectItem>)}
@@ -198,7 +220,11 @@ export default function AttendancePage() {
                   name="date"
                   control={control}
                   render={({ field }) => (
-                     <DatePicker date={field.value ? new Date(field.value) : undefined} setDate={field.onChange} disabled={!!editingRecord} />
+                     <DatePicker 
+                       date={field.value ? new Date(field.value) : undefined} 
+                       setDate={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')} 
+                       disabled={!!editingRecord} 
+                     />
                   )}
                 />
                 {errors.date && <p className="text-sm text-destructive mt-1">{errors.date.message}</p>}
@@ -213,7 +239,7 @@ export default function AttendancePage() {
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger id="status">
-                        <SelectValue placeholder={t("selectStatusPlaceholder")} />
+                        <SelectValue placeholder={t("selectStatusPlaceholder") || "Select status"} />
                       </SelectTrigger>
                       <SelectContent>
                         {AttendanceStatusValues.map(val => <SelectItem key={val} value={val}>{t(val.toLowerCase()) || val}</SelectItem>)}
@@ -245,7 +271,7 @@ export default function AttendancePage() {
             {/* Notes */}
             <div>
                 <label htmlFor="notes" className="block text-sm font-medium mb-1">{t("notesField")}</label>
-                <Controller name="notes" control={control} render={({ field }) => <Input id="notes" {...field} value={field.value ?? ""} placeholder={t("notesPlaceholder")} />} />
+                <Controller name="notes" control={control} render={({ field }) => <Input id="notes" {...field} value={field.value ?? ""} placeholder={t("notesPlaceholder") || "Add notes"} />} />
                 {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
             </div>
           </form>
@@ -257,14 +283,14 @@ export default function AttendancePage() {
         <CardHeader>
           <CardTitle>{t("attendanceRecordsTitle")}</CardTitle>
           <div className="flex flex-col md:flex-row gap-2 mt-2">
-             <Select value={filterEmployeeId} onValueChange={setFilterEmployeeId}>
-                <SelectTrigger><SelectValue placeholder={t("filterByEmployee")} /></SelectTrigger>
+             <Select value={filterEmployeeId || "all"} onValueChange={(value) => setFilterEmployeeId(value === "all" ? "" : value)}>
+                <SelectTrigger><SelectValue placeholder={t("filterByEmployee") || "Filter by employee"} /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">{t("allEmployees")}</SelectItem>
+                    <SelectItem value="all">{t("allEmployees") || "All Employees"}</SelectItem>
                     {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
                 </SelectContent>
             </Select>
-            <DatePicker date={filterDate} setDate={setFilterDate} placeholder={t("filterByDate")} />
+            <DatePicker date={filterDate} setDate={setFilterDate} placeholder={t("filterByDate") || "Filter by date"} />
             <Button onClick={() => fetchAttendanceRecords(filterEmployeeId || undefined, filterDate)} variant="outline" size="icon" title={common("search")}><Search className="h-4 w-4"/></Button>
             {(filterEmployeeId || filterDate) &&
                 <Button onClick={clearFilters} variant="ghost" size="icon" title={t("clearFilters")}>

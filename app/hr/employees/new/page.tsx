@@ -10,9 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 // import { Textarea } from "@/components/ui/textarea"; // Not used for now
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-radix";
 import { useToast } from "@/hooks/use-toast";
-import { EmployeeFormData } from "@/types/hr"; // Using the shared type
 import { PlusCircle } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker"; // Import DatePicker
 
@@ -24,13 +23,16 @@ const newEmployeeFormSchema = z.object({
   phone: z.string().optional().nullable().or(z.literal('')),
   department: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
-  salary: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
-    z.number().positive("Salary must be a positive number").nullable().optional()
-  ),
-  hireDate: z.date({ required_error: "Hire date is required." }), // Changed to z.date()
+  salary: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    return typeof val === "string" ? Number(val) || null : val;
+  }).optional().nullable(),
+  hireDate: z.string().min(1, "Hire date is required"), // Changed back to string to match form handling
   isActive: z.boolean().default(true).optional(),
 });
+
+// Local form data type that matches the Zod schema
+type NewEmployeeFormData = z.infer<typeof newEmployeeFormSchema>;
 
 
 export default function AddEmployeePage() {
@@ -39,7 +41,7 @@ export default function AddEmployeePage() {
   const common = useTranslations("common");
   const { toast } = useToast();
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<EmployeeFormData>({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<NewEmployeeFormData>({
     resolver: zodResolver(newEmployeeFormSchema),
     defaultValues: {
       employeeId: "",
@@ -54,7 +56,7 @@ export default function AddEmployeePage() {
     },
   });
 
-  const onSubmit = async (data: EmployeeFormData) => {
+  const onSubmit = async (data: NewEmployeeFormData) => {
     try {
       // Convert hireDate from Date object (from react-hook-form with DatePicker) to string for API
       const payload = {
@@ -96,7 +98,7 @@ export default function AddEmployeePage() {
           <p className="text-muted-foreground">{t("addEmployeeDescription")}</p>
         </div>
          <Link href="/hr/employees">
-            <Button variant="outline">{common("backToList")}</Button>
+            <Button variant="outline">{common("backToList") || "Back to List"}</Button>
           </Link>
       </div>
 
@@ -167,7 +169,7 @@ export default function AddEmployeePage() {
                     <DatePicker
                       date={field.value ? new Date(field.value) : undefined}
                       setDate={(date) => field.onChange(date ? date.toISOString().split('T')[0] : '')}
-                      placeholder={common("selectPlaceholder") || "Select a date"}
+                      placeholder="Select a date"
                     />
                   )}
                 />
@@ -186,8 +188,8 @@ export default function AddEmployeePage() {
                         <SelectValue placeholder={t("selectStatusPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="true">{common("active")}</SelectItem>
-                        <SelectItem value="false">{common("inactive")}</SelectItem>
+                        <SelectItem value="true">{common("active") || "Active"}</SelectItem>
+                        <SelectItem value="false">{common("inactive") || "Inactive"}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}

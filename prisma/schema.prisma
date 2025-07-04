@@ -249,18 +249,20 @@ model SaleItem {
 }
 
 model Employee {
-  id         String   @id @default(uuid())
-  employeeId String   @unique
-  name       String
-  email      String?  @unique
-  phone      String?
-  department String?
-  position   String?
-  salary     Float?
-  hireDate   DateTime
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                String   @id @default(uuid())
+  employeeId        String   @unique
+  name              String
+  email             String?  @unique
+  phone             String?
+  department        String?
+  position          String?
+  salary            Float?   // Monthly salary
+  hoursPerWeek      Float?   @default(40) // Standard hours per week
+  overtimeRate      Float?   @default(1.5) // Overtime multiplier (1.5x regular rate)
+  hireDate          DateTime
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   attendance Attendance[]
   payrolls   Payroll[]
@@ -269,36 +271,46 @@ model Employee {
 }
 
 model Attendance {
-  id         String   @id @default(uuid())
-  employeeId String
-  date       DateTime
-  status     String   // PRESENT, ABSENT, LATE, etc.
-  checkIn    DateTime?
-  checkOut   DateTime?
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  employeeId  String
+  date        DateTime
+  status      String   // PRESENT, ABSENT, LATE, etc.
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hoursWorked Float?   // Manual entry for hours worked
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
+  @@unique([employeeId, date]) // Ensure one attendance record per employee per day
   @@map("attendance")
 }
 
 model Payroll {
-  id         String   @id @default(uuid())
-  employeeId String
-  month      Int
-  year       Int
-  salary     Float
-  bonus      Float?
-  deductions Float?
-  netPay     Float
-  status     String   // PENDING, COMPLETED, CANCELLED
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  employeeId           String
+  month                Int
+  year                 Int
+  baseSalary           Float    // Calculated base salary for the period
+  originalBaseSalary   Float    // Original monthly salary for reference
+  bonusesOrOvertime    String?  // JSON string of PayrollAdjustmentItem[]
+  deductions           String?  // JSON string of PayrollAdjustmentItem[]
+  netSalary            Float    // Final calculated net salary
+  regularHours         Float?   // Total regular hours worked
+  overtimeHours        Float?   // Total overtime hours worked
+  workingDaysActual    Float?   // Actual working days in the period
+  workingDaysStandard  Float?   // Standard working days for the period
+  paid                 Boolean  @default(false)
+  paidAt               DateTime?
+  notes                String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-
+  
+  @@unique([employeeId, month, year])
   @@map("payrolls")
 }
 
@@ -392,16 +404,45 @@ model ExpenseCategory {
 model Expense {
   id            String   @id @default(uuid())
   expenseDate   DateTime
-  amount        Float
+  dueDate       DateTime? // When this expense/loan is due
+  totalAmount   Float    // Total amount owed/to be paid
+  paidAmount    Float    @default(0) // Amount already paid
   description   String
+  type          String   @default("ONE_TIME") // ONE_TIME, RECURRING, LOAN
+  status        String   @default("UNPAID") // UNPAID, PARTIALLY_PAID, PAID
   paymentMethod String?
   receipt       String?
   notes         String?
+  
+  // Recurring expense fields
+  isRecurring      Boolean  @default(false)
+  recurringFreq    String?  // MONTHLY, WEEKLY, YEARLY
+  nextDueDate      DateTime?
+  lastGenerated    DateTime?
+  recurringEndDate DateTime? // When to stop generating
+  originalExpenseId String? // Reference to the template expense for generated recurring expenses
+  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   categoryId    String
   category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  payments      ExpensePayment[]
 
   @@map("expenses")
+}
+
+model ExpensePayment {
+  id           String   @id @default(uuid())
+  expenseId    String
+  expense      Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  amount       Float
+  paymentDate  DateTime @default(now())
+  paymentMethod String?
+  reference    String?  // Payment reference/check number
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("expense_payments")
 }

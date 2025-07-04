@@ -9,7 +9,7 @@ import { useTranslations } from "@/lib/language-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-radix";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { PayrollData, PayrollGenerationRequest } from "@/types/hr";
@@ -68,13 +68,35 @@ export default function PayrollPage() {
     },
   });
 
-  // Fetch employees for filter dropdown
+  // Fetch employees for filter dropdown (only once)
   useEffect(() => {
-    fetch("/api/hr/employees")
-      .then((res) => res.json())
-      .then(setEmployees)
-      .catch(() => toast({ variant: "destructive", title: common("error"), description: t("errorFetchingEmployees") }));
-  }, [toast, common, t]);
+    let isMounted = true;
+    
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch("/api/hr/employees");
+        if (!res.ok) throw new Error("Failed to fetch employees");
+        const data = await res.json();
+        if (isMounted) {
+          setEmployees(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          toast({ 
+            variant: "destructive", 
+            title: "Error", 
+            description: "Failed to fetch employees" 
+          });
+        }
+      }
+    };
+
+    fetchEmployees();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - only run once
 
   // Fetch Payrolls based on filters
   const fetchPayrolls = async (filters: PayrollFilterFormValues) => {
@@ -89,11 +111,11 @@ export default function PayrollPage() {
       const res = await fetch(`/api/hr/payroll?${queryParams.toString()}`);
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || t("errorFetchingPayrolls"));
+        throw new Error(errorData.error || "Failed to fetch payrolls");
       }
       setPayrolls(await res.json());
     } catch (err: any) {
-      toast({ variant: "destructive", title: common("error"), description: err.message });
+      toast({ variant: "destructive", title: "Error", description: err.message });
     } finally {
       setLoadingPayrolls(false);
     }
@@ -101,15 +123,24 @@ export default function PayrollPage() {
 
   // Initial fetch and fetch on filter change
   useEffect(() => {
+    let isMounted = true;
+    
     const subscription = filterForm.watch((value, { name, type }) => {
-      if (type === 'change') { // Fetch when any filter field changes
+      if (type === 'change' && isMounted) { // Fetch when any filter field changes
         fetchPayrolls(value as PayrollFilterFormValues);
       }
     });
-    fetchPayrolls(filterForm.getValues()); // Initial fetch
-    return () => subscription.unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterForm.watch]); // React to watch changes
+    
+    // Initial fetch
+    if (isMounted) {
+      fetchPayrolls(filterForm.getValues());
+    }
+    
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []); // Empty dependency array
 
   const handleGeneratePayroll = async (data: PayrollGenerationFormValues) => {
     try {
@@ -165,7 +196,7 @@ export default function PayrollPage() {
                 control={generationForm.control}
                 render={({ field }) => (
                   <Select onValueChange={(val) => field.onChange(parseInt(val))} value={String(field.value)}>
-                    <SelectTrigger><SelectValue placeholder={t("selectMonthPlaceholder")} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("selectMonthPlaceholder") || "Select month"} /></SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <SelectItem key={m} value={String(m)}>{m}</SelectItem>)}
                     </SelectContent>
@@ -181,7 +212,7 @@ export default function PayrollPage() {
             </div>
             <div>
               <label htmlFor="standardWorkingDaysInput" className="block text-sm font-medium mb-1">{t("standardWorkingDaysField")} ({common("optional")})</label>
-              <Controller name="standardWorkingDaysInput" control={generationForm.control} render={({ field }) => <Input id="standardWorkingDaysInput" type="number" {...field} value={field.value ?? ""} placeholder={t("e.g.") + " 22"} />} />
+              <Controller name="standardWorkingDaysInput" control={generationForm.control} render={({ field }) => <Input id="standardWorkingDaysInput" type="number" {...field} value={field.value ?? ""} placeholder={(t("e.g.") || "e.g.") + " 22"} />} />
               {generationForm.formState.errors.standardWorkingDaysInput && <p className="text-sm text-destructive mt-1">{generationForm.formState.errors.standardWorkingDaysInput.message}</p>}
             </div>
             <Button type="submit" disabled={generationForm.formState.isSubmitting} className="md:self-end">
@@ -202,16 +233,16 @@ export default function PayrollPage() {
             {/* Filters */}
             <Controller name="filterMonth" control={filterForm.control} render={({ field }) => (
                 <Select onValueChange={(val) => field.onChange(val ? parseInt(val) : null)} value={String(field.value ?? "")}>
-                    <SelectTrigger><SelectValue placeholder={t("filterByMonth")} /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t("filterByMonth") || "Filter by month"} /></SelectTrigger>
                     <SelectContent>{Array.from({ length: 12 }, (_, i) => i + 1).map(m => <SelectItem key={m} value={String(m)}>{m}</SelectItem>)}</SelectContent>
                 </Select>
             )} />
-            <Controller name="filterYear" control={filterForm.control} render={({ field }) => <Input type="number" placeholder={t("filterByYear")} {...field} value={field.value ?? ""} />} />
+            <Controller name="filterYear" control={filterForm.control} render={({ field }) => <Input type="number" placeholder={t("filterByYear") || "Filter by year"} {...field} value={field.value ?? ""} />} />
             <Controller name="filterEmployeeId" control={filterForm.control} render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                    <SelectTrigger><SelectValue placeholder={t("filterByEmployeeAll")} /></SelectTrigger>
+                <Select onValueChange={(value) => field.onChange(value === "all" ? "" : value)} value={field.value || "all"}>
+                    <SelectTrigger><SelectValue placeholder={t("filterByEmployeeAll") || "Filter by employee"} /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">{t("allEmployees")}</SelectItem>
+                        <SelectItem value="all">{t("allEmployees") || "All Employees"}</SelectItem>
                         {employees.map(emp => <SelectItem key={emp.id} value={emp.id}>{emp.name}</SelectItem>)}
                     </SelectContent>
                 </Select>

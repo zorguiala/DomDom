@@ -53,6 +53,7 @@ export function NewProductModal({ open, onClose, onCreated, name, context = "inv
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     try {
       const product = await mutateAsync({ 
         ...form,
@@ -67,7 +68,7 @@ export function NewProductModal({ open, onClose, onCreated, name, context = "inv
         throw new Error("Invalid product data received from server");
       }
 
-      toast({ title: "Product created!" });
+      toast({ title: "Product created successfully!", description: `${product.name} has been added to your inventory.` });
       onCreated(product);
       onClose();
     } catch (err: any) {
@@ -103,7 +104,9 @@ export function NewProductModal({ open, onClose, onCreated, name, context = "inv
     return "";
   };
 
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -115,11 +118,11 @@ export function NewProductModal({ open, onClose, onCreated, name, context = "inv
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Name</Label>
+              <Label>Name *</Label>
               <Input name="name" value={form.name} onChange={handleChange} required />
             </div>
             <div>
-              <Label>Unit</Label>
+              <Label>Unit *</Label>
               <Input name="unit" value={form.unit} onChange={handleChange} required placeholder="e.g., kg, pcs, box" />
             </div>
             
@@ -138,7 +141,7 @@ export function NewProductModal({ open, onClose, onCreated, name, context = "inv
             <div className="flex gap-2 justify-end pt-4">
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
               <ShimmerButton type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Create Product"}
+                {isLoading ? "Creating..." : "Create Product"}
               </ShimmerButton>
             </div>
           </form>

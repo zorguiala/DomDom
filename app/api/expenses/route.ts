@@ -5,13 +5,27 @@ import { z } from "zod";
 const expenseSchema = z.object({
   description: z.string().min(1, "Description is required"),
   categoryId: z.string().min(1, "Category is required"),
-  amount: z.number().positive("Amount must be a positive number"),
+  totalAmount: z.number().positive("Total amount must be a positive number"),
+  paidAmount: z.number().min(0, "Paid amount cannot be negative").optional().default(0),
+  type: z.enum(["ONE_TIME", "RECURRING", "LOAN"]).optional().default("ONE_TIME"),
   expenseDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Invalid date format. Expected YYYY-MM-DD or ISO string",
+  }),
+  dueDate: z.string().optional().nullable().refine((date) => !date || !isNaN(Date.parse(date)), {
+    message: "Invalid due date format. Expected YYYY-MM-DD or ISO string",
   }),
   paymentMethod: z.string().optional().nullable(),
   receipt: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  // Recurring fields
+  isRecurring: z.boolean().optional().default(false),
+  recurringFreq: z.enum(["WEEKLY", "MONTHLY", "YEARLY"]).optional().nullable(),
+  nextDueDate: z.string().optional().nullable().refine((date) => !date || !isNaN(Date.parse(date)), {
+    message: "Invalid next due date format",
+  }),
+  recurringEndDate: z.string().optional().nullable().refine((date) => !date || !isNaN(Date.parse(date)), {
+    message: "Invalid recurring end date format",
+  }),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,10 +44,21 @@ export async function POST(req: NextRequest) {
     }
 
     const data = validationResult.data;
+    
+    // Calculate status based on paid amount
+    let status = "UNPAID";
+    if (data.paidAmount > 0) {
+      status = data.paidAmount >= data.totalAmount ? "PAID" : "PARTIALLY_PAID";
+    }
+    
     const newExpense = await prisma.expense.create({
       data: {
         ...data,
         expenseDate: new Date(data.expenseDate),
+        dueDate: data.dueDate ? new Date(data.dueDate) : null,
+        nextDueDate: data.nextDueDate ? new Date(data.nextDueDate) : null,
+        recurringEndDate: data.recurringEndDate ? new Date(data.recurringEndDate) : null,
+        status,
       },
     });
 
@@ -77,6 +102,11 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             name: true,
+          },
+        },
+        payments: {
+          orderBy: {
+            paymentDate: "desc",
           },
         },
       },

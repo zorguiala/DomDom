@@ -35,10 +35,10 @@ const calculateNetSalary = (
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { payrollId: string } }
+  { params }: { params: Promise<{ payrollId: string }> }
 ) {
   try {
-    const { payrollId } = params;
+    const { payrollId } = await params;
     if (!payrollId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
         return NextResponse.json({ error: "Invalid Payroll ID format." }, { status: 400 });
     }
@@ -145,10 +145,10 @@ export async function PUT(
 // GET /api/hr/payroll/[payrollId] - Fetch a single payroll record (optional, if needed for an edit page)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { payrollId: string } }
+  { params }: { params: Promise<{ payrollId: string }> }
 ) {
   try {
-    const { payrollId } = params;
+    const { payrollId } = await params;
     if (!payrollId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
         return NextResponse.json({ error: "Invalid Payroll ID format." }, { status: 400 });
     }

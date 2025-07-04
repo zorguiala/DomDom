@@ -50,6 +50,11 @@ function OrderForm({ supplierId }: { supplierId: string }) {
       ));
     }
     setShowNewProduct({ open: false, idx: null });
+    toast({ title: "Product added to order", description: `${product.name} has been added to your purchase order.` });
+  };
+
+  const handleShowNewProduct = (idx: number, name: string) => {
+    setShowNewProduct({ open: true, idx, name });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,7 +117,7 @@ function OrderForm({ supplierId }: { supplierId: string }) {
             items={items}
             onItemsChange={setItems}
             onAddProduct={addItem}
-            onShowNewProduct={(idx, name) => setShowNewProduct({ open: true, idx, name })}
+            onShowNewProduct={handleShowNewProduct}
           />
 
           <PurchaseOrderSummary

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types";
 import { useGetProducts } from "@/app/inventory/data/use-get-products/use-get-products";
 import { useTranslations } from "@/lib/language-context";
+import { Plus } from "lucide-react";
 
 interface OrderItem {
   productId: string;
@@ -97,20 +98,17 @@ export function PurchaseOrderItems({
       )
     );
     
-    // Show dropdown if there's input and it's not an exact match
-    if (value.trim() && !exactMatch) {
+    // Show dropdown if there's input or on focus
+    if (value.trim() || products.length > 0) {
       setActiveDropdown(idx);
-    } else if (!value.trim()) {
+    } else {
       setActiveDropdown(null);
     }
   };
 
   const handleInputFocus = (idx: number) => {
-    const item = items[idx];
-    // Show dropdown on focus if there's already input or show all products
-    if (item.productInput?.trim() || products.length > 0) {
-      setActiveDropdown(idx);
-    }
+    // Always show dropdown on focus to make it more discoverable
+    setActiveDropdown(idx);
   };
 
   const handleInputKeyDown = (idx: number, e: React.KeyboardEvent) => {
@@ -133,6 +131,7 @@ export function PurchaseOrderItems({
         const unitCost = item.qty > 0 ? item.totalCost / item.qty : 0;
         const searchTerm = item.productInput?.toLowerCase() || "";
         
+        // Filter products based on search term
         const filteredProducts = searchTerm
           ? products.filter(p =>
               p.name.toLowerCase().includes(searchTerm) ||
@@ -140,30 +139,50 @@ export function PurchaseOrderItems({
             )
           : products.slice(0, 10); // Show first 10 products when no search
         
-        const showAddNew =
-          item.productInput &&
-          item.productInput.trim() &&
-          !filteredProducts.some(
-            p => p.name.toLowerCase() === item.productInput!.toLowerCase()
-          );
+        // Show "Add New Product" option if:
+        // 1. User has typed something that's not empty
+        // 2. No exact product name match exists
+        const hasInput = item.productInput && item.productInput.trim();
+        const hasExactMatch = hasInput && filteredProducts.some(
+          p => p.name.toLowerCase() === item.productInput!.toLowerCase()
+        );
+        const showAddNew = hasInput && !hasExactMatch;
 
         return (
           <div key={idx} className="flex gap-2 items-end relative mb-2">
             <div className="flex-1 relative">
               <Label>{common("product")} *</Label>
-              <Input
-                ref={el => {
-                  inputRefs.current[idx] = el;
-                }}
-                value={item.productInput || ""}
-                onChange={e => handleInputChange(idx, e.target.value)}
-                onFocus={() => handleInputFocus(idx)}
-                onKeyDown={e => handleInputKeyDown(idx, e)}
-                placeholder={t("searchOrAddProduct")}
-                autoComplete="off"
-                className={item.productId ? "border-green-500" : ""}
-                required
-              />
+              <div className="relative">
+                <Input
+                  ref={el => {
+                    inputRefs.current[idx] = el;
+                  }}
+                  value={item.productInput || ""}
+                  onChange={e => handleInputChange(idx, e.target.value)}
+                  onFocus={() => handleInputFocus(idx)}
+                  onKeyDown={e => handleInputKeyDown(idx, e)}
+                  placeholder={t("searchOrAddProduct")}
+                  autoComplete="off"
+                  className={`${item.productId ? "border-green-500" : ""} pr-10`}
+                  required
+                />
+                {/* Quick add button */}
+                {hasInput && !hasExactMatch && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1 h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => {
+                      onShowNewProduct(idx, item.productInput!);
+                      setActiveDropdown(null);
+                    }}
+                    title={`Add "${item.productInput}" as new product`}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               
               {/* Dropdown */}
               {activeDropdown === idx && (
@@ -182,38 +201,56 @@ export function PurchaseOrderItems({
                     <div className="px-3 py-2 text-red-500 text-sm">
                       Error: {error.message}
                     </div>
-                  ) : filteredProducts.length === 0 && !showAddNew ? (
-                    <div className="px-3 py-2 text-gray-500 text-sm">
-                      {t("noProductsFound")}
-                    </div>
                   ) : (
                     <>
-                      {filteredProducts.map(p => (
-                        <div
-                          key={p.id}
-                          className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-50 last:border-b-0 ${
-                            item.productId === p.id ? "bg-blue-50 border-blue-200" : ""
-                          }`}
-                          onClick={() => handleProductSelect(idx, p)}
-                        >
-                          <div className="font-medium text-sm">{p.name}</div>
-                          {p.sku && (
-                            <div className="text-xs text-gray-500">SKU: {p.sku}</div>
-                          )}
-                          <div className="text-xs text-gray-600">
-                            Cost: {p.priceCost?.toFixed(2) || "0.00"} TND
-                          </div>
-                        </div>
-                      ))}
+                      {/* Existing products */}
+                      {filteredProducts.length > 0 && (
+                        <>
+                          {filteredProducts.map(p => (
+                            <div
+                              key={p.id}
+                              className={`px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-50 ${
+                                item.productId === p.id ? "bg-blue-50 border-blue-200" : ""
+                              }`}
+                              onClick={() => handleProductSelect(idx, p)}
+                            >
+                              <div className="font-medium text-sm">{p.name}</div>
+                              {p.sku && (
+                                <div className="text-xs text-gray-500">SKU: {p.sku}</div>
+                              )}
+                              <div className="text-xs text-gray-600">
+                                Cost: {p.priceCost?.toFixed(2) || "0.00"} TND
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      
+                      {/* Add new product option */}
                       {showAddNew && (
                         <div
-                          className="px-3 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 border-t border-blue-200 text-sm font-medium"
+                          className="px-3 py-2 cursor-pointer text-blue-600 hover:bg-blue-50 border-t border-blue-200 text-sm font-medium flex items-center gap-2"
                           onClick={() => {
                             onShowNewProduct(idx, item.productInput!);
                             setActiveDropdown(null);
                           }}
                         >
-                          + {t("addNewProduct")}: <span className="font-normal">"{item.productInput}"</span>
+                          <Plus className="h-4 w-4" />
+                          {t("addNewProduct")}: <span className="font-normal">"{item.productInput}"</span>
+                        </div>
+                      )}
+                      
+                      {/* No results and no add option */}
+                      {filteredProducts.length === 0 && !showAddNew && (
+                        <div className="px-3 py-2 text-gray-500 text-sm">
+                          {item.productInput ? t("noProductsFound") : "Start typing to search products"}
+                        </div>
+                      )}
+                      
+                      {/* Help text when no input */}
+                      {!item.productInput && (
+                        <div className="px-3 py-2 text-xs text-gray-400 border-t border-gray-100">
+                          💡 Tip: Type a product name to search or create a new one
                         </div>
                       )}
                     </>

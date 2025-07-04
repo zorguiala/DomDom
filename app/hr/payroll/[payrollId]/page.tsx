@@ -81,34 +81,49 @@ export default function PayrollDetailPage() {
 
 
   useEffect(() => {
+    let isMounted = true;
+    
     if (payrollId) {
       setIsLoading(true);
-      fetch(`/api/hr/payroll/${payrollId}`)
-        .then(async (res) => {
+      
+      const fetchPayrollData = async () => {
+        try {
+          const res = await fetch(`/api/hr/payroll/${payrollId}`);
           if (!res.ok) {
             const errorData = await res.json();
-            throw new Error(errorData.error || t("errorFetchingPayrollDetail"));
+            throw new Error(errorData.error || "Failed to fetch payroll details");
           }
-          return res.json();
-        })
-        .then((data: PayrollData) => {
-          setPayrollData(data);
-          reset({
-            baseSalary: data.baseSalary, // Or originalBaseSalary if that's what should be editable
-            bonusesOrOvertime: data.bonusesOrOvertime || [],
-            deductions: data.deductions || [],
-            paid: data.paid,
-            paidAt: data.paidAt ? new Date(data.paidAt) : null,
-            notes: data.notes ?? "",
-          });
-        })
-        .catch((err: any) => {
-          toast({ variant: "destructive", title: common("error"), description: err.message });
-          router.push("/hr/payroll"); // Redirect if error
-        })
-        .finally(() => setIsLoading(false));
+          
+          const data: PayrollData = await res.json();
+          
+          if (isMounted) {
+            setPayrollData(data);
+            reset({
+              baseSalary: data.baseSalary, // Or originalBaseSalary if that's what should be editable
+              bonusesOrOvertime: data.bonusesOrOvertime || [],
+              deductions: data.deductions || [],
+              paid: data.paid,
+              paidAt: data.paidAt ? new Date(data.paidAt) : null,
+              notes: data.notes ?? "",
+            });
+            setIsLoading(false);
+          }
+        } catch (err: any) {
+          if (isMounted) {
+            toast({ variant: "destructive", title: "Error", description: err.message });
+            router.push("/hr/payroll"); // Redirect if error
+            setIsLoading(false);
+          }
+        }
+      };
+
+      fetchPayrollData();
     }
-  }, [payrollId, t, common, toast, reset, router]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [payrollId]); // Only depend on payrollId
 
   const onSubmit = async (data: UpdatePayrollFormValues) => {
     try {
