@@ -22,6 +22,7 @@
     "build": "next build",
     "vercel-build": "node scripts/vercel-build.js",
     "generate-secrets": "node scripts/generate-secrets.js",
+    "seed-check": "node scripts/seed-check.js",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",

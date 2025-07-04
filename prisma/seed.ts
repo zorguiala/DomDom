@@ -1,13 +1,35 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+// Configure Prisma Client for Vercel deployment
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+  log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+});
 
 async function main() {
   console.log("🌱 Starting database seed...");
+  
+  // Test database connection first
+  try {
+    console.log("🔗 Testing database connection...");
+    await prisma.$connect();
+    console.log("✅ Database connection successful");
+  } catch (error) {
+    console.error("❌ Database connection failed:");
+    console.error("DATABASE_URL:", process.env.DATABASE_URL ? "Set" : "Missing");
+    console.error("POSTGRES_URL:", process.env.POSTGRES_URL ? "Set" : "Missing");
+    console.error("Error details:", error);
+    throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 
   try {
     // Check if database is already seeded
+    console.log("🔍 Checking if database is already seeded...");
     const existingUsers = await prisma.user.count();
     if (existingUsers > 0) {
       console.log("ℹ️ Database already contains data. Skipping seed to prevent duplicates.");
@@ -395,7 +417,21 @@ async function main() {
 
   } catch (error) {
     console.error("❌ Error during database seeding:");
-    console.error(error);
+    console.error("Environment:", {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      DATABASE_URL: process.env.DATABASE_URL ? "Set" : "Missing",
+      POSTGRES_URL: process.env.POSTGRES_URL ? "Set" : "Missing",
+    });
+    
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    
     throw error;
   }
 }
