@@ -17,10 +17,11 @@ const updateAttendanceSchema = z.object({
 // PUT /api/hr/attendance/[id] - Update an existing attendance record
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const rawData = await req.json();
     const validationResult = updateAttendanceSchema.safeParse(rawData);
 
@@ -92,10 +93,11 @@ export async function PUT(
 // GET /api/hr/attendance/[id] - Fetch a single attendance record (optional, good for edit prefill)
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const attendanceRecord = await prisma.attendance.findUnique({
       where: { id },
       include: {

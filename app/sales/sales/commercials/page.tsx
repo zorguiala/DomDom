@@ -24,8 +24,14 @@ interface Commercial {
   client?: ClientInfo | null; // Populated by Prisma include
 }
 
-export default function CommercialsPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale;
+export default function CommercialsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+    });
+  }, [params]);
   const t = useTranslations("commercials");
   const commonT = useTranslations("common");
   const { toast } = useToast();

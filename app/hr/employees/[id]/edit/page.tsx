@@ -25,10 +25,11 @@ const editEmployeeFormSchema = z.object({
   phone: z.string().optional().nullable().or(z.literal('')),
   department: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
-  salary: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
-    z.number().positive("Salary must be a positive number").nullable().optional()
-  ),
+  salary: z.union([
+    z.number().positive("Salary must be a positive number"),
+    z.null(),
+    z.undefined()
+  ]).optional(),
   hireDate: z.string().min(1, "Hire date is required"),
   isActive: z.boolean().optional(),
 });

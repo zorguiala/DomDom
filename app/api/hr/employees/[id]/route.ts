@@ -20,10 +20,11 @@ const updateEmployeeSchema = z.object({
 // GET /api/hr/employees/[id] - Get a single employee by ID
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const employee = await prisma.employee.findUnique({
       where: { id },
     });
@@ -44,10 +45,11 @@ export async function GET(
 // PUT /api/hr/employees/[id] - Update an employee by ID
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const rawData = await req.json();
     const validationResult = updateEmployeeSchema.safeParse(rawData);
 
@@ -108,10 +110,11 @@ export async function PUT(
 // DELETE /api/hr/employees/[id] - Delete an employee by ID
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
 
     // Ensure employee exists before trying to delete
     const employee = await prisma.employee.findUnique({ where: { id } });

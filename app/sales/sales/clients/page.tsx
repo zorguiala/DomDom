@@ -19,8 +19,14 @@ interface Client {
   mf?: string | null;
 }
 
-export default function ClientsPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale;
+export default function ClientsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+    });
+  }, [params]);
   const t = useTranslations("clients"); // Translation keys for clients
   const commonT = useTranslations("common");
   const { toast } = useToast();

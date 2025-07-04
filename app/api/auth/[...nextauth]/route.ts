@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 // Ensure this route is always dynamic (not statically generated)
 export const dynamic = "force-dynamic";
 
-export const authOptions = {
+const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -56,7 +56,7 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   callbacks: {
     async jwt({ token, user }: { token: any; user?: any }) {

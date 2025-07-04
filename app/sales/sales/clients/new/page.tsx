@@ -1,7 +1,7 @@
 // app/[locale]/dashboard/sales/clients/new/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -20,8 +20,14 @@ interface ClientFormData {
   mf: string;
 }
 
-export default function NewClientPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale;
+export default function NewClientPage({ params }: { params: Promise<{ locale: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+    });
+  }, [params]);
   const router = useRouter();
   const t = useTranslations("clients");
   const commonT = useTranslations("common");

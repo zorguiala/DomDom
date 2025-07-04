@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/commercials/[id] - Get a single commercial contact by ID
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const commercial = await prisma.commercial.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         client: true, // Include related client information
         // sales: true // Optionally include related sales
@@ -24,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ commercial });
   } catch (error) {
-    console.error(`Error fetching commercial contact ${params.id}:`, error);
+    console.error(`Error fetching commercial contact:`, error);
     return NextResponse.json(
       { error: "Failed to fetch commercial contact" },
       { status: 500 }
@@ -35,6 +36,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 // PUT /api/commercials/[id] - Update a commercial contact by ID
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { name, email, address, phone, clientId } = body;
 
@@ -63,13 +65,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 
     const commercial = await prisma.commercial.update({
-      where: { id: params.id },
+      where: { id },
       data: commercialData,
     });
 
     return NextResponse.json({ commercial });
   } catch (error) {
-    console.error(`Error updating commercial contact ${params.id}:`, error);
+    console.error(`Error updating commercial contact:`, error);
     if (error instanceof Error && error.message.includes("Record to update not found")) {
       return NextResponse.json({ error: "Commercial contact not found" }, { status: 404 });
     }
@@ -89,15 +91,16 @@ export async function PUT(request: NextRequest, { params }: Params) {
 // DELETE /api/commercials/[id] - Delete a commercial contact by ID
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     // Consider implications of deleting a commercial contact, e.g., on associated Sales.
     // Prisma's default behavior (restrict, cascade, set null) is defined in the schema.
     await prisma.commercial.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Commercial contact deleted successfully" });
   } catch (error) {
-    console.error(`Error deleting commercial contact ${params.id}:`, error);
+    console.error(`Error deleting commercial contact:`, error);
     if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
       return NextResponse.json({ error: "Commercial contact not found" }, { status: 404 });
     }

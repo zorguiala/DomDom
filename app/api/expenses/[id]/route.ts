@@ -21,10 +21,11 @@ const updateExpenseSchema = expenseBaseSchema.partial(); // All fields become op
 // GET /api/expenses/[id] - Get a single expense by ID
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const expense = await prisma.expense.findUnique({
       where: { id },
     });
@@ -45,10 +46,11 @@ export async function GET(
 // PUT /api/expenses/[id] - Update an expense by ID
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
     const rawData = await req.json();
     const validationResult = updateExpenseSchema.safeParse(rawData);
 
@@ -96,10 +98,11 @@ export async function PUT(
 // DELETE /api/expenses/[id] - Delete an expense by ID
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const paramValues = await params;
+    const { id } = paramValues;
 
     // Ensure the record exists
     const existingExpense = await prisma.expense.findUnique({ where: { id } });

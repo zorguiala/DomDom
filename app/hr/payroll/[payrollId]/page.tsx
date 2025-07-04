@@ -20,17 +20,11 @@ import { PlusCircle, Trash2, Printer, Edit, Save } from "lucide-react";
 
 const payrollAdjustmentItemSchema = z.object({
   reason: z.string().min(1, "Reason is required"),
-  amount: z.preprocess(
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")),
-    z.number({invalid_type_error: "Amount must be a number"}).min(0.01, "Amount must be positive")
-  ),
+  amount: z.number().min(0.01, "Amount must be positive"),
 });
 
 const updatePayrollFormSchema = z.object({
-  baseSalary: z.preprocess( // If base salary adjustment is allowed
-    (val) => Number(String(val).replace(/[^0-9.-]+/g, "")),
-    z.number({invalid_type_error: "Base salary must be a number"}).positive().optional()
-  ),
+  baseSalary: z.number().positive().optional(),
   bonusesOrOvertime: z.array(payrollAdjustmentItemSchema).optional(),
   deductions: z.array(payrollAdjustmentItemSchema).optional(),
   paid: z.boolean().optional(),
@@ -284,7 +278,7 @@ export default function PayrollDetailPage() {
                   control={control}
                   render={({ field }) => (
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="paid" checked={field.value} onCheckedChange={field.onChange} />
+                      <Checkbox id="paid" checked={field.value} onChange={field.onChange} />
                       <label htmlFor="paid" className="text-sm font-medium">{t("markAsPaidField") || "Mark as Paid"}</label>
                     </div>
                   )}
@@ -292,7 +286,7 @@ export default function PayrollDetailPage() {
                 {watch("paid") && (
                   <div>
                     <label htmlFor="paidAt" className="block text-sm font-medium mb-1">{t("paidDateField")}</label>
-                    <Controller name="paidAt" control={control} render={({ field }) => <DatePicker date={field.value} setDate={field.onChange} placeholder={t("selectPaidDatePlaceholder")} />} />
+                    <Controller name="paidAt" control={control} render={({ field }) => <DatePicker date={field.value || undefined} setDate={field.onChange} placeholder={t("selectPaidDatePlaceholder")} />} />
                     {errors.paidAt && <p className="text-sm text-destructive mt-1">{errors.paidAt.message}</p>}
                   </div>
                 )}

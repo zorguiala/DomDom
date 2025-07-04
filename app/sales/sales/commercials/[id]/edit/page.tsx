@@ -31,10 +31,17 @@ interface CommercialFormData {
   clientId: string;
 }
 
-export default function EditCommercialPage({ params: routeParams }: { params: { locale: string; id: string } }) {
-  const locale = routeParams.locale;
-  const commercialId = routeParams.id;
+export default function EditCommercialPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+  const [commercialId, setCommercialId] = useState<string>("");
   const router = useRouter();
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+      setCommercialId(resolvedParams.id);
+    });
+  }, [params]);
 
   const t = useTranslations("commercials");
   const commonT = useTranslations("common");
@@ -64,7 +71,7 @@ export default function EditCommercialPage({ params: routeParams }: { params: { 
   }, []);
 
   useEffect(() => {
-    if (!commercialId) return;
+    if (!commercialId || !locale) return;
 
     setIsFetching(true);
     async function fetchInitialData() {

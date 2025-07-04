@@ -11,20 +11,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function EditPurchasePage({ params }: { params: { id: string } }) {
+export default function EditPurchasePage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [purchase, setPurchase] = useState<any>(null);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<any[]>([]);
+  const [purchaseId, setPurchaseId] = useState<string>("");
 
   useEffect(() => {
-    fetchPurchase();
-  }, []);
+    params.then(resolvedParams => {
+      setPurchaseId(resolvedParams.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (purchaseId) {
+      fetchPurchase();
+    }
+  }, [purchaseId]);
 
   const fetchPurchase = async () => {
     try {
-      const response = await fetch(`/api/purchases/${params.id}`);
+      const response = await fetch(`/api/purchases/${purchaseId}`);
       const data = await response.json();
       if (data.purchase) {
         setPurchase(data.purchase);
@@ -61,7 +70,7 @@ export default function EditPurchasePage({ params }: { params: { id: string } })
     try {
       // Update status
       if (status !== purchase.status) {
-        const response = await fetch(`/api/purchases/${params.id}`, {
+        const response = await fetch(`/api/purchases/${purchaseId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status }),

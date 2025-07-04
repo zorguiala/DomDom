@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 interface Params {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // GET /api/clients/[id] - Get a single client by ID
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const client = await prisma.client.findUnique({
-      where: { id: params.id },
+      where: { id },
       // include: { commercials: true, sales: true } // Optionally include related data
     });
 
@@ -21,7 +22,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ client });
   } catch (error) {
-    console.error(`Error fetching client ${params.id}:`, error);
+    console.error(`Error fetching client:`, error);
     return NextResponse.json(
       { error: "Failed to fetch client" },
       { status: 500 }
@@ -32,11 +33,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
 // PUT /api/clients/[id] - Update a client by ID
 export async function PUT(request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { companyName, email, address, phone, mf } = body;
 
     const client = await prisma.client.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         companyName,
         email,
@@ -48,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     return NextResponse.json({ client });
   } catch (error) {
-    console.error(`Error updating client ${params.id}:`, error);
+    console.error(`Error updating client:`, error);
     if (error instanceof Error && error.message.includes("Record to update not found")) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
@@ -68,18 +70,19 @@ export async function PUT(request: NextRequest, { params }: Params) {
 // DELETE /api/clients/[id] - Delete a client by ID
 export async function DELETE(_request: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     // Consider implications of deleting a client:
     // - What happens to sales associated with this client?
     // - What happens to commercial contacts associated with this client?
     // Prisma's default behavior (restrict, cascade, set null) is defined in the schema.
     // For now, we assume the schema handles this as desired.
     await prisma.client.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Client deleted successfully" });
   } catch (error) {
-    console.error(`Error deleting client ${params.id}:`, error);
+    console.error(`Error deleting client:`, error);
     if (error instanceof Error && error.message.includes("Record to delete does not exist")) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }

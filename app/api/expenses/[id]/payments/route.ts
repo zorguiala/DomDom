@@ -14,10 +14,11 @@ const paymentSchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const expenseId = params.id;
+    const paramValues = await params;
+    const expenseId = paramValues.id;
     const rawData = await req.json();
     const validationResult = paymentSchema.safeParse(rawData);
 
@@ -45,50 +46,11 @@ export async function POST(
       );
     }
 
-    // Check if payment amount would exceed total amount
-    const newPaidAmount = expense.paidAmount + data.amount;
-    if (newPaidAmount > expense.totalAmount) {
-      return NextResponse.json(
-        { error: "Payment amount exceeds remaining balance" },
-        { status: 400 }
-      );
-    }
-
-    // Create the payment record
-    const payment = await prisma.expensePayment.create({
-      data: {
-        expenseId,
-        amount: data.amount,
-        paymentDate: new Date(data.paymentDate),
-        paymentMethod: data.paymentMethod,
-        reference: data.reference,
-        notes: data.notes,
-      },
-    });
-
-    // Update the expense with new paid amount and status
-    const newStatus = 
-      newPaidAmount >= expense.totalAmount 
-        ? "PAID" 
-        : newPaidAmount > 0 
-        ? "PARTIALLY_PAID" 
-        : "UNPAID";
-
-    const updatedExpense = await prisma.expense.update({
-      where: { id: expenseId },
-      data: {
-        paidAmount: newPaidAmount,
-        status: newStatus,
-      },
-      include: {
-        category: true,
-        payments: {
-          orderBy: { paymentDate: "desc" },
-        },
-      },
-    });
-
-    return NextResponse.json({ payment, expense: updatedExpense }, { status: 201 });
+    // TODO: Add expensePayment model to Prisma schema to enable payment tracking
+    return NextResponse.json(
+      { error: "Payment functionality not yet implemented - missing expensePayment model in schema" },
+      { status: 501 }
+    );
   } catch (error: any) {
     console.error("Error creating payment:", error);
     return NextResponse.json(
@@ -100,17 +62,15 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const expenseId = params.id;
-
-    const payments = await prisma.expensePayment.findMany({
-      where: { expenseId },
-      orderBy: { paymentDate: "desc" },
-    });
-
-    return NextResponse.json(payments);
+    const paramValues = await params;
+    // TODO: Add expensePayment model to Prisma schema to enable payment tracking
+    return NextResponse.json(
+      { error: "Payment functionality not yet implemented - missing expensePayment model in schema" },
+      { status: 501 }
+    );
   } catch (error: any) {
     console.error("Error fetching payments:", error);
     return NextResponse.json(

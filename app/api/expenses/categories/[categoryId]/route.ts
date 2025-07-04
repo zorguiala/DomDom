@@ -10,16 +10,17 @@ const categorySchema = z.object({
 
 export async function GET(
   req: Request,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    if (!params.categoryId) {
+    const paramValues = await params;
+    if (!paramValues.categoryId) {
       return new NextResponse('Category ID is required', { status: 400 });
     }
 
     const category = await prisma.expenseCategory.findUnique({
       where: {
-        id: params.categoryId,
+        id: paramValues.categoryId,
       },
     });
 
@@ -36,10 +37,11 @@ export async function GET(
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    if (!params.categoryId) {
+    const paramValues = await params;
+    if (!paramValues.categoryId) {
       return new NextResponse('Category ID is required', { status: 400 });
     }
 
@@ -48,7 +50,7 @@ export async function PATCH(
 
     const category = await prisma.expenseCategory.update({
       where: {
-        id: params.categoryId,
+        id: paramValues.categoryId,
       },
       data: {
         name,
@@ -68,17 +70,18 @@ export async function PATCH(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
-    if (!params.categoryId) {
+    const paramValues = await params;
+    if (!paramValues.categoryId) {
       return new NextResponse('Category ID is required', { status: 400 });
     }
 
     // Check if any expenses are using this category
     const existingExpenses = await prisma.expense.findFirst({
       where: {
-        categoryId: params.categoryId,
+        categoryId: paramValues.categoryId,
       },
     });
 
@@ -91,7 +94,7 @@ export async function DELETE(
 
     const category = await prisma.expenseCategory.delete({
       where: {
-        id: params.categoryId,
+        id: paramValues.categoryId,
       },
     });
 

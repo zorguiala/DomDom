@@ -23,10 +23,11 @@ const newEmployeeFormSchema = z.object({
   phone: z.string().optional().nullable().or(z.literal('')),
   department: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
-  salary: z.union([z.string(), z.number()]).transform((val) => {
-    if (val === "" || val === null || val === undefined) return null;
-    return typeof val === "string" ? Number(val) || null : val;
-  }).optional().nullable(),
+  salary: z.union([
+    z.number().positive("Salary must be a positive number"),
+    z.null(),
+    z.undefined()
+  ]).optional(),
   hireDate: z.string().min(1, "Hire date is required"), // Changed back to string to match form handling
   isActive: z.boolean().default(true).optional(),
 });

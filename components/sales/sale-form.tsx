@@ -15,6 +15,25 @@ import { SaleItemsForm } from "./sale-items-form";
 import { CustomerInfoForm } from "./customer-info-form";
 import { VanInfoForm } from "./van-info-form";
 import { SaleSummary } from "./sale-summary";
+
+// Match the interfaces from the form components
+interface VanInfo {
+  vanId?: string;
+  driverName: string;
+  route: string;
+  departureTime?: string;
+  expectedReturnTime?: string;
+  vanNotes?: string;
+  isVanOperation: boolean;
+}
+
+interface CustomerInfo {
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  notes?: string;
+}
 import { useSaleCalculations } from "@/hooks/sales/use-sale-calculations";
 import { ArrowLeft, FileText, Package } from "lucide-react";
 import Link from "next/link";
@@ -32,14 +51,14 @@ export function SaleForm({ type }: SaleFormProps) {
   const { data: products = [] } = useProducts({ finishedGoodsOnly: true });
   
   // Form state
-  const [customerInfo, setCustomerInfo] = useState({
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     customerName: "",
     customerEmail: "",
     customerPhone: "",
     customerAddress: "",
     notes: "",
   });
-  const [vanInfo, setVanInfo] = useState({
+  const [vanInfo, setVanInfo] = useState<VanInfo>({
     driverName: "",
     route: "",
     vanId: "",

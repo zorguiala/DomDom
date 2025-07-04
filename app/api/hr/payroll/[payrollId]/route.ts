@@ -38,6 +38,7 @@ export async function PUT(
   { params }: { params: Promise<{ payrollId: string }> }
 ) {
   try {
+    const paramValues = await params;
     const { payrollId } = await params;
     if (!payrollId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
         return NextResponse.json({ error: "Invalid Payroll ID format." }, { status: 400 });
@@ -148,6 +149,7 @@ export async function GET(
   { params }: { params: Promise<{ payrollId: string }> }
 ) {
   try {
+    const paramValues = await params;
     const { payrollId } = await params;
     if (!payrollId.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
         return NextResponse.json({ error: "Invalid Payroll ID format." }, { status: 400 });

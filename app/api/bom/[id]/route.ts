@@ -53,6 +53,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const paramValues = await params;
     const { id: bomId } = await params;
 
     const bom = await prisma.billOfMaterials.findUnique({
@@ -104,6 +105,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const paramValues = await params;
     const { id: bomId } = await params;
     const body = await request.json();
     // finalProductId cannot be changed in PUT, so we fetch it.

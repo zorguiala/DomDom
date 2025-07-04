@@ -24,10 +24,17 @@ interface Client extends ClientFormData {
   id: string;
 }
 
-export default function EditClientPage({ params: routeParams }: { params: { locale: string; id: string } }) {
-  const locale = routeParams.locale;
-  const clientId = routeParams.id;
+export default function EditClientPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+  const [clientId, setClientId] = useState<string>("");
   const router = useRouter();
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+      setClientId(resolvedParams.id);
+    });
+  }, [params]);
 
   const t = useTranslations("clients");
   const commonT = useTranslations("common");
@@ -46,7 +53,7 @@ export default function EditClientPage({ params: routeParams }: { params: { loca
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId || !locale) return;
 
     setIsFetching(true);
     async function fetchClientDetails() {

@@ -26,8 +26,14 @@ interface CommercialFormData {
   clientId: string; // Store ID of selected client, empty if none
 }
 
-export default function NewCommercialPage({ params }: { params: { locale: string } }) {
-  const locale = params.locale;
+export default function NewCommercialPage({ params }: { params: Promise<{ locale: string }> }) {
+  const [locale, setLocale] = useState<string>("");
+
+  useEffect(() => {
+    params.then(resolvedParams => {
+      setLocale(resolvedParams.locale);
+    });
+  }, [params]);
   const router = useRouter();
   const t = useTranslations("commercials");
   const commonT = useTranslations("common");

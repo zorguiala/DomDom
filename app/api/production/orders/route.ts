@@ -144,7 +144,8 @@ export async function PUT(req: NextRequest) {
 
     // Handle completion logic (Odoo-style)
     if (data.status === "COMPLETED" && currentOrder.status !== "COMPLETED") {
-      return await completeProductionOrder(currentOrder, data);
+      const completedOrder = await completeProductionOrder(currentOrder, data);
+      return NextResponse.json(completedOrder);
     }
 
     // Regular update

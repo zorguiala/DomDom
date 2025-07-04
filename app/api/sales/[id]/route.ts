@@ -6,6 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const paramValues = await params;
     const { id: saleId } = await params;
     const sale = await prisma.sale.findUnique({
       where: {
@@ -50,6 +51,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const paramValues = await params;
     const { id: saleId } = await params;
     const body = await request.json();
     const { customerName, customerEmail, customerPhone, status } = body;
@@ -108,6 +110,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const paramValues = await params;
     const { id: saleId } = await params; // Check if sale exists
     const existingSale = await prisma.sale.findUnique({
       where: { id: saleId },
