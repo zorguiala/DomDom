@@ -19,6 +19,9 @@
     "build": "next build",
     "start": "next start",
     "postinstall": "prisma generate",
+    "build": "next build",
+    "vercel-build": "node scripts/vercel-build.js",
+    "generate-secrets": "node scripts/generate-secrets.js",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
@@ -121,5 +124,8 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@8.15.0",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
 }
